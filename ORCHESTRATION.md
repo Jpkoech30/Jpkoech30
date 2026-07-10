@@ -512,10 +512,22 @@ STATUS: <PENDING | IN_PROGRESS | REVIEW | DONE | BLOCKED>
 |---|------|------|-------|--------|------------|-------|
 | **5.1** | Create `.github/workflows/ci.yml` — basic CI (lint, test, build) | `ci` | `🚀 DevOps` | ✅ DONE | — | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
 | **5.2** | Install Husky + lint-staged + pre-commit + commit-msg hooks | `devops` | `🚀 DevOps` | ✅ DONE | — | [`.husky/pre-commit`](jengabooks/.husky/pre-commit), [`.husky/commit-msg`](jengabooks/.husky/commit-msg), [`package.json`](jengabooks/package.json) |
-| **5.3** | Add lint-staged config to `jengabooks/package.json` | `config` | `🚀 DevOps` | PENDING | 5.2 | — |
-| **5.4** | Create `test:setup` + `test:cleanup` npm scripts | `config` | `⚙️ Backend` | PENDING | — | — |
-| **5.5** | Create `.agency/scripts/cleanup-test-db.js` | `script` | `🔧 JengaBooks Code` | PENDING | — | — |
-| **5.6** | Add remaining missing npm scripts to `jengabooks/package.json` | `config` | `🚀 DevOps` | PENDING | 5.4 | — |
+| **5.3** | Add lint-staged config to `jengabooks/package.json` | `config` | `🔧 JengaBooks Code` | ✅ DONE | 5.2 | [`package.json`](jengabooks/package.json) |
+| **5.4** | Create `test:setup` + `test:cleanup` npm scripts | `config` | `🔧 JengaBooks Code` | ✅ DONE | — | [`package.json`](jengabooks/package.json) |
+| **5.5** | Create `.agency/scripts/cleanup-test-db.js` | `script` | `🔧 JengaBooks Code` | ✅ DONE | — | [`.agency/scripts/cleanup-test-db.js`](.agency/scripts/cleanup-test-db.js) |
+| **5.6** | Add remaining missing npm scripts to `jengabooks/package.json` | `config` | `🔧 JengaBooks Code` | ✅ DONE | 5.4 | [`package.json`](jengabooks/package.json) |
+
+### Sprint 6 — Agency Infrastructure: MEDIUM Priority Items (Est. 2 days)
+**Theme:** Bootstrap script, temp directory, format documentation
+
+| # | Task | Type | Agent | Status | Files |
+|---|------|------|-------|--------|-------|
+| **6.1** | Create `.agency/scripts/init-project.js` bootstrap script | `script` | `🔧 JengaBooks Code` | PENDING | — |
+| **6.2** | Add `agency:init` npm script to `jengabooks/package.json` | `config` | `🔧 JengaBooks Code` | PENDING | — |
+| **6.3** | Create `.agency/temp/` directory (cleanup temp location) | `config` | `🧠 Lead Architect` | PENDING | — |
+| **6.4** | Document both `.roomodes` formats (ZooCode + Roo Code) | `docs` | `📝 Documentarian` | ✅ DONE | [`.agency/roomodes-formats.md`](.agency/roomodes-formats.md) |
+
+---
 
 **Delta Plan:** [`plans/roo-code-setup-delta-plan.md`](.agency/plans/roo-code-setup-delta-plan.md)
 
