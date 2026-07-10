@@ -45,6 +45,8 @@ const COMMANDS = [
     ['cleanup', 'cleanup.js', 'Delete obsolete files per AGENCY-RULES §15'],
     ['cleanup-test-db', 'cleanup-test-db.js', 'Truncate all test database tables'],
     ['clean-temp', 'clean-temp.js', 'Scan for orphan temp files'],
+    ['secret-scan', 'secret-scan.js', 'Pre-commit secret scanner — blocks API keys, passwords, tokens'],
+    ['telemetry', 'telemetry.js', 'Event telemetry pipeline — log, monitor, stats'],
     ['chaos-monkey', 'chaos-monkey.js', 'Run P0 guard chaos monkey tests'],
     ['escalate', 'escalate-lead.js', 'Check gate circuit breaker for failing tasks'],
     ['terminal', 'terminal-session.js', 'Terminal helper & session manager'],
@@ -92,12 +94,12 @@ function showHelp(exitCode = 0) {
     }
     console.log('');
     console.log('  ── DevOps ─────────────────────────────────────');
-    for (const [cmd, , desc] of COMMANDS.slice(10, 17)) {
+    for (const [cmd, , desc] of COMMANDS.slice(10, 19)) {
         console.log(`    ${cmd.padEnd(18)} ${desc}`);
     }
     console.log('');
     console.log('  ── PowerShell (via powershell -File) ──────────');
-    for (const [cmd, , desc] of COMMANDS.slice(17)) {
+    for (const [cmd, , desc] of COMMANDS.slice(19)) {
         console.log(`    ${cmd.padEnd(18)} ${desc}`);
     }
     console.log('');
