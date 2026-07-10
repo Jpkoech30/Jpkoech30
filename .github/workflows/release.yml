@@ -1,0 +1,140 @@
+# =============================================================================
+# Release Manager Workflow
+# =============================================================================
+# This workflow documents the steps the 📦 Release Manager follows when
+# cutting a new release.  It is both a reference for the AI agent and a
+# CI/CD workflow for automated release publishing.
+#
+# Steps (followed by the AI agent):
+#   1.  git pull  (ensure latest)
+#   2.  Scan conventional commits since last tag to determine SemVer bump
+#       (major/minor/patch based on commit types: breaking change -> major,
+#        feat -> minor, fix/perf -> patch)
+#   3.  Run `npm run docs:sync` — this executes:
+#         node .agency/scripts/auto-docs.js --sync
+#       which:
+#         a) Parses JSDoc annotations in .agency/scripts/ to regenerate the
+#            Scripts Reference table in AGENCY-RULES.md
+#         b) Reads git log since last tag and prepends a structured changelog
+#            entry to CHANGELOG.md grouped by conventional commit type
+#   4.  git add the auto-generated changes (CHANGELOG.md + AGENCY-RULES.md)
+#   5.  Bump version in package.json (and jengabooks/package.json if needed)
+#   6.  git commit with the new version
+#   7.  git tag <vX.Y.Z>
+#   8.  Create / push a release PR (GitHub CLI or API)
+#
+# Never force-push.
+#
+# Contract: agency-auto-docs@1.0.0
+# =============================================================================
+
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      semver:
+        description: 'SemVer bump type (major | minor | patch)'
+        required: true
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      dry_run:
+        description: 'Dry run — show what would change without committing'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Sync auto-docs
+        run: node .agency/scripts/auto-docs.js --sync
+        env:
+          NODE_ENV: production
+
+      - name: Determine next version
+        id: semver
+        run: |
+          LATEST_TAG=$(git tag --sort=-version:refname | head -1)
+          if [ -z "$LATEST_TAG" ]; then
+            LATEST_TAG="v0.0.0"
+          fi
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST_TAG#v}"
+          case "${{ github.event.inputs.semver }}" in
+            major) echo "next=v$((MAJOR+1)).0.0" >> $GITHUB_OUTPUT ;;
+            minor) echo "next=v$MAJOR.$((MINOR+1)).0" >> $GITHUB_OUTPUT ;;
+            patch) echo "next=v$MAJOR.$MINOR.$((PATCH+1))" >> $GITHUB_OUTPUT ;;
+          esac
+
+      - name: Bump version (dry-run)
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        run: |
+          echo "── DRY RUN ──"
+          echo "Latest tag: ${{ steps.semver.outputs.latest_tag }}"
+          echo "Next version: ${{ steps.semver.outputs.next }}"
+          echo "Changes would be committed and a release PR created."
+
+      - name: Bump version and create PR
+        if: ${{ github.event.inputs.dry_run == 'false' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NEXT=${{ steps.semver.outputs.next }}
+
+          # Update package.json version
+          npm version "${NEXT#v}" --no-git-tag-version --allow-same-version
+
+          # Stage all auto-generated changes
+          git add CHANGELOG.md .agency/AGENCY-RULES.md package.json
+
+          # Commit
+          git commit -m "chore(release): bump to ${NEXT}
+
+          HANDOFF:lead-architect
+          ARTIFACTS:CHANGELOG.md,.agency/AGENCY-RULES.md,package.json
+          CONTRACT:agency-auto-docs@1.0.0
+          STATUS:DONE"
+
+          # Tag
+          git tag "${NEXT}"
+
+          # Push
+          git push origin "${NEXT}"
+          git push origin HEAD:refs/heads/release/"${NEXT}"
+
+          # Create PR
+          gh pr create \
+            --base main \
+            --head release/"${NEXT}" \
+            --title "Release ${NEXT}" \
+            --body "## Release ${NEXT}
+
+          ### Changes
+          - Auto-generated CHANGELOG.md entry from conventional commits
+          - Updated Scripts Reference in AGENCY-RULES.md
+          - Version bump to ${NEXT}
+
+          ### Workflow
+          This release was cut by the automated Release workflow.
+          See [.github/workflows/release.yml](.github/workflows/release.yml) for details."

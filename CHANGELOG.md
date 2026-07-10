@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.3 (2026-07-10)
+
+### 🚀 CI/CD
+- Added auto-docs sync step to release-manager workflow — runs `node .agency/scripts/auto-docs.js --sync` before version bump to regenerate CHANGELOG.md and Scripts Reference in AGENCY-RULES.md
+- Created `.github/workflows/release.yml` documenting the full release process including SemVer bump, auto-docs sync, and release PR creation
+- Added `npm run docs:sync` script to root package.json for easy invocation
+
+### 📝 Documentation
+- Release flow updated: auto-docs sync is now a required pre-bump step (see `.github/workflows/release.yml`)
+
 ## v1.0.2 (2026-07-09)
 
 ### 🧭 Navigation

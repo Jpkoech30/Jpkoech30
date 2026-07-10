@@ -11,6 +11,7 @@
         "agent:handoff": "node .agency/scripts/handoff.js",
         "agent:status": "node .agency/scripts/status.js",
         "agent:cost": "node .agency/scripts/cost-track.js",
+        "docs:sync": "node .agency/scripts/auto-docs.js --sync",
         "telegram:test": "node .agency/scripts/notify-telegram.js --message '✅ System ready'",
         "terminal": "node .agency/scripts/terminal-session.js",
         "terminal:cost": "node .agency/scripts/terminal-session.js @cost",
