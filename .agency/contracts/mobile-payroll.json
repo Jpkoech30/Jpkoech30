@@ -1,0 +1,120 @@
+{
+  "contractId": "mobile-payroll",
+  "version": "1.0.0",
+  "description": "Payroll endpoints consumed by the JengaBooks mobile app",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/payroll/runs",
+      "auth": true,
+      "description": "List payroll runs",
+      "request": {
+        "query": {
+          "page": { "type": "number", "default": 1 },
+          "limit": { "type": "number", "default": 20 },
+          "status": { "type": "string", "enum": ["DRAFT", "LOCKED", "FILED"], "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "items": { "type": "array", "items": { "$ref": "#/types/PayrollRun" } },
+            "total": { "type": "number" },
+            "page": { "type": "number" },
+            "totalPages": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/payroll/runs/{id}",
+      "auth": true,
+      "description": "Get payroll run detail with employee entries",
+      "response": {
+        "200": {
+          "body": {
+            "run": { "$ref": "#/types/PayrollRun" },
+            "entries": { "type": "array", "items": { "$ref": "#/types/PayrollEntry" } }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/payroll/employees",
+      "auth": true,
+      "description": "List employees",
+      "request": {
+        "query": {
+          "page": { "type": "number", "default": 1 },
+          "limit": { "type": "number", "default": 20 },
+          "status": { "type": "string", "enum": ["ACTIVE", "TERMINATED"], "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "items": { "type": "array", "items": { "$ref": "#/types/Employee" } },
+            "total": { "type": "number" }
+          }
+        }
+      }
+    }
+  ],
+  "types": {
+    "PayrollRun": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "periodStart": { "type": "string", "format": "datetime" },
+        "periodEnd": { "type": "string", "format": "datetime" },
+        "status": { "type": "string", "enum": ["DRAFT", "LOCKED", "FILED"] },
+        "totalGrossPay": { "type": "number" },
+        "totalNetPay": { "type": "number" },
+        "totalPaye": { "type": "number" },
+        "totalNhif": { "type": "number" },
+        "totalNssf": { "type": "number" },
+        "totalHousingLevy": { "type": "number" },
+        "employeeCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "datetime" }
+      }
+    },
+    "PayrollEntry": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "employeeName": { "type": "string" },
+        "grossPay": { "type": "number" },
+        "basicPay": { "type": "number" },
+        "benefitsTotal": { "type": "number" },
+        "deductionsTotal": { "type": "number" },
+        "paye": { "type": "number" },
+        "nhif": { "type": "number" },
+        "nssf": { "type": "number" },
+        "housingLevy": { "type": "number" },
+        "netPay": { "type": "number" },
+        "status": { "type": "string" }
+      }
+    },
+    "Employee": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "optional": true },
+        "phone": { "type": "string", "optional": true },
+        "kraPin": { "type": "string" },
+        "employeeType": { "type": "string" },
+        "taxTreatment": { "type": "string" },
+        "status": { "type": "string" },
+        "hireDate": { "type": "string", "format": "datetime" }
+      }
+    }
+  },
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial mobile payroll contract" }
+  ]
+}

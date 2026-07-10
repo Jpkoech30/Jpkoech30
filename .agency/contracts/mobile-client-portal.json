@@ -1,0 +1,108 @@
+{
+  "contractId": "mobile-client-portal",
+  "version": "1.0.0",
+  "description": "Client portal endpoints — allows clients to view invoices, upload documents, and complete tasks",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/portal/invoices",
+      "auth": true,
+      "description": "List invoices visible to the client (filtered by client company)",
+      "request": {
+        "query": {
+          "page": { "type": "number", "default": 1 },
+          "limit": { "type": "number", "default": 20 },
+          "status": { "type": "string", "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "items": { "type": "array", "items": { "$ref": "mobile-etims.json#/types/Invoice" } },
+            "total": { "type": "number" },
+            "totalDue": { "type": "number" },
+            "overdueCount": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/portal/documents/upload",
+      "auth": true,
+      "description": "Client uploads a document to their accountant",
+      "request": {
+        "contentType": "multipart/form-data",
+        "body": {
+          "file": { "type": "file", "required": true },
+          "description": { "type": "string", "optional": true },
+          "relatedEntityType": { "type": "string", "enum": ["INVOICE", "EXPENSE", "STATEMENT"], "optional": true },
+          "relatedEntityId": { "type": "string", "format": "uuid", "optional": true }
+        }
+      },
+      "response": {
+        "201": { "body": { "$ref": "mobile-documents.json#/types/Document" } }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/portal/tasks",
+      "auth": true,
+      "description": "List tasks assigned to the client",
+      "response": {
+        "200": {
+          "body": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "title": { "type": "string" },
+                  "description": { "type": "string", "optional": true },
+                  "category": { "type": "string" },
+                  "priority": { "type": "string" },
+                  "status": { "type": "string" },
+                  "dueDate": { "type": "string", "format": "datetime", "optional": true },
+                  "createdAt": { "type": "string", "format": "datetime" }
+                }
+              }
+            },
+            "pendingCount": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/portal/tasks/{id}/complete",
+      "auth": true,
+      "description": "Mark a client task as completed",
+      "response": {
+        "200": { "body": { "message": "Task completed" } }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/portal/message",
+      "auth": true,
+      "description": "Send a message to the accountant (creates a comment thread)",
+      "request": {
+        "body": {
+          "subject": { "type": "string", "minLength": 1, "maxLength": 200, "required": true },
+          "message": { "type": "string", "minLength": 1, "maxLength": 5000, "required": true },
+          "relatedEntityType": { "type": "string", "optional": true },
+          "relatedEntityId": { "type": "string", "optional": true }
+        }
+      },
+      "response": {
+        "201": { "body": { "message": "Message sent", "threadId": { "type": "string" } } }
+      }
+    }
+  ],
+  "types": {},
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial mobile client portal contract" }
+  ]
+}

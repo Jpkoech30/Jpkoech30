@@ -1,0 +1,154 @@
+{
+  "contractId": "mobile-export",
+  "version": "1.0.0",
+  "description": "CSV/Excel Export endpoints — export invoices, clients, products, ledger, payments to CSV for offline use and data portability (SIM-inspired)",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/export/invoices",
+      "auth": true,
+      "description": "Export invoices to CSV with filters",
+      "request": {
+        "body": {
+          "status": { "type": "string", "enum": ["DRAFT", "SENT", "PAID", "OVERDUE", "CANCELLED", "ALL"], "default": "ALL", "optional": true },
+          "from": { "type": "string", "format": "date", "optional": true },
+          "to": { "type": "string", "format": "date", "optional": true },
+          "clientId": { "type": "string", "format": "uuid", "optional": true },
+          "columns": {
+            "type": "array",
+            "items": { "type": "string" },
+            "optional": true,
+            "description": "Specific columns to export; defaults to all"
+          },
+          "format": { "type": "string", "enum": ["CSV", "EXCEL"], "default": "CSV", "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "downloadUrl": { "type": "string", "format": "url", "description": "Temporary download URL (1h expiry)" },
+            "fileName": { "type": "string", "description": "e.g., invoices-20260709.csv" },
+            "recordCount": { "type": "number" },
+            "expiresAt": { "type": "string", "format": "datetime" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/export/ledger",
+      "auth": true,
+      "description": "Export ledger/journal entries to CSV",
+      "request": {
+        "body": {
+          "from": { "type": "string", "format": "date", "optional": true },
+          "to": { "type": "string", "format": "date", "optional": true },
+          "accountId": { "type": "string", "format": "uuid", "optional": true },
+          "format": { "type": "string", "enum": ["CSV", "EXCEL"], "default": "CSV", "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "downloadUrl": { "type": "string", "format": "url" },
+            "fileName": { "type": "string" },
+            "recordCount": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/export/clients",
+      "auth": true,
+      "description": "Export client list to CSV",
+      "request": {
+        "body": {
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "ARCHIVED", "ALL"], "default": "ALL", "optional": true },
+          "format": { "type": "string", "enum": ["CSV", "EXCEL"], "default": "CSV", "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "downloadUrl": { "type": "string", "format": "url" },
+            "fileName": { "type": "string" },
+            "recordCount": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/export/products",
+      "auth": true,
+      "description": "Export product/service catalog to CSV",
+      "request": {
+        "body": {
+          "type": { "type": "string", "enum": ["PRODUCT", "SERVICE", "ALL"], "default": "ALL", "optional": true },
+          "format": { "type": "string", "enum": ["CSV", "EXCEL"], "default": "CSV", "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "downloadUrl": { "type": "string", "format": "url" },
+            "fileName": { "type": "string" },
+            "recordCount": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/export/payments",
+      "auth": true,
+      "description": "Export payment history to CSV",
+      "request": {
+        "body": {
+          "from": { "type": "string", "format": "date", "optional": true },
+          "to": { "type": "string", "format": "date", "optional": true },
+          "method": { "type": "string", "enum": ["MPESA", "CASH", "BANK", "CARD", "ALL"], "default": "ALL", "optional": true },
+          "format": { "type": "string", "enum": ["CSV", "EXCEL"], "default": "CSV", "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "downloadUrl": { "type": "string", "format": "url" },
+            "fileName": { "type": "string" },
+            "recordCount": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/export/reports",
+      "auth": true,
+      "description": "Export a financial report to CSV (P&L, Balance Sheet, Cash Flow, Trial Balance)",
+      "request": {
+        "body": {
+          "reportType": { "type": "string", "enum": ["PL", "BALANCE_SHEET", "CASH_FLOW", "TRIAL_BALANCE"], "required": true },
+          "from": { "type": "string", "format": "date", "optional": true },
+          "to": { "type": "string", "format": "date", "optional": true },
+          "format": { "type": "string", "enum": ["CSV", "EXCEL"], "default": "CSV", "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "downloadUrl": { "type": "string", "format": "url" },
+            "fileName": { "type": "string" },
+            "recordCount": { "type": "number" }
+          }
+        }
+      }
+    }
+  ],
+  "types": {},
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "CSV/Excel export contract — SIM-inspired data portability for all major entities" }
+  ]
+}

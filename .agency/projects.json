@@ -1,0 +1,16 @@
+{
+    "projects": [
+        {
+            "name": "jengabooks",
+            "path": "jengabooks",
+            "description": "JengaBooks — Kenyan accounting SaaS (NestJS + Postgres + React/Expo)",
+            "registered": "2026-07-10"
+        },
+        {
+            "name": "zoocode-agency",
+            "path": ".",
+            "description": "ZooCode Agency — reusable multi-agent orchestration system",
+            "registered": "2026-07-10"
+        }
+    ]
+}

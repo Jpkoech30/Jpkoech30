@@ -1,0 +1,156 @@
+{
+  "contractId": "mobile-gamification",
+  "version": "1.0.0",
+  "description": "Gamification endpoints consumed by the JengaBooks mobile app",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/gamification/profile",
+      "auth": true,
+      "description": "Get the current user's gamification profile (XP, level, badges)",
+      "response": {
+        "200": {
+          "body": {
+            "userId": { "type": "string" },
+            "level": { "type": "number" },
+            "title": { "type": "string", "description": "Level title (Apprentice, Bookkeeper, etc.)" },
+            "totalXp": { "type": "number" },
+            "xpToNextLevel": { "type": "number", "description": "XP needed for next level" },
+            "currentLevelMinXp": { "type": "number" },
+            "nextLevelMinXp": { "type": "number" },
+            "badges": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "earnedAt": { "type": "string", "format": "datetime", "optional": true },
+                  "icon": { "type": "string", "optional": true }
+                }
+              }
+            },
+            "recentActivity": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "reason": { "type": "string" },
+                  "points": { "type": "number" },
+                  "createdAt": { "type": "string", "format": "datetime" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/gamification/badges",
+      "auth": true,
+      "description": "List all available badges and which ones are earned",
+      "response": {
+        "200": {
+          "body": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "name": { "type": "string" },
+                  "description": { "type": "string" },
+                  "icon": { "type": "string" },
+                  "earned": { "type": "boolean" },
+                  "earnedAt": { "type": "string", "format": "datetime", "optional": true }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/gamification/leaderboard",
+      "auth": true,
+      "description": "Company leaderboard",
+      "request": {
+        "query": {
+          "limit": { "type": "number", "default": 20, "max": 100 }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "companyName": { "type": "string" },
+            "myRank": {
+              "type": "object",
+              "properties": {
+                "rank": { "type": "number" },
+                "userId": { "type": "string" },
+                "name": { "type": "string" },
+                "level": { "type": "number" },
+                "totalXp": { "type": "number" }
+              }
+            },
+            "leaderboard": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "rank": { "type": "number" },
+                  "userId": { "type": "string" },
+                  "name": { "type": "string" },
+                  "level": { "type": "number" },
+                  "title": { "type": "string" },
+                  "totalXp": { "type": "number" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/gamification/wizard",
+      "auth": true,
+      "description": "Get onboarding wizard progress",
+      "response": {
+        "200": {
+          "body": {
+            "completedSteps": { "type": "array", "items": { "type": "string" } },
+            "nextStep": { "type": "string", "optional": true },
+            "progress": { "type": "number", "description": "Percentage 0-100" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/gamification/wizard/complete",
+      "auth": true,
+      "description": "Mark a wizard step as completed",
+      "request": {
+        "body": {
+          "step": { "type": "string", "required": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "xpAwarded": { "type": "number" },
+            "badgeAwarded": { "type": "string", "optional": true },
+            "nextStep": { "type": "string", "optional": true }
+          }
+        }
+      }
+    }
+  ],
+  "types": {},
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial mobile gamification contract" }
+  ]
+}

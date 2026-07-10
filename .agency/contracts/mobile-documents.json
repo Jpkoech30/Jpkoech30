@@ -1,0 +1,83 @@
+{
+  "contractId": "mobile-documents",
+  "version": "1.0.0",
+  "description": "Document management endpoints consumed by the JengaBooks mobile app",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/documents",
+      "auth": true,
+      "description": "List documents",
+      "request": {
+        "query": {
+          "page": { "type": "number", "default": 1 },
+          "limit": { "type": "number", "default": 20 },
+          "category": { "type": "string", "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "items": { "type": "array", "items": { "$ref": "#/types/Document" } },
+            "total": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/documents/upload",
+      "auth": true,
+      "description": "Upload a document (receipt, statement, etc.)",
+      "request": {
+        "contentType": "multipart/form-data",
+        "body": {
+          "file": { "type": "file", "required": true },
+          "category": { "type": "string", "enum": ["RECEIPT", "STATEMENT", "INVOICE", "REPORT", "OTHER"], "required": true },
+          "description": { "type": "string", "optional": true }
+        }
+      },
+      "response": {
+        "201": { "body": { "$ref": "#/types/Document" } }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/documents/{id}/download",
+      "auth": true,
+      "description": "Download a document file",
+      "response": {
+        "200": { "contentType": "application/octet-stream" },
+        "404": { "body": { "message": "Document not found" } }
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/documents/{id}",
+      "auth": true,
+      "description": "Soft-delete a document",
+      "response": {
+        "200": { "body": { "message": "Document deleted" } }
+      }
+    }
+  ],
+  "types": {
+    "Document": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "originalName": { "type": "string" },
+        "fileSize": { "type": "number" },
+        "mimeType": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string", "optional": true },
+        "uploadedBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "datetime" }
+      }
+    }
+  },
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial mobile documents contract" }
+  ]
+}

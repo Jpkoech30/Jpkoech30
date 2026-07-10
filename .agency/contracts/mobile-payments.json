@@ -1,0 +1,208 @@
+{
+  "contractId": "mobile-payments",
+  "version": "1.1.0",
+  "description": "Payment endpoints — M-Pesa payment links, payment status, invoice payment tracking, combined/partial payments (SIM-inspired)",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/payments/mpesa-link",
+      "auth": true,
+      "description": "Generate an M-Pesa payment link for an invoice. Returns Paybill/Till number and amount.",
+      "request": {
+        "body": {
+          "invoiceId": { "type": "string", "format": "uuid", "required": true },
+          "amount": { "type": "number", "positive": true, "optional": true, "description": "Partial payment amount; defaults to invoice total" }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "paybill": { "type": "string", "description": "M-Pesa Paybill number" },
+            "accountNumber": { "type": "string", "description": "Account reference to enter on M-Pesa" },
+            "amount": { "type": "number" },
+            "tillNumber": { "type": "string", "optional": true, "description": "Till number if applicable" },
+            "deepLink": { "type": "string", "description": "Mobile deep link to M-Pesa app" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/payments/confirm",
+      "auth": true,
+      "description": "Confirm a payment received via M-Pesa and link it to an invoice",
+      "request": {
+        "body": {
+          "invoiceId": { "type": "string", "format": "uuid", "required": true },
+          "mpesaReceipt": { "type": "string", "required": true, "description": "M-Pesa transaction receipt number" },
+          "amount": { "type": "number", "positive": true, "required": true },
+          "paidAt": { "type": "string", "format": "datetime", "required": true },
+          "phoneNumber": { "type": "string", "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "invoiceId": { "type": "string" },
+            "paymentId": { "type": "string" },
+            "newStatus": { "type": "string", "enum": ["PAID", "PARTIALLY_PAID", "OVERPAID"] },
+            "amountApplied": { "type": "number" },
+            "remainingBalance": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/payments/invoice/{invoiceId}",
+      "auth": true,
+      "description": "Get payment status and history for an invoice",
+      "response": {
+        "200": {
+          "body": {
+            "invoiceId": { "type": "string" },
+            "invoiceTotal": { "type": "number" },
+            "totalPaid": { "type": "number" },
+            "balance": { "type": "number" },
+            "status": { "type": "string", "enum": ["UNPAID", "PARTIALLY_PAID", "PAID", "OVERPAID", "VOID"] },
+            "payments": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "amount": { "type": "number" },
+                  "method": { "type": "string", "enum": ["MPESA", "CASH", "BANK", "CARD"] },
+                  "receiptNo": { "type": "string" },
+                  "paidAt": { "type": "string", "format": "datetime" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/payments/aging",
+      "auth": true,
+      "description": "Get invoice aging report (0-30, 31-60, 61-90, 90+ days overdue)",
+      "response": {
+        "200": {
+          "body": {
+            "buckets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "range": { "type": "string", "enum": ["0-30", "31-60", "61-90", "90+"] },
+                  "count": { "type": "number" },
+                  "totalAmount": { "type": "number" },
+                  "invoices": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string" },
+                        "invoiceNumber": { "type": "string" },
+                        "customerName": { "type": "string" },
+                        "total": { "type": "number" },
+                        "dueDate": { "type": "string", "format": "datetime" },
+                        "daysOverdue": { "type": "number" }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "totalOutstanding": { "type": "number" },
+            "totalOverdue": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/payments/combined",
+      "auth": true,
+      "description": "Record a combined payment (multiple payment types for a single invoice — e.g., CASH + CARD + MPESA partial) — SIM-inspired",
+      "request": {
+        "body": {
+          "invoiceId": { "type": "string", "format": "uuid", "required": true },
+          "payments": {
+            "type": "array",
+            "minItems": 1,
+            "required": true,
+            "items": {
+              "type": "object",
+              "properties": {
+                "method": { "type": "string", "enum": ["MPESA", "CASH", "BANK", "CARD"], "required": true },
+                "amount": { "type": "number", "positive": true, "required": true },
+                "reference": { "type": "string", "optional": true, "description": "Receipt/transaction reference" }
+              }
+            }
+          },
+          "paidAt": { "type": "string", "format": "datetime", "required": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "invoiceId": { "type": "string" },
+            "paymentIds": { "type": "array", "items": { "type": "string" } },
+            "totalPaid": { "type": "number" },
+            "newStatus": { "type": "string", "enum": ["PAID", "PARTIALLY_PAID", "OVERPAID"] },
+            "remainingBalance": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/payments/{id}/split",
+      "auth": true,
+      "description": "Split an overpayment or large payment across multiple invoices",
+      "request": {
+        "body": {
+          "splits": {
+            "type": "array",
+            "minItems": 1,
+            "required": true,
+            "items": {
+              "type": "object",
+              "properties": {
+                "invoiceId": { "type": "string", "format": "uuid", "required": true },
+                "amount": { "type": "number", "positive": true, "required": true }
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "paymentId": { "type": "string" },
+            "splits": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "invoiceId": { "type": "string" },
+                  "invoiceNumber": { "type": "string" },
+                  "amount": { "type": "number" },
+                  "newStatus": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "types": {},
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial mobile payments contract — M-Pesa links, payment confirmation, aging" },
+    { "date": "2026-07-09", "version": "1.1.0", "description": "Added combined/multiple payment types and payment splitting — SIM-inspired full/partial/combined payments" }
+  ]
+}

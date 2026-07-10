@@ -1,0 +1,91 @@
+{
+  "contractId": "mobile-biometric",
+  "version": "1.0.0",
+  "description": "Biometric authentication endpoints — register and verify biometric keys for passwordless login",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/auth/biometric/register",
+      "auth": true,
+      "description": "Register a biometric key (device public key) for future biometric login",
+      "request": {
+        "body": {
+          "deviceId": { "type": "string", "required": true, "description": "Unique device identifier" },
+          "deviceName": { "type": "string", "required": true, "description": "e.g., 'iPhone 15 Pro', 'Samsung Galaxy S24'" },
+          "publicKey": { "type": "string", "required": true, "description": "Device-generated public key for biometric verification" }
+        }
+      },
+      "response": {
+        "201": {
+          "body": {
+            "credentialId": { "type": "string", "description": "Server-side credential identifier" },
+            "challenge": { "type": "string", "description": "Signing challenge for verification" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/auth/biometric/verify",
+      "auth": false,
+      "description": "Verify biometric signature and issue JWT tokens (passwordless login)",
+      "request": {
+        "body": {
+          "credentialId": { "type": "string", "required": true },
+          "signature": { "type": "string", "required": true, "description": "Signed challenge from device" },
+          "deviceId": { "type": "string", "required": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "access_token": { "type": "string" },
+            "refresh_token": { "type": "string" },
+            "user": { "$ref": "mobile-auth.json#/types/User" }
+          }
+        },
+        "401": {
+          "body": { "message": "Biometric verification failed", "code": "BIOMETRIC_FAILED" }
+        }
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/auth/biometric/device/{deviceId}",
+      "auth": true,
+      "description": "Remove a registered biometric device (logout from device)",
+      "response": {
+        "200": { "body": { "message": "Device removed" } }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/auth/biometric/devices",
+      "auth": true,
+      "description": "List all registered biometric devices for the user",
+      "response": {
+        "200": {
+          "body": {
+            "devices": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "credentialId": { "type": "string" },
+                  "deviceName": { "type": "string" },
+                  "registeredAt": { "type": "string", "format": "datetime" },
+                  "lastUsedAt": { "type": "string", "format": "datetime", "optional": true }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "types": {},
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial mobile biometric authentication contract" }
+  ]
+}

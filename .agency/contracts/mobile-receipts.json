@@ -1,0 +1,134 @@
+{
+  "contractId": "mobile-receipts",
+  "version": "1.0.0",
+  "description": "Signed Receipt endpoints — generate, view, and send signed payment receipts linked to invoices",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/receipts",
+      "auth": true,
+      "description": "List signed receipts with optional filtering",
+      "request": {
+        "query": {
+          "page": { "type": "number", "default": 1 },
+          "limit": { "type": "number", "default": 20 },
+          "invoiceId": { "type": "string", "format": "uuid", "optional": true },
+          "paymentId": { "type": "string", "format": "uuid", "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "items": { "type": "array", "items": { "$ref": "#/types/Receipt" } },
+            "total": { "type": "number" },
+            "page": { "type": "number" },
+            "totalPages": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/receipts/generate",
+      "auth": true,
+      "description": "Generate a signed receipt for a payment on an invoice. Creates an officially stamped receipt PDF.",
+      "request": {
+        "body": {
+          "invoiceId": { "type": "string", "format": "uuid", "required": true },
+          "paymentId": { "type": "string", "format": "uuid", "required": true, "description": "Payment to generate receipt for" },
+          "includeSignature": { "type": "boolean", "default": true, "optional": true },
+          "includeStamp": { "type": "boolean", "default": true, "optional": true },
+          "receiptNote": { "type": "string", "maxLength": 500, "optional": true }
+        }
+      },
+      "response": {
+        "201": {
+          "body": {
+            "receiptId": { "type": "string", "format": "uuid" },
+            "receiptNumber": { "type": "string", "description": "Auto-generated RCP-YYYY-NNNNN format" },
+            "pdfUrl": { "type": "string", "description": "PDF URL for the signed receipt (24h expiry)" },
+            "signedAt": { "type": "string", "format": "datetime" }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/receipts/{id}",
+      "auth": true,
+      "description": "Get receipt detail",
+      "response": {
+        "200": { "body": { "$ref": "#/types/Receipt" } }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/receipts/{id}/pdf",
+      "auth": true,
+      "description": "Get signed receipt PDF download URL",
+      "response": {
+        "200": {
+          "body": {
+            "pdfUrl": { "type": "string", "format": "url" },
+            "expiresAt": { "type": "string", "format": "datetime" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/receipts/{id}/send",
+      "auth": true,
+      "description": "Send the signed receipt via email or WhatsApp",
+      "request": {
+        "body": {
+          "channel": { "type": "string", "enum": ["EMAIL", "WHATSAPP"], "required": true },
+          "recipient": { "type": "string", "required": true, "description": "Email address or phone number" }
+        }
+      },
+      "response": {
+        "200": { "body": { "sent": { "type": "boolean" }, "channel": { "type": "string" } } }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/receipts/{id}/void",
+      "auth": true,
+      "description": "Void a receipt (must have a reason)",
+      "request": {
+        "body": {
+          "reason": { "type": "string", "maxLength": 500, "required": true }
+        }
+      },
+      "response": {
+        "200": { "body": { "message": "Receipt voided" } }
+      }
+    }
+  ],
+  "types": {
+    "Receipt": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "receiptNumber": { "type": "string" },
+        "invoiceId": { "type": "string", "format": "uuid" },
+        "invoiceNumber": { "type": "string" },
+        "paymentId": { "type": "string", "format": "uuid" },
+        "amount": { "type": "number" },
+        "paymentMethod": { "type": "string", "enum": ["MPESA", "CASH", "BANK", "CARD", "CREDIT_NOTE"] },
+        "receiptNote": { "type": "string", "optional": true },
+        "includeSignature": { "type": "boolean" },
+        "includeStamp": { "type": "boolean" },
+        "pdfUrl": { "type": "string", "optional": true },
+        "status": { "type": "string", "enum": ["ACTIVE", "VOID", "SENT"] },
+        "signedAt": { "type": "string", "format": "datetime" },
+        "sentAt": { "type": "string", "format": "datetime", "optional": true },
+        "voidedAt": { "type": "string", "format": "datetime", "optional": true }
+      }
+    }
+  },
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial signed receipts contract — SIM-inspired receipt generation with signature/stamp" }
+  ]
+}

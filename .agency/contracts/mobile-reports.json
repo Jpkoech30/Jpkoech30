@@ -1,0 +1,110 @@
+{
+  "contractId": "mobile-reports",
+  "version": "1.0.0",
+  "description": "Reports endpoints consumed by the JengaBooks mobile app",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/reports/profit-loss",
+      "auth": true,
+      "description": "Profit & Loss statement",
+      "request": {
+        "query": {
+          "from": { "type": "string", "format": "datetime", "required": true },
+          "to": { "type": "string", "format": "datetime", "required": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "title": { "type": "string" },
+            "period": { "type": "object", "properties": { "from": { "type": "string" }, "to": { "type": "string" } } },
+            "income": { "type": "array", "items": { "type": "object", "properties": { "account": { "type": "string" }, "amount": { "type": "number" } } } },
+            "expenses": { "type": "array", "items": { "type": "object", "properties": { "account": { "type": "string" }, "amount": { "type": "number" } } } },
+            "totalIncome": { "type": "number" },
+            "totalExpenses": { "type": "number" },
+            "netIncome": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/reports/balance-sheet",
+      "auth": true,
+      "description": "Balance Sheet",
+      "request": {
+        "query": {
+          "asOf": { "type": "string", "format": "datetime", "required": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "title": { "type": "string" },
+            "asOf": { "type": "string", "format": "datetime" },
+            "assets": { "type": "array", "items": { "type": "object" } },
+            "liabilities": { "type": "array", "items": { "type": "object" } },
+            "equity": { "type": "array", "items": { "type": "object" } },
+            "totalAssets": { "type": "number" },
+            "totalLiabilities": { "type": "number" },
+            "totalEquity": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/reports/cash-flow",
+      "auth": true,
+      "description": "Cash Flow statement",
+      "request": {
+        "query": {
+          "from": { "type": "string", "format": "datetime", "required": true },
+          "to": { "type": "string", "format": "datetime", "required": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "title": { "type": "string" },
+            "period": { "type": "object" },
+            "operating": { "type": "array" },
+            "investing": { "type": "array" },
+            "financing": { "type": "array" },
+            "netCashFlow": { "type": "number" },
+            "openingBalance": { "type": "number" },
+            "closingBalance": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/reports/trial-balance",
+      "auth": true,
+      "description": "Trial balance report",
+      "request": {
+        "query": {
+          "asOf": { "type": "string", "format": "datetime", "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "title": { "type": "string" },
+            "asOf": { "type": "string" },
+            "accounts": { "type": "array", "items": { "type": "object" } },
+            "totalDebits": { "type": "number" },
+            "totalCredits": { "type": "number" }
+          }
+        }
+      }
+    }
+  ],
+  "types": {},
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial mobile reports contract" }
+  ]
+}

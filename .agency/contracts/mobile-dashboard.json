@@ -1,0 +1,118 @@
+{
+  "contractId": "mobile-dashboard",
+  "version": "1.0.0",
+  "description": "Dashboard and health score endpoints consumed by the JengaBooks mobile app",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/health-score",
+      "auth": true,
+      "description": "Get business health score for the current company",
+      "response": {
+        "200": {
+          "body": {
+            "overallScore": { "type": "number", "description": "Score 0-100" },
+            "pillarScores": {
+              "type": "object",
+              "properties": {
+                "dataQuality": { "type": "number" },
+                "compliance": { "type": "number" },
+                "reconciliation": { "type": "number" },
+                "timeliness": { "type": "number" },
+                "profitability": { "type": "number" }
+              }
+            },
+            "calculatedAt": { "type": "string", "format": "datetime" }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workflow",
+      "auth": true,
+      "description": "Get monthly workflow progress (5 phases)",
+      "response": {
+        "200": {
+          "body": {
+            "currentPeriod": { "type": "string" },
+            "phases": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "enum": ["Data Collection", "Categorization", "Reconciliation", "Close", "Report"] },
+                  "status": { "type": "string", "enum": ["COMPLETE", "IN_PROGRESS", "PENDING"] },
+                  "progress": { "type": "number", "description": "Percentage 0-100" },
+                  "actionLink": { "type": "string", "optional": true }
+                }
+              }
+            },
+            "overallProgress": { "type": "number", "description": "Percentage 0-100" }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/notifications",
+      "auth": true,
+      "description": "List user notifications",
+      "request": {
+        "query": {
+          "page": { "type": "number", "default": 1 },
+          "limit": { "type": "number", "default": 20 },
+          "status": { "type": "string", "enum": ["UNREAD", "READ", "DISMISSED"], "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "type": { "type": "string" },
+                  "title": { "type": "string" },
+                  "message": { "type": "string", "optional": true },
+                  "link": { "type": "string", "optional": true },
+                  "relatedEntityType": { "type": "string", "optional": true },
+                  "relatedEntityId": { "type": "string", "optional": true },
+                  "status": { "type": "string" },
+                  "createdAt": { "type": "string", "format": "datetime" }
+                }
+              }
+            },
+            "unreadCount": { "type": "number" },
+            "total": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/notifications/{id}/read",
+      "auth": true,
+      "description": "Mark notification as read",
+      "response": {
+        "200": { "body": { "message": "Marked as read" } }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/notifications/read-all",
+      "auth": true,
+      "description": "Mark all notifications as read",
+      "response": {
+        "200": { "body": { "message": "All marked as read" } }
+      }
+    }
+  ],
+  "types": {},
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial mobile dashboard contract" }
+  ]
+}

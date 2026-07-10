@@ -1,0 +1,16 @@
+{
+  "model": "deepseek-flash",
+  "max_context_tokens": 16384,
+  "max_iterations": 6,
+  "max_tokens_per_task": 2500,
+  "temperature": 0.1,
+  "tool_call_parallelism": true,
+  "on_fail": {
+    "retry": 2,
+    "escalate_to": "deepseek-pro"
+  },
+  "session": {
+    "max_turns": 10,
+    "checkpoint_after": 10
+  }
+}

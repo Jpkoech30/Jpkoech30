@@ -1,0 +1,128 @@
+{
+  "contractId": "cost-ledger",
+  "version": "1.0.0",
+  "description": "Schema for tracking per-sprint AI token costs and spend across the JengaBooks Agency",
+  "type": "object",
+  "required": ["sprintId", "name", "entries", "rollup"],
+  "properties": {
+    "sprintId": {
+      "type": "string",
+      "pattern": "^S\\d+(\\.\\d+)?$",
+      "description": "Sprint identifier (e.g., S12.1, S13)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable sprint name"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of cost recording"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/CostEntry"
+      },
+      "minItems": 1
+    },
+    "rollup": {
+      "$ref": "#/definitions/Rollup"
+    }
+  },
+  "definitions": {
+    "CostEntry": {
+      "type": "object",
+      "required": ["agent", "model", "inputTokens", "outputTokens", "cacheHitTokens", "cost", "duration"],
+      "properties": {
+        "agent": {
+          "type": "string",
+          "description": "Agent slug (e.g., backend-api, frontend-ui)"
+        },
+        "model": {
+          "type": "string",
+          "enum": ["deepseek-v4-flash", "deepseek-v4-pro", "claude-sonnet-4", "gpt-4o", "other"],
+          "description": "AI model used for this agent's work"
+        },
+        "modelRate": {
+          "type": "number",
+          "description": "USD per 1M output tokens for the model"
+        },
+        "inputTokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total input tokens consumed"
+        },
+        "outputTokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total output tokens consumed"
+        },
+        "cacheHitTokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Cached input tokens (billed at 0.4% of normal rate)"
+        },
+        "cacheDiscountRate": {
+          "type": "number",
+          "default": 0.996,
+          "description": "Cache discount fraction (99.6% = 0.996)"
+        },
+        "cost": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Net cost in USD after cache savings"
+        },
+        "duration": {
+          "type": "string",
+          "pattern": "^\\d+h\\s*\\d+m$|^\\d+m$|^\\d+s$",
+          "description": "Wall-clock duration (e.g., 1h 23m, 45m, 30s)"
+        },
+        "artifacts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Files created or modified by this agent"
+        },
+        "task": {
+          "type": "string",
+          "description": "Brief description of the sub-task"
+        }
+      }
+    },
+    "Rollup": {
+      "type": "object",
+      "required": ["totalCost", "totalInputTokens", "totalOutputTokens", "totalCacheHitTokens", "agentCount"],
+      "properties": {
+        "totalCost": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Sum of all entry costs in USD"
+        },
+        "totalInputTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "totalOutputTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "totalCacheHitTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "agentCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of agents that participated in this sprint"
+        }
+      }
+    }
+  },
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-07-09",
+      "changes": ["Initial schema for sprint cost tracking"]
+    }
+  ]
+}

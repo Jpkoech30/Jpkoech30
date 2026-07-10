@@ -1,0 +1,243 @@
+{
+  "contractId": "mobile-clients",
+  "version": "1.0.0",
+  "description": "Client Management endpoints — full client profile with contact history, communication log, and bulk import (SIM-inspired)",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/clients",
+      "auth": true,
+      "description": "List clients with search and filtering",
+      "request": {
+        "query": {
+          "page": { "type": "number", "default": 1 },
+          "limit": { "type": "number", "default": 20 },
+          "search": { "type": "string", "maxLength": 100, "optional": true, "description": "Search by name, email, phone, or KRA PIN" },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "ARCHIVED"], "optional": true },
+          "sortBy": { "type": "string", "enum": ["name", "email", "createdAt", "totalBilled"], "default": "name", "optional": true },
+          "sortOrder": { "type": "string", "enum": ["asc", "desc"], "default": "asc", "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "items": { "type": "array", "items": { "$ref": "#/types/Client" } },
+            "total": { "type": "number" },
+            "page": { "type": "number" },
+            "totalPages": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/clients",
+      "auth": true,
+      "description": "Create a new client",
+      "request": {
+        "body": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200, "required": true },
+          "email": { "type": "string", "format": "email", "optional": true },
+          "phone": { "type": "string", "maxLength": 20, "optional": true },
+          "companyName": { "type": "string", "maxLength": 200, "optional": true },
+          "kraPin": { "type": "string", "length": 11, "pattern": "^[A-Z0-9]{11}$", "optional": true },
+          "address": {
+            "type": "object",
+            "optional": true,
+            "properties": {
+              "street": { "type": "string" },
+              "city": { "type": "string" },
+              "state": { "type": "string" },
+              "postalCode": { "type": "string" }
+            }
+          },
+          "notes": { "type": "string", "maxLength": 2000, "optional": true },
+          "currency": { "type": "string", "enum": ["KES", "USD", "EUR", "GBP"], "default": "KES", "optional": true },
+          "paymentTerms": { "type": "string", "enum": ["CASH", "NET15", "NET30", "NET60", "DUE_ON_RECEIPT"], "default": "NET30", "optional": true }
+        }
+      },
+      "response": {
+        "201": { "body": { "$ref": "#/types/Client" } }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/clients/{id}",
+      "auth": true,
+      "description": "Get client detail with summary stats",
+      "response": {
+        "200": {
+          "body": {
+            "client": { "$ref": "#/types/Client" },
+            "summary": {
+              "type": "object",
+              "properties": {
+                "totalInvoiced": { "type": "number" },
+                "totalPaid": { "type": "number" },
+                "outstandingBalance": { "type": "number" },
+                "invoiceCount": { "type": "number" },
+                "lastInvoiceDate": { "type": "string", "format": "datetime", "optional": true }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/clients/{id}",
+      "auth": true,
+      "description": "Update client details",
+      "request": {
+        "body": {
+          "name": { "type": "string", "optional": true },
+          "email": { "type": "string", "optional": true },
+          "phone": { "type": "string", "optional": true },
+          "companyName": { "type": "string", "optional": true },
+          "kraPin": { "type": "string", "optional": true },
+          "address": { "type": "object", "optional": true },
+          "notes": { "type": "string", "optional": true },
+          "currency": { "type": "string", "optional": true },
+          "paymentTerms": { "type": "string", "optional": true },
+          "status": { "type": "string", "optional": true }
+        }
+      },
+      "response": {
+        "200": { "body": { "$ref": "#/types/Client" } }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/clients/{id}/contact-history",
+      "auth": true,
+      "description": "Get contact/communication history for a client",
+      "request": {
+        "query": {
+          "page": { "type": "number", "default": 1 },
+          "limit": { "type": "number", "default": 50 }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "type": { "type": "string", "enum": ["INVOICE_SENT", "PAYMENT_RECEIVED", "RECEIPT_SENT", "EMAIL", "NOTE", "CALL", "CREDIT_NOTE_ISSUED"] },
+                  "description": { "type": "string" },
+                  "referenceId": { "type": "string", "optional": true },
+                  "amount": { "type": "number", "optional": true },
+                  "createdAt": { "type": "string", "format": "datetime" }
+                }
+              }
+            },
+            "total": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/clients/{id}/contact-history",
+      "auth": true,
+      "description": "Add a manual note to client contact history",
+      "request": {
+        "body": {
+          "type": { "type": "string", "enum": ["NOTE", "CALL", "EMAIL"], "required": true },
+          "description": { "type": "string", "minLength": 1, "maxLength": 2000, "required": true }
+        }
+      },
+      "response": {
+        "201": { "body": { "message": "Contact logged" } }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/clients/bulk-import",
+      "auth": true,
+      "description": "Bulk import clients from CSV/Excel or phonebook contact vCard",
+      "request": {
+        "contentType": "multipart/form-data",
+        "body": {
+          "file": { "type": "file", "required": true, "description": "CSV, Excel (.xlsx), or vCard (.vcf) file" },
+          "importMode": { "type": "string", "enum": ["ADD_ONLY", "ADD_AND_UPDATE"], "default": "ADD_ONLY", "optional": true },
+          "defaultPaymentTerms": { "type": "string", "optional": true },
+          "defaultCurrency": { "type": "string", "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "imported": { "type": "number" },
+            "updated": { "type": "number" },
+            "skipped": { "type": "number" },
+            "failed": { "type": "number" },
+            "errors": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "row": { "type": "number" },
+                  "name": { "type": "string" },
+                  "error": { "type": "string" }
+                }
+              },
+              "optional": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/clients/bulk-import/template",
+      "auth": true,
+      "description": "Download CSV template for bulk client import",
+      "response": {
+        "200": {
+          "contentType": "text/csv",
+          "body": { "downloadUrl": { "type": "string" } }
+        }
+      }
+    }
+  ],
+  "types": {
+    "Client": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "companyId": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "optional": true },
+        "phone": { "type": "string", "optional": true },
+        "companyName": { "type": "string", "optional": true },
+        "kraPin": { "type": "string", "optional": true },
+        "address": {
+          "type": "object",
+          "optional": true,
+          "properties": {
+            "street": { "type": "string" },
+            "city": { "type": "string" },
+            "postalCode": { "type": "string" }
+          }
+        },
+        "currency": { "type": "string", "default": "KES" },
+        "paymentTerms": { "type": "string", "default": "NET30" },
+        "notes": { "type": "string", "optional": true },
+        "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "ARCHIVED"] },
+        "totalInvoiced": { "type": "number", "optional": true },
+        "totalPaid": { "type": "number", "optional": true },
+        "outstandingBalance": { "type": "number", "optional": true },
+        "createdAt": { "type": "string", "format": "datetime" },
+        "updatedAt": { "type": "string", "format": "datetime" }
+      }
+    }
+  },
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Full client management with contact history, summary stats, bulk import — SIM-inspired expansion" }
+  ]
+}

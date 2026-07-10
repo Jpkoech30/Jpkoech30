@@ -1,0 +1,196 @@
+{
+  "contractId": "mobile-ledger",
+  "version": "1.0.0",
+  "description": "Ledger endpoints consumed by the JengaBooks mobile app",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/ledger/entries",
+      "auth": true,
+      "description": "List journal entries with pagination",
+      "request": {
+        "query": {
+          "page": { "type": "number", "default": 1 },
+          "limit": { "type": "number", "default": 20, "max": 100 },
+          "direction": { "type": "string", "enum": ["DEBIT", "CREDIT"], "optional": true },
+          "search": { "type": "string", "optional": true },
+          "from": { "type": "string", "format": "date", "optional": true },
+          "to": { "type": "string", "format": "date", "optional": true },
+          "accountId": { "type": "string", "format": "uuid", "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "items": {
+              "type": "array",
+              "items": { "$ref": "#/types/LedgerEntry" }
+            },
+            "total": { "type": "number" },
+            "page": { "type": "number" },
+            "totalPages": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/ledger/entries",
+      "auth": true,
+      "description": "Create a journal entry",
+      "request": {
+        "body": {
+          "accountId": { "type": "string", "format": "uuid", "required": true },
+          "description": { "type": "string", "minLength": 1, "maxLength": 500, "required": true },
+          "amount": { "type": "number", "positive": true, "required": true },
+          "direction": { "type": "string", "enum": ["DEBIT", "CREDIT"], "required": true },
+          "reference": { "type": "string", "maxLength": 100, "optional": true },
+          "entryDate": { "type": "string", "format": "datetime", "required": true }
+        }
+      },
+      "response": {
+        "201": { "body": { "$ref": "#/types/LedgerEntry" } },
+        "422": { "body": { "message": "Validation failed" } }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/ledger/trial-balance",
+      "auth": true,
+      "description": "Get trial balance summary",
+      "response": {
+        "200": {
+          "body": {
+            "totalDebits": { "type": "number" },
+            "totalCredits": { "type": "number" },
+            "balanced": { "type": "boolean" },
+            "accounts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "accountId": { "type": "string" },
+                  "code": { "type": "string" },
+                  "name": { "type": "string" },
+                  "debitTotal": { "type": "number" },
+                  "creditTotal": { "type": "number" },
+                  "balance": { "type": "number" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/ledger/accounts",
+      "auth": true,
+      "description": "List chart of accounts",
+      "response": {
+        "200": {
+          "body": {
+            "items": {
+              "type": "array",
+              "items": { "$ref": "#/types/Account" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/ledger/accounts",
+      "auth": true,
+      "description": "Create a new chart of account",
+      "request": {
+        "body": {
+          "code": { "type": "string", "minLength": 1, "maxLength": 20, "required": true },
+          "name": { "type": "string", "minLength": 1, "maxLength": 200, "required": true },
+          "type": { "type": "string", "enum": ["ASSET", "LIABILITY", "EQUITY", "INCOME", "EXPENSE"], "required": true },
+          "parentId": { "type": "string", "format": "uuid", "optional": true }
+        }
+      },
+      "response": {
+        "201": { "body": { "$ref": "#/types/Account" } }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/ledger/periods",
+      "auth": true,
+      "description": "List fiscal periods",
+      "response": {
+        "200": {
+          "body": {
+            "items": {
+              "type": "array",
+              "items": { "$ref": "#/types/FiscalPeriod" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/ledger/entries/{id}",
+      "auth": true,
+      "description": "Get single journal entry detail",
+      "response": {
+        "200": { "body": { "$ref": "#/types/LedgerEntry" } },
+        "404": { "body": { "message": "Entry not found" } }
+      }
+    }
+  ],
+  "types": {
+    "LedgerEntry": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "description": { "type": "string" },
+        "amount": { "type": "number" },
+        "direction": { "type": "string", "enum": ["DEBIT", "CREDIT"] },
+        "entryDate": { "type": "string", "format": "datetime" },
+        "reference": { "type": "string", "optional": true },
+        "account": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "code": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        },
+        "postedBy": { "type": "string", "optional": true },
+        "aiConfidence": { "type": "number", "optional": true },
+        "isReconciled": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "datetime" }
+      }
+    },
+    "Account": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "code": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["ASSET", "LIABILITY", "EQUITY", "INCOME", "EXPENSE"] },
+        "isActive": { "type": "boolean" },
+        "balance": { "type": "number", "description": "Current calculated balance" },
+        "parentId": { "type": "string", "optional": true }
+      }
+    },
+    "FiscalPeriod": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "startDate": { "type": "string", "format": "datetime" },
+        "endDate": { "type": "string", "format": "datetime" },
+        "status": { "type": "string", "enum": ["OPEN", "CLOSED", "LOCKED"] }
+      }
+    }
+  },
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial mobile ledger contract" }
+  ]
+}

@@ -1,0 +1,191 @@
+{
+  "contractId": "mobile-auth",
+  "version": "1.0.0",
+  "description": "Authentication endpoints consumed by the JengaBooks mobile app",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/auth/login",
+      "auth": false,
+      "rateLimit": "5 req/min",
+      "description": "Sign in with email + password",
+      "request": {
+        "contentType": "application/json",
+        "body": {
+          "email": { "type": "string", "format": "email", "required": true },
+          "password": { "type": "string", "minLength": 8, "required": true }
+        }
+      },
+      "response": {
+        "200": {
+          "contentType": "application/json",
+          "body": {
+            "access_token": { "type": "string", "description": "JWT access token" },
+            "refresh_token": { "type": "string", "description": "Refresh token for rotation" },
+            "user": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "email": { "type": "string", "format": "email" },
+                "name": { "type": "string" },
+                "role": { "type": "string", "enum": ["SUPER_ADMIN", "FIRM_OWNER", "TENANT_ADMIN", "ACCOUNTANT", "SME_OWNER", "AUDITOR", "BANK_OFFICER"] },
+                "companyId": { "type": "string", "format": "uuid" },
+                "companyName": { "type": "string" }
+              },
+              "required": ["id", "email", "name", "role", "companyId", "companyName"]
+            }
+          },
+          "required": ["access_token", "refresh_token", "user"]
+        },
+        "401": {
+          "body": { "message": "Invalid credentials", "statusCode": 401 }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/auth/register",
+      "auth": false,
+      "rateLimit": "3 req/min",
+      "description": "Create account + company",
+      "request": {
+        "contentType": "application/json",
+        "body": {
+          "email": { "type": "string", "format": "email", "required": true },
+          "password": { "type": "string", "minLength": 8, "maxLength": 100, "required": true },
+          "name": { "type": "string", "minLength": 1, "maxLength": 100, "required": true },
+          "companyName": { "type": "string", "minLength": 1, "maxLength": 200, "required": true }
+        }
+      },
+      "response": {
+        "201": {
+          "contentType": "application/json",
+          "body": {
+            "access_token": { "type": "string" },
+            "refresh_token": { "type": "string" },
+            "user": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "email": { "type": "string" },
+                "name": { "type": "string" },
+                "role": { "type": "string" },
+                "companyId": { "type": "string" },
+                "companyName": { "type": "string" }
+              }
+            }
+          }
+        },
+        "422": {
+          "body": { "message": "Validation failed", "errors": [{"field": "email", "message": "invalid email"}] }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/auth/refresh",
+      "auth": false,
+      "description": "Refresh JWT token",
+      "request": {
+        "contentType": "application/json",
+        "body": {
+          "refreshToken": { "type": "string", "required": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "access_token": { "type": "string" },
+            "refresh_token": { "type": "string" },
+            "user": { "type": "object" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/auth/logout",
+      "auth": true,
+      "description": "Clear session",
+      "request": { "body": null },
+      "response": { "200": { "body": { "message": "Logged out successfully" } } }
+    },
+    {
+      "method": "GET",
+      "path": "/auth/profile",
+      "auth": true,
+      "description": "Get user profile with all memberships",
+      "response": {
+        "200": {
+          "body": {
+            "id": { "type": "string" },
+            "email": { "type": "string" },
+            "name": { "type": "string" },
+            "memberships": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "companyId": { "type": "string" },
+                  "companyName": { "type": "string" },
+                  "role": { "type": "string" },
+                  "isActive": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/auth/switch-company",
+      "auth": true,
+      "description": "Switch active company context",
+      "request": {
+        "body": {
+          "companyId": { "type": "string", "format": "uuid", "required": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "access_token": { "type": "string" },
+            "user": { "type": "object" }
+          }
+        }
+      }
+    }
+  ],
+  "types": {
+    "User": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "companyId": { "type": "string", "format": "uuid" },
+        "companyName": { "type": "string" }
+      }
+    },
+    "LoginInput": {
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "password": { "type": "string" }
+      }
+    },
+    "AuthTokens": {
+      "type": "object",
+      "properties": {
+        "access_token": { "type": "string" },
+        "refresh_token": { "type": "string" }
+      }
+    }
+  },
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial mobile auth contract" }
+  ]
+}

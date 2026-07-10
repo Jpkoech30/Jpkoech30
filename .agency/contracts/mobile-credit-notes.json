@@ -1,0 +1,150 @@
+{
+  "contractId": "mobile-credit-notes",
+  "version": "1.0.0",
+  "description": "Credit Note endpoints — create credit notes linked to original invoices, list credit notes, and apply credits",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/credit-notes",
+      "auth": true,
+      "description": "List credit notes with optional filter by original invoice",
+      "request": {
+        "query": {
+          "page": { "type": "number", "default": 1 },
+          "limit": { "type": "number", "default": 20 },
+          "invoiceId": { "type": "string", "format": "uuid", "optional": true, "description": "Filter by original invoice" },
+          "status": { "type": "string", "enum": ["DRAFT", "ISSUED", "APPLIED", "VOID"], "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "items": { "type": "array", "items": { "$ref": "#/types/CreditNote" } },
+            "total": { "type": "number" },
+            "page": { "type": "number" },
+            "totalPages": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/credit-notes",
+      "auth": true,
+      "description": "Create a credit note linked to an original invoice (SIM one-click credit note from invoice)",
+      "request": {
+        "body": {
+          "originalInvoiceId": { "type": "string", "format": "uuid", "required": true },
+          "reason": { "type": "string", "enum": ["RETURN", "CANCELLATION", "DISCOUNT", "OTHER"], "required": true },
+          "reasonText": { "type": "string", "maxLength": 500, "optional": true },
+          "lineItems": {
+            "type": "array",
+            "minItems": 1,
+            "required": true,
+            "items": {
+              "type": "object",
+              "properties": {
+                "description": { "type": "string", "required": true },
+                "quantity": { "type": "number", "positive": true, "required": true },
+                "unitPrice": { "type": "number", "positive": true, "required": true }
+              }
+            }
+          },
+          "taxAdjustment": { "type": "number", "optional": true, "description": "Tax amount to adjust (negative for refund)" }
+        }
+      },
+      "response": {
+        "201": { "body": { "$ref": "#/types/CreditNote" } },
+        "422": { "body": { "message": "Validation failed - check invoice exists and is not already fully credited" } }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/credit-notes/{id}",
+      "auth": true,
+      "description": "Get credit note detail with linked invoice info",
+      "response": {
+        "200": { "body": { "$ref": "#/types/CreditNote" } }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/credit-notes/{id}/apply",
+      "auth": true,
+      "description": "Apply a credit note to an outstanding invoice (partial or full settlement)",
+      "request": {
+        "body": {
+          "targetInvoiceId": { "type": "string", "format": "uuid", "required": true },
+          "amount": { "type": "number", "positive": true, "required": true, "description": "Amount to apply (must not exceed credit note remaining balance)" }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "creditNoteId": { "type": "string" },
+            "appliedAmount": { "type": "number" },
+            "remainingBalance": { "type": "number" },
+            "invoiceBalanceAfter": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/credit-notes/{id}/void",
+      "auth": true,
+      "description": "Void a credit note that has not been applied",
+      "response": {
+        "200": { "body": { "message": "Credit note voided" } }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/credit-notes/generate-pdf/{id}",
+      "auth": true,
+      "description": "Generate a PDF for a credit note (signed, with reference to original invoice)",
+      "response": {
+        "200": {
+          "contentType": "application/pdf",
+          "body": { "pdfUrl": { "type": "string", "description": "Temporary PDF URL (24h expiry)" } }
+        }
+      }
+    }
+  ],
+  "types": {
+    "CreditNote": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "creditNoteNumber": { "type": "string", "description": "Auto-generated CN-YYYY-NNNNN format" },
+        "originalInvoiceId": { "type": "string", "format": "uuid" },
+        "originalInvoiceNumber": { "type": "string" },
+        "reason": { "type": "string", "enum": ["RETURN", "CANCELLATION", "DISCOUNT", "OTHER"] },
+        "reasonText": { "type": "string" },
+        "lineItems": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": { "type": "string" },
+              "quantity": { "type": "number" },
+              "unitPrice": { "type": "number" },
+              "total": { "type": "number" }
+            }
+          }
+        },
+        "subtotal": { "type": "number" },
+        "taxAmount": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "remainingBalance": { "type": "number", "description": "Unapplied credit remaining" },
+        "status": { "type": "string", "enum": ["DRAFT", "ISSUED", "APPLIED", "VOID"] },
+        "createdAt": { "type": "string", "format": "datetime" },
+        "issuedAt": { "type": "string", "format": "datetime", "optional": true }
+      }
+    }
+  },
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial credit notes contract — SIM-inspired Credit Notes linked to original invoice" }
+  ]
+}

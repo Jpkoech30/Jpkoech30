@@ -1,0 +1,126 @@
+{
+  "contractId": "mobile-backup",
+  "version": "1.0.0",
+  "description": "Backup and restore endpoints for data safety and portability",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/backup",
+      "auth": true,
+      "description": "Trigger a manual backup of all company data",
+      "request": {
+        "body": {
+          "destination": { "type": "string", "enum": ["CLOUD", "GOOGLE_DRIVE", "DROPBOX", "ONEDRIVE"], "default": "CLOUD", "optional": true }
+        }
+      },
+      "response": {
+        "201": {
+          "body": {
+            "backupId": { "type": "string", "format": "uuid" },
+            "size": { "type": "number", "description": "Backup size in bytes" },
+            "tables": { "type": "number", "description": "Number of tables backed up" },
+            "status": { "type": "string", "enum": ["IN_PROGRESS", "COMPLETED"] },
+            "startedAt": { "type": "string", "format": "datetime" }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/backup/status",
+      "auth": true,
+      "description": "Get backup status — last backup time, size, and frequency",
+      "response": {
+        "200": {
+          "body": {
+            "lastBackupAt": { "type": "string", "format": "datetime", "optional": true },
+            "lastBackupSize": { "type": "number", "optional": true },
+            "autoBackupEnabled": { "type": "boolean" },
+            "autoBackupFrequency": { "type": "string", "enum": ["DAILY", "WEEKLY", "MANUAL"] },
+            "backupCount": { "type": "number" },
+            "totalBackupSize": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/backup/history",
+      "auth": true,
+      "description": "List backup history",
+      "request": {
+        "query": {
+          "page": { "type": "number", "default": 1 },
+          "limit": { "type": "number", "default": 20 }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "size": { "type": "number" },
+                  "tables": { "type": "number" },
+                  "status": { "type": "string" },
+                  "createdAt": { "type": "string", "format": "datetime" }
+                }
+              }
+            },
+            "total": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/backup/restore/{backupId}",
+      "auth": true,
+      "description": "Restore data from a specific backup point",
+      "request": {
+        "body": {
+          "confirm": { "type": "boolean", "required": true, "description": "Must be true to proceed" },
+          "tables": {
+            "type": "array",
+            "items": { "type": "string" },
+            "optional": true,
+            "description": "Specific tables to restore. If empty, restore all."
+          }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "status": { "type": "string", "enum": ["IN_PROGRESS", "COMPLETED"] },
+            "tablesRestored": { "type": "array", "items": { "type": "string" } },
+            "completedAt": { "type": "string", "format": "datetime", "optional": true }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/backup/settings",
+      "auth": true,
+      "description": "Update auto-backup settings",
+      "request": {
+        "body": {
+          "enabled": { "type": "boolean", "required": true },
+          "frequency": { "type": "string", "enum": ["DAILY", "WEEKLY", "MANUAL"], "optional": true },
+          "destination": { "type": "string", "enum": ["CLOUD", "GOOGLE_DRIVE", "DROPBOX"], "optional": true }
+        }
+      },
+      "response": {
+        "200": { "body": { "message": "Backup settings updated" } }
+      }
+    }
+  ],
+  "types": {},
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial mobile backup contract" }
+  ]
+}

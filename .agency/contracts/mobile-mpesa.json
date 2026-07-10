@@ -1,0 +1,138 @@
+{
+  "contractId": "mobile-mpesa",
+  "version": "1.0.0",
+  "description": "M-Pesa endpoints consumed by the JengaBooks mobile app",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/mpesa",
+      "auth": true,
+      "description": "List M-Pesa transactions",
+      "request": {
+        "query": {
+          "page": { "type": "number", "default": 1 },
+          "limit": { "type": "number", "default": 20 },
+          "status": { "type": "string", "enum": ["mapped", "unmapped", "reconciled"], "optional": true },
+          "search": { "type": "string", "optional": true },
+          "from": { "type": "string", "format": "date", "optional": true },
+          "to": { "type": "string", "format": "date", "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "items": { "type": "array", "items": { "$ref": "#/types/MpesaTransaction" } },
+            "total": { "type": "number" },
+            "page": { "type": "number" },
+            "totalPages": { "type": "number" },
+            "summary": {
+              "type": "object",
+              "properties": {
+                "totalPaidIn": { "type": "number" },
+                "totalWithdrawn": { "type": "number" },
+                "unmappedCount": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/mpesa/{id}",
+      "auth": true,
+      "description": "Get single M-Pesa transaction detail",
+      "response": {
+        "200": { "body": { "$ref": "#/types/MpesaTransaction" } }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/mpesa/{txId}/map",
+      "auth": true,
+      "description": "Map an M-Pesa transaction to a chart of account",
+      "request": {
+        "body": {
+          "accountId": { "type": "string", "format": "uuid", "required": true }
+        }
+      },
+      "response": {
+        "200": { "body": { "$ref": "#/types/MpesaTransaction" } }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/mpesa/import",
+      "auth": true,
+      "description": "Import M-Pesa CSV/XLSX/PDF transactions",
+      "request": {
+        "contentType": "multipart/form-data",
+        "body": {
+          "file": { "type": "file", "required": true, "accept": [".csv", ".xlsx", ".pdf"] }
+        }
+      },
+      "response": {
+        "201": {
+          "body": {
+            "imported": { "type": "number" },
+            "duplicates": { "type": "number" },
+            "errors": { "type": "array", "items": { "type": "object", "properties": { "row": { "type": "number" }, "error": { "type": "string" } } } },
+            "transactions": { "type": "array", "items": { "$ref": "#/types/MpesaTransaction" } }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/mpesa/bulk-approve",
+      "auth": true,
+      "description": "Bulk approve unmapped M-Pesa transactions (AI auto-map)",
+      "request": {
+        "body": {
+          "transactionIds": { "type": "array", "items": { "type": "string", "format": "uuid" }, "required": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "approved": { "type": "number" },
+            "failed": { "type": "number" },
+            "errors": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    }
+  ],
+  "types": {
+    "MpesaTransaction": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "receiptNo": { "type": "string", "optional": true },
+        "transactionDate": { "type": "string", "format": "datetime" },
+        "description": { "type": "string" },
+        "amount": { "type": "number" },
+        "paidIn": { "type": "number", "optional": true },
+        "withdrawn": { "type": "number", "optional": true },
+        "phoneNumber": { "type": "string", "optional": true },
+        "customerName": { "type": "string", "optional": true },
+        "mappedAccount": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "code": { "type": "string" },
+            "name": { "type": "string" }
+          },
+          "optional": true
+        },
+        "confidence": { "type": "number", "optional": true },
+        "isReconciled": { "type": "boolean" },
+        "category": { "type": "string", "optional": true }
+      }
+    }
+  },
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial mobile M-Pesa contract" }
+  ]
+}

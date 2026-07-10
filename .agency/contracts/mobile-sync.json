@@ -1,0 +1,133 @@
+{
+  "contractId": "mobile-sync",
+  "version": "1.0.0",
+  "description": "Offline sync protocol endpoints for the JengaBooks mobile app with WatermelonDB",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/sync/pull",
+      "auth": true,
+      "description": "Pull changes since last sync timestamp. Returns all changed records since the given timestamp.",
+      "request": {
+        "body": {
+          "lastPulledAt": { "type": "number", "description": "Unix timestamp of last pull", "required": true },
+          "tables": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["journal_entries", "chart_of_accounts", "mpesa_transactions", "invoices", "pending_reviews", "xp_records", "user_levels", "companies", "company_members"] },
+            "description": "Tables to pull. If empty, pull all.",
+            "optional": true
+          }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "lastPulledAt": { "type": "number", "description": "Server timestamp for next pull" },
+            "changes": {
+              "type": "object",
+              "properties": {
+                "journal_entries": { "$ref": "#/types/SyncChanges" },
+                "chart_of_accounts": { "$ref": "#/types/SyncChanges" },
+                "mpesa_transactions": { "$ref": "#/types/SyncChanges" },
+                "invoices": { "$ref": "#/types/SyncChanges" },
+                "pending_reviews": { "$ref": "#/types/SyncChanges" },
+                "xp_records": { "$ref": "#/types/SyncChanges" },
+                "user_levels": { "$ref": "#/types/SyncChanges" },
+                "companies": { "$ref": "#/types/SyncChanges" },
+                "company_members": { "$ref": "#/types/SyncChanges" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/sync/push",
+      "auth": true,
+      "description": "Push local changes to server. Returns server-side conflicts if any.",
+      "request": {
+        "body": {
+          "changes": {
+            "type": "object",
+            "required": true,
+            "properties": {
+              "journal_entries": { "$ref": "#/types/SyncChanges" },
+              "chart_of_accounts": { "$ref": "#/types/SyncChanges" },
+              "mpesa_transactions": { "$ref": "#/types/SyncChanges" }
+            }
+          },
+          "lastPulledAt": { "type": "number", "required": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "ok": { "type": "boolean" },
+            "conflicts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "table": { "type": "string" },
+                  "id": { "type": "string" },
+                  "local": { "type": "object" },
+                  "server": { "type": "object" }
+                }
+              },
+              "optional": true
+            }
+          }
+        },
+        "409": {
+          "body": {
+            "message": "Sync conflict detected",
+            "conflicts": { "type": "array" }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/sync/status",
+      "auth": true,
+      "description": "Get sync status for the current company",
+      "response": {
+        "200": {
+          "body": {
+            "lastSyncAt": { "type": "string", "format": "datetime", "optional": true },
+            "pendingChanges": { "type": "number" },
+            "deviceCount": { "type": "number" },
+            "status": { "type": "string", "enum": ["LIVE", "SYNCING", "CONFLICT"] }
+          }
+        }
+      }
+    }
+  ],
+  "types": {
+    "SyncChanges": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "array",
+          "items": { "type": "object" },
+          "description": "Records created locally"
+        },
+        "updated": {
+          "type": "array",
+          "items": { "type": "object" },
+          "description": "Records updated locally"
+        },
+        "deleted": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "IDs of records deleted locally"
+        }
+      }
+    }
+  },
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial mobile sync protocol contract" }
+  ]
+}

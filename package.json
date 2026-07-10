@@ -1,0 +1,33 @@
+{
+    "name": "zoocode-agency",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Custom ZooCode Agency — reusable multi-agent orchestration system",
+    "scripts": {
+        "agency": "node .agency/agency.js",
+        "agency:init": "node .agency/scripts/init-project.js",
+        "agency:clean": "node .agency/scripts/clean-temp.js",
+        "agency:report": "node .agency/scripts/cost-report.js",
+        "agent:handoff": "node .agency/scripts/handoff.js",
+        "agent:status": "node .agency/scripts/status.js",
+        "agent:cost": "node .agency/scripts/cost-track.js",
+        "telegram:test": "node .agency/scripts/notify-telegram.js --message '✅ System ready'",
+        "terminal": "node .agency/scripts/terminal-session.js",
+        "terminal:cost": "node .agency/scripts/terminal-session.js @cost",
+        "terminal:stats": "node .agency/scripts/terminal-session.js @stats",
+        "project:register": "node .agency/scripts/projects-manager.js register",
+        "project:switch": "node .agency/scripts/projects-manager.js switch",
+        "project:list": "node .agency/scripts/projects-manager.js list",
+        "clean:temp": "node .agency/scripts/clean-temp.js",
+        "prepare": "husky"
+    },
+    "lint-staged": {
+        "*.{ts,tsx,js,jsx}": [
+            "eslint --fix",
+            "prettier --write"
+        ],
+        "*.{json,md,css}": [
+            "prettier --write"
+        ]
+    }
+}

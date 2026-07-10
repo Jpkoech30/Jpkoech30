@@ -1,0 +1,53 @@
+{
+  "contractId": "<feature-name>",
+  "version": "1.0.0",
+  "description": "Brief description of this API contract",
+  "featureType": "A | B | C | D",
+  "endpoints": [
+    {
+      "method": "GET | POST | PATCH | DELETE",
+      "path": "/api/v1/<resource>/<action>",
+      "auth": "JWT | Public | Optional",
+      "rateLimit": "requests/minute",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer <token>",
+          "X-Tenant-Id": "uuid"
+        },
+        "query": {
+          "companyId": { "type": "string", "required": true, "description": "Tenant company ID" }
+        },
+        "body": {
+          "contentType": "application/json",
+          "schema": {}
+        }
+      },
+      "response": {
+        "200": {
+          "description": "Success",
+          "body": {}
+        },
+        "400": { "description": "Bad Request — validation error" },
+        "401": { "description": "Unauthorized — missing/invalid JWT" },
+        "403": { "description": "Forbidden — insufficient permissions" },
+        "404": { "description": "Not Found" },
+        "402": { "description": "Payment Required — feature not in current plan" },
+        "413": { "description": "Payload Too Large" },
+        "429": { "description": "Too Many Requests" }
+      }
+    }
+  ],
+  "types": {
+    "<TypeName>": {
+      "description": "Description of this type",
+      "fields": {
+        "id": { "type": "string (uuid)", "required": true },
+        "createdAt": { "type": "string (ISO8601)", "required": true, "note": "DB-provided timestamp" },
+        "updatedAt": { "type": "string (ISO8601)", "required": true, "note": "DB-provided timestamp" }
+      }
+    }
+  },
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-07-09", "changes": ["Initial contract"] }
+  ]
+}

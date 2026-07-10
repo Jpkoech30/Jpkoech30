@@ -1,0 +1,30 @@
+{
+  "agent": "default",
+  "commands": [
+    {
+      "command": "@switch",
+      "args": "jengabooks",
+      "timestamp": "2026-07-10T14:58:10.760Z",
+      "cost": {
+        "input": 5,
+        "output": 500,
+        "cache": 1
+      }
+    },
+    {
+      "command": "@switch",
+      "args": "jengabooks",
+      "timestamp": "2026-07-10T14:58:35.786Z",
+      "cost": {
+        "input": 5,
+        "output": 500,
+        "cache": 1
+      }
+    }
+  ],
+  "cost": {
+    "input": 10,
+    "output": 1000,
+    "cache": 2
+  }
+}

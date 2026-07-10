@@ -1,0 +1,94 @@
+{
+  "contractId": "mobile-share",
+  "version": "1.0.0",
+  "description": "Sharing endpoints for invoices, receipts, and reports via WhatsApp, email, and shareable links",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/share/whatsapp",
+      "auth": true,
+      "description": "Share an invoice/receipt/report via WhatsApp. Returns a pre-formatted message and deep link.",
+      "request": {
+        "body": {
+          "entityType": { "type": "string", "enum": ["INVOICE", "RECEIPT", "REPORT", "STATEMENT"], "required": true },
+          "entityId": { "type": "string", "format": "uuid", "required": true },
+          "phoneNumber": { "type": "string", "optional": true, "description": "Specific number or empty for contact picker" }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "deepLink": { "type": "string", "description": "whatsapp://send?text=..." },
+            "message": { "type": "string", "description": "Pre-formatted WhatsApp message" },
+            "pdfUrl": { "type": "string", "description": "Temporary PDF URL (24h expiry)" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/share/email",
+      "auth": true,
+      "description": "Share an invoice/receipt/report via email",
+      "request": {
+        "body": {
+          "entityType": { "type": "string", "enum": ["INVOICE", "RECEIPT", "REPORT", "STATEMENT"], "required": true },
+          "entityId": { "type": "string", "format": "uuid", "required": true },
+          "to": { "type": "string", "format": "email", "required": true },
+          "cc": { "type": "string", "format": "email", "optional": true },
+          "message": { "type": "string", "maxLength": 2000, "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "sent": { "type": "boolean" },
+            "messageId": { "type": "string" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/share/links",
+      "auth": true,
+      "description": "Generate a shareable view-only link for an entity",
+      "request": {
+        "body": {
+          "entityType": { "type": "string", "enum": ["INVOICE", "RECEIPT", "REPORT", "STATEMENT"], "required": true },
+          "entityId": { "type": "string", "format": "uuid", "required": true },
+          "expiresInHours": { "type": "number", "default": 24, "max": 168, "optional": true }
+        }
+      },
+      "response": {
+        "201": {
+          "body": {
+            "shareLink": { "type": "string", "format": "url" },
+            "token": { "type": "string" },
+            "expiresAt": { "type": "string", "format": "datetime" }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/share/links/{token}",
+      "auth": false,
+      "description": "Access a shared entity via token (no auth required)",
+      "response": {
+        "200": {
+          "body": {
+            "entityType": { "type": "string" },
+            "entity": { "type": "object" }
+          }
+        },
+        "404": { "body": { "message": "Link expired or invalid" } }
+      }
+    }
+  ],
+  "types": {},
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial mobile sharing contract — WhatsApp, email, shareable links" }
+  ]
+}

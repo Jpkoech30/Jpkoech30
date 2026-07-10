@@ -1,0 +1,114 @@
+{
+  "contractId": "mobile-hitl",
+  "version": "1.0.0",
+  "description": "HITL (Human-in-the-Loop) endpoints consumed by the JengaBooks mobile app",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/hitl",
+      "auth": true,
+      "description": "List review tasks with optional filters",
+      "request": {
+        "query": {
+          "status": { "type": "string", "enum": ["PENDING", "IN_PROGRESS", "RESOLVED"], "optional": true },
+          "category": { "type": "string", "optional": true },
+          "page": { "type": "number", "default": 1 },
+          "limit": { "type": "number", "default": 20 }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "items": { "type": "array", "items": { "$ref": "#/types/HitlTask" } },
+            "total": { "type": "number" },
+            "page": { "type": "number" },
+            "totalPages": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/hitl/stats",
+      "auth": true,
+      "description": "Get HITL statistics by status category",
+      "response": {
+        "200": {
+          "body": {
+            "pending": { "type": "number" },
+            "inProgress": { "type": "number" },
+            "resolved": { "type": "number" },
+            "total": { "type": "number" },
+            "byCategory": {
+              "type": "object",
+              "properties": {
+                "BACKDATED_ENTRY": { "type": "number" },
+                "UNMAPPED_DATA": { "type": "number" },
+                "ETIMS_FAILURE": { "type": "number" },
+                "RECONCILIATION_CONFLICT": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/hitl/{id}/assign",
+      "auth": true,
+      "description": "Claim/assign a review task to the current user",
+      "response": {
+        "200": { "body": { "$ref": "#/types/HitlTask" } },
+        "409": { "body": { "message": "Task already assigned to another user" } }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/hitl/{id}/resolve",
+      "auth": true,
+      "description": "Resolve a review task with action",
+      "request": {
+        "body": {
+          "resolution": { "type": "string", "minLength": 1, "maxLength": 2000, "required": true },
+          "action": { "type": "string", "enum": ["APPROVE", "REJECT", "EDIT"], "required": true },
+          "correctedData": { "type": "string", "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "task": { "$ref": "#/types/HitlTask" },
+            "xpAwarded": { "type": "number" }
+          }
+        }
+      }
+    }
+  ],
+  "types": {
+    "HitlTask": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "category": { "type": "string", "enum": ["BACKDATED_ENTRY", "UNMAPPED_DATA", "ETIMS_FAILURE", "RECONCILIATION_CONFLICT"] },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["PENDING", "IN_PROGRESS", "RESOLVED"] },
+        "assignedUser": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          },
+          "optional": true
+        },
+        "confidence": { "type": "number", "optional": true },
+        "linkedEntityType": { "type": "string", "optional": true },
+        "xpAwarded": { "type": "number", "default": 0 },
+        "createdAt": { "type": "string", "format": "datetime" }
+      }
+    }
+  },
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial mobile HITL contract" }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "contractId": "mobile-sms-import",
+  "version": "1.0.0",
+  "description": "M-Pesa SMS auto-import endpoints — parse and import M-Pesa transaction SMS messages",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/sms/import",
+      "auth": true,
+      "description": "Import M-Pesa transactions from forwarded SMS messages. Accepts raw SMS text and parses it.",
+      "request": {
+        "body": {
+          "messages": {
+            "type": "array",
+            "required": true,
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "properties": {
+                "from": { "type": "string", "required": true, "description": "Sender phone number or name" },
+                "message": { "type": "string", "required": true, "description": "Full SMS text" },
+                "receivedAt": { "type": "string", "format": "datetime", "required": true }
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "201": {
+          "body": {
+            "imported": { "type": "number", "description": "Number of successfully imported transactions" },
+            "duplicates": { "type": "number", "description": "Number of duplicate SMS skipped" },
+            "failed": { "type": "number", "description": "Number of unparseable SMS" },
+            "transactions": {
+              "type": "array",
+              "items": { "$ref": "mobile-mpesa.json#/types/MpesaTransaction" }
+            },
+            "errors": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "index": { "type": "number" },
+                  "message": { "type": "string" },
+                  "error": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/sms/pending",
+      "auth": true,
+      "description": "Get count of pending SMS messages that haven't been imported yet (server-side buffer)",
+      "response": {
+        "200": {
+          "body": {
+            "pendingCount": { "type": "number" },
+            "lastImportedAt": { "type": "string", "format": "datetime", "optional": true }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/sms/whatsapp-import",
+      "auth": true,
+      "description": "Import M-Pesa transactions forwarded via WhatsApp. Accepts WhatsApp message format.",
+      "request": {
+        "body": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "from": { "type": "string" },
+                "message": { "type": "string" },
+                "timestamp": { "type": "string", "format": "datetime" },
+                "mediaUrl": { "type": "string", "optional": true, "description": "Screenshot of M-Pesa message" }
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "201": {
+          "body": {
+            "imported": { "type": "number" },
+            "failed": { "type": "number" },
+            "transactions": { "type": "array", "items": { "$ref": "mobile-mpesa.json#/types/MpesaTransaction" } }
+          }
+        }
+      }
+    }
+  ],
+  "types": {},
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial mobile SMS import contract — M-Pesa SMS parsing" }
+  ]
+}

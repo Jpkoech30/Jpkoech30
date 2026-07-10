@@ -1,0 +1,115 @@
+{
+  "agency": {
+    "name": "JengaBooks Agency",
+    "version": "1.0.0",
+    "description": "Multi-agent orchestration system for JengaBooks development"
+  },
+  "agents": {
+    "enabled": [
+      "lead-architect",
+      "backend-lead",
+      "backend-api",
+      "backend-service",
+      "backend-integration",
+      "backend-logic",
+      "backend-database",
+      "frontend-lead",
+      "frontend-ui",
+      "frontend-page",
+      "frontend-state",
+      "frontend-web",
+      "frontend-mobile",
+      "mobile-lead",
+      "mobile-ui",
+      "mobile-screen",
+      "mobile-state",
+      "devops-lead",
+      "devops-infra",
+      "devops-cicd",
+      "devops-db",
+      "devops",
+      "compliance-guardian",
+      "security-auditor",
+      "performance-auditor",
+      "accessibility-auditor",
+      "qa-automator",
+      "documentarian",
+      "design-keeper",
+      "release-manager",
+      "jengabooks-code"
+    ],
+    "hierarchy": {
+      "orchestrator": "lead-architect",
+      "leads": [
+        "backend-lead",
+        "frontend-lead",
+        "mobile-lead",
+        "devops-lead"
+      ],
+      "specialists": [
+        "backend-api",
+        "backend-service",
+        "backend-integration",
+        "backend-logic",
+        "backend-database",
+        "frontend-ui",
+        "frontend-page",
+        "frontend-state",
+        "frontend-web",
+        "frontend-mobile",
+        "mobile-ui",
+        "mobile-screen",
+        "mobile-state",
+        "devops-infra",
+        "devops-cicd",
+        "devops-db",
+        "devops"
+      ],
+      "qualityGates": [
+        "compliance-guardian",
+        "security-auditor",
+        "performance-auditor",
+        "accessibility-auditor",
+        "qa-automator"
+      ],
+      "support": [
+        "documentarian",
+        "design-keeper",
+        "release-manager",
+        "jengabooks-code"
+      ]
+    },
+    "handoffProtocol": {
+      "requiredCommitBodyFields": [
+        "HANDOFF",
+        "ARTIFACTS",
+        "CONTRACT",
+        "CONTEXT",
+        "STATUS"
+      ],
+      "trackingFile": "ORCHESTRATION.md",
+      "statusValues": ["PENDING", "IN_PROGRESS", "REVIEW", "DONE", "BLOCKED"]
+    }
+  },
+  "contracts": {
+    "directory": ".agency/contracts/",
+    "format": "json",
+    "requiredFields": [
+      "contractId",
+      "version",
+      "endpoints",
+      "types",
+      "changelog"
+    ]
+  },
+  "workflows": {
+    "featureTypes": {
+      "A": { "name": "UI-only", "pipeline": ["frontend-lead"] },
+      "B": { "name": "API+UI", "pipeline": ["backend-lead", "frontend-lead"] },
+      "C": { "name": "DB+API+UI", "pipeline": ["backend-database", "backend-lead", "frontend-lead"] },
+      "D": { "name": "Backend-only", "pipeline": ["backend-lead"] }
+    },
+    "qualityGatesAfter": ["compliance-guardian", "security-auditor", "qa-automator"],
+    "releaseAfter": ["release-manager"]
+  }
+}

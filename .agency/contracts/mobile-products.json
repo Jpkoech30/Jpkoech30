@@ -1,0 +1,177 @@
+{
+  "contractId": "mobile-products",
+  "version": "1.0.0",
+  "description": "Product/Service Portfolio catalog — manage products and services used in invoices, with categories, pricing, and stock tracking",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/products",
+      "auth": true,
+      "description": "List products/services in the portfolio catalog",
+      "request": {
+        "query": {
+          "page": { "type": "number", "default": 1 },
+          "limit": { "type": "number", "default": 20 },
+          "category": { "type": "string", "optional": true },
+          "type": { "type": "string", "enum": ["PRODUCT", "SERVICE"], "optional": true },
+          "search": { "type": "string", "maxLength": 100, "optional": true },
+          "isActive": { "type": "boolean", "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "items": { "type": "array", "items": { "$ref": "#/types/Product" } },
+            "total": { "type": "number" },
+            "page": { "type": "number" },
+            "totalPages": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/products",
+      "auth": true,
+      "description": "Create a new product or service in the portfolio",
+      "request": {
+        "body": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 200, "required": true },
+          "type": { "type": "string", "enum": ["PRODUCT", "SERVICE"], "required": true },
+          "description": { "type": "string", "maxLength": 2000, "optional": true },
+          "category": { "type": "string", "maxLength": 100, "optional": true },
+          "unitPrice": { "type": "number", "positive": true, "required": true },
+          "unit": { "type": "string", "default": "pcs", "optional": true, "description": "Unit of measure (pcs, hrs, days, kg, etc)" },
+          "taxCode": { "type": "string", "enum": ["E", "S", "Z"], "default": "S", "optional": true },
+          "sku": { "type": "string", "maxLength": 50, "optional": true },
+          "stockQuantity": { "type": "number", "optional": true, "description": "Only for PRODUCT type" },
+          "reorderLevel": { "type": "number", "optional": true },
+          "isActive": { "type": "boolean", "default": true, "optional": true }
+        }
+      },
+      "response": {
+        "201": { "body": { "$ref": "#/types/Product" } }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/products/{id}",
+      "auth": true,
+      "description": "Get single product/service detail",
+      "response": {
+        "200": { "body": { "$ref": "#/types/Product" } }
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/products/{id}",
+      "auth": true,
+      "description": "Update a product or service",
+      "request": {
+        "body": {
+          "name": { "type": "string", "optional": true },
+          "description": { "type": "string", "optional": true },
+          "category": { "type": "string", "optional": true },
+          "unitPrice": { "type": "number", "optional": true },
+          "unit": { "type": "string", "optional": true },
+          "taxCode": { "type": "string", "optional": true },
+          "sku": { "type": "string", "optional": true },
+          "stockQuantity": { "type": "number", "optional": true },
+          "reorderLevel": { "type": "number", "optional": true },
+          "isActive": { "type": "boolean", "optional": true }
+        }
+      },
+      "response": {
+        "200": { "body": { "$ref": "#/types/Product" } }
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/products/{id}",
+      "auth": true,
+      "description": "Deactivate (soft-delete) a product/service",
+      "response": {
+        "200": { "body": { "message": "Product deactivated" } }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/products/categories",
+      "auth": true,
+      "description": "List product categories",
+      "response": {
+        "200": {
+          "body": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "category": { "type": "string" },
+                  "count": { "type": "number" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/products/bulk",
+      "auth": true,
+      "description": "Bulk import products from CSV/Excel",
+      "request": {
+        "contentType": "multipart/form-data",
+        "body": {
+          "file": { "type": "file", "required": true, "description": "CSV or Excel file with product data" }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "imported": { "type": "number" },
+            "failed": { "type": "number" },
+            "errors": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "row": { "type": "number" },
+                  "error": { "type": "string" }
+                }
+              },
+              "optional": true
+            }
+          }
+        }
+      }
+    }
+  ],
+  "types": {
+    "Product": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "companyId": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["PRODUCT", "SERVICE"] },
+        "description": { "type": "string", "optional": true },
+        "category": { "type": "string", "optional": true },
+        "unitPrice": { "type": "number" },
+        "unit": { "type": "string" },
+        "taxCode": { "type": "string" },
+        "sku": { "type": "string", "optional": true },
+        "stockQuantity": { "type": "number", "optional": true },
+        "reorderLevel": { "type": "number", "optional": true },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "datetime" },
+        "updatedAt": { "type": "string", "format": "datetime" }
+      }
+    }
+  },
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial product/service portfolio catalog — SIM-inspired product management for invoice line items" }
+  ]
+}

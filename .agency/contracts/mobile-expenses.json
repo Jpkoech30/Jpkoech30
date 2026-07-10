@@ -1,0 +1,132 @@
+{
+  "contractId": "mobile-expenses",
+  "version": "1.0.0",
+  "description": "Expense management endpoints for tracking business expenses",
+  "basePath": "/api/v1",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/expenses",
+      "auth": true,
+      "description": "List business expenses",
+      "request": {
+        "query": {
+          "page": { "type": "number", "default": 1 },
+          "limit": { "type": "number", "default": 20 },
+          "category": { "type": "string", "optional": true },
+          "from": { "type": "string", "format": "date", "optional": true },
+          "to": { "type": "string", "format": "date", "optional": true },
+          "search": { "type": "string", "optional": true }
+        }
+      },
+      "response": {
+        "200": {
+          "body": {
+            "items": { "type": "array", "items": { "$ref": "#/types/Expense" } },
+            "total": { "type": "number" },
+            "totalAmount": { "type": "number" },
+            "page": { "type": "number" },
+            "totalPages": { "type": "number" }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/expenses",
+      "auth": true,
+      "description": "Record a new expense",
+      "request": {
+        "body": {
+          "description": { "type": "string", "minLength": 1, "maxLength": 500, "required": true },
+          "amount": { "type": "number", "positive": true, "required": true },
+          "category": { "type": "string", "required": true },
+          "expenseDate": { "type": "string", "format": "datetime", "required": true },
+          "reference": { "type": "string", "maxLength": 100, "optional": true },
+          "receiptImage": { "type": "string", "optional": true, "description": "Base64 or file upload" },
+          "notes": { "type": "string", "maxLength": 1000, "optional": true }
+        }
+      },
+      "response": {
+        "201": { "body": { "$ref": "#/types/Expense" } }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/expenses/categories",
+      "auth": true,
+      "description": "List expense categories with totals",
+      "response": {
+        "200": {
+          "body": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "category": { "type": "string" },
+                  "count": { "type": "number" },
+                  "totalAmount": { "type": "number" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/expenses/{id}",
+      "auth": true,
+      "description": "Get single expense detail",
+      "response": {
+        "200": { "body": { "$ref": "#/types/Expense" } }
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/expenses/{id}",
+      "auth": true,
+      "description": "Update an expense",
+      "request": {
+        "body": {
+          "description": { "type": "string", "optional": true },
+          "amount": { "type": "number", "optional": true },
+          "category": { "type": "string", "optional": true },
+          "notes": { "type": "string", "optional": true }
+        }
+      },
+      "response": {
+        "200": { "body": { "$ref": "#/types/Expense" } }
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/expenses/{id}",
+      "auth": true,
+      "description": "Soft-delete an expense",
+      "response": {
+        "200": { "body": { "message": "Expense deleted" } }
+      }
+    }
+  ],
+  "types": {
+    "Expense": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "description": { "type": "string" },
+        "amount": { "type": "number" },
+        "category": { "type": "string" },
+        "expenseDate": { "type": "string", "format": "datetime" },
+        "reference": { "type": "string", "optional": true },
+        "hasReceipt": { "type": "boolean" },
+        "notes": { "type": "string", "optional": true },
+        "createdAt": { "type": "string", "format": "datetime" }
+      }
+    }
+  },
+  "changelog": [
+    { "date": "2026-07-09", "version": "1.0.0", "description": "Initial mobile expenses contract" }
+  ]
+}
