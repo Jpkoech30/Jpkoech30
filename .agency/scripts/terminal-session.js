@@ -580,6 +580,22 @@ function cmdSwitch(name) {
         var output = '── @switch ' + name + ' ' + divider.slice(10 + name.length);
         output += '\n' + lines.join('\n');
 
+        // Auto-open VS Code
+        try {
+            var registryPath = path.resolve(ROOT, '.agency', 'projects.json');
+            if (fs.existsSync(registryPath)) {
+                var regData = JSON.parse(fs.readFileSync(registryPath, 'utf-8'));
+                var project = (regData.projects || []).find(function (p) { return p.name === name; });
+                if (project) {
+                    var absPath = path.resolve(ROOT, project.path);
+                    execSync('code "' + absPath + '"', { stdio: 'ignore', timeout: 10000 });
+                    output += '\n' + '📂 Opened in new VS Code window';
+                }
+            }
+        } catch (e2) {
+            output += '\n' + '⚠ Could not open VS Code: ' + e2.message;
+        }
+
         return output;
     } catch (e) {
         var stderr = e.stderr ? e.stderr.toString().trim() : '';

@@ -19,6 +19,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '../..');
 const REGISTRY_PATH = path.join(ROOT, '.agency', 'projects.json');
@@ -185,6 +186,15 @@ function cmdSwitch(name) {
 
     console.log(green('📂 Switched to ' + bold(name) + ' at ' + absolutePath));
     console.log(cyan('💡 Run: cd ' + absolutePath));
+
+    // Auto-open VS Code
+    try {
+        execSync('code "' + absolutePath + '"', { stdio: 'ignore', timeout: 10000 });
+        console.log(green('📂 Opened in new VS Code window'));
+    } catch (e) {
+        console.log(yellow('⚠ Could not open VS Code: ' + e.message));
+    }
+
     process.exit(0);
 }
 
