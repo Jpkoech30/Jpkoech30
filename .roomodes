@@ -72,7 +72,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?(apps/api/src/.*\.controller\.ts|apps/api/src/.*\.route\.ts|apps/api/src/.*\.dto\.ts)$",
+            "fileRegex": "^(?:[^/]+/)?(apps/api/src/.*\\.controller\\.ts|apps/api/src/.*\\.route\\.ts|apps/api/src/.*\\.dto\\.ts)$",
             "description": "API controllers, DTOs, routes"
           }
         ],
@@ -93,7 +93,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?(apps/api/src/.*\.service\.ts|apps/api/src/.*\.provider\.ts|apps/api/src/.*\.module\.ts)$",
+            "fileRegex": "^(?:[^/]+/)?(apps/api/src/.*\\.service\\.ts|apps/api/src/.*\\.provider\\.ts|apps/api/src/.*\\.module\\.ts)$",
             "description": "Service layer and business logic"
           }
         ],
@@ -114,7 +114,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?(apps/api/src/.*\.integration\.ts|apps/api/src/.*\.adapter\.ts|apps/api/src/.*\.client\.ts)$",
+            "fileRegex": "^(?:[^/]+/)?(apps/api/src/.*\\.integration\\.ts|apps/api/src/.*\\.adapter\\.ts|apps/api/src/.*\\.client\\.ts)$",
             "description": "Queues, webhooks, integrations"
           }
         ],
@@ -429,7 +429,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?(apps/api/src/.*\.logic\.ts|apps/api/src/.*\.business\.ts|packages/shared/src/.*)$",
+            "fileRegex": "^(?:[^/]+/)?(apps/api/src/.*\\.logic\\.ts|apps/api/src/.*\\.business\\.ts|packages/shared/src/.*)$",
             "description": "Backend source"
           }
         ],

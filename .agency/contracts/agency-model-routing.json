@@ -1,0 +1,93 @@
+{
+    "contractId": "agency-model-routing",
+    "version": "1.0.0",
+    "description": "Per-role model routing configuration — maps agent slugs to specific model overrides, with fallback to deepseek-flash",
+    "configSchema": {
+        "type": "object",
+        "properties": {
+            "model_overrides": {
+                "type": "object",
+                "description": "Map of agent slug → model identifier",
+                "propertyNames": {
+                    "pattern": "^[a-z]+(-[a-z]+)*$",
+                    "description": "Must match an agent slug from .roomodes"
+                },
+                "additionalProperties": {
+                    "type": "string",
+                    "enum": [
+                        "deepseek-flash",
+                        "deepseek-pro",
+                        "deepseek-v4-flash",
+                        "deepseek-v4-pro"
+                    ],
+                    "description": "Valid model identifier"
+                },
+                "default": {
+                    "lead-architect": "deepseek-pro",
+                    "security-auditor": "deepseek-pro",
+                    "compliance-guardian": "deepseek-pro",
+                    "backend-lead": "deepseek-pro"
+                }
+            },
+            "fallback_model": {
+                "type": "string",
+                "default": "deepseek-flash",
+                "description": "Default model when no override is specified"
+            },
+            "apply_to_roomodes": {
+                "type": "boolean",
+                "default": true,
+                "description": "If true, the runtime syncs model_overrides into .roomodes agent configurations"
+            }
+        },
+        "required": [
+            "fallback_model"
+        ]
+    },
+    "integrationPoints": [
+        "Add model_overrides section to .zoo/config.json",
+        "Script (.agency/scripts/sync-models.js) reads model_overrides and updates .roomodes apiConfiguration for each agent",
+        "Wire into handoff.js to accept --model flag for manual overrides",
+        "Add --model pro flag to agency handoff command"
+    ],
+    "commands": {
+        "sync-models": {
+            "usage": "node .agency/scripts/sync-models.js",
+            "description": "Sync model_overrides from .zoo/config.json into .roomodes agent apiConfiguration blocks"
+        },
+        "handoff-override": {
+            "usage": "node .agency/scripts/handoff.js --from <from> --to <to> --task <id> [--model pro]",
+            "description": "Allow manual model override during handoff"
+        }
+    },
+    "models": {
+        "deepseek-flash": {
+            "description": "Fast, cheap model for simple tasks",
+            "costPer1MInput": 19,
+            "costPer1MOutput": 38
+        },
+        "deepseek-pro": {
+            "description": "Stronger reasoning for complex tasks",
+            "costPer1MInput": 270,
+            "costPer1MOutput": 1080
+        }
+    },
+    "defaultRouting": {
+        "deepseek-pro": [
+            "lead-architect",
+            "security-auditor",
+            "compliance-guardian",
+            "backend-lead"
+        ],
+        "deepseek-flash": [
+            "all others"
+        ]
+    },
+    "changelog": [
+        {
+            "date": "2026-07-10",
+            "version": "1.0.0",
+            "description": "Initial model routing contract"
+        }
+    ]
+}

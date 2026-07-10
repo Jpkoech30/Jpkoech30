@@ -88,7 +88,13 @@
         "STATUS"
       ],
       "trackingFile": "ORCHESTRATION.md",
-      "statusValues": ["PENDING", "IN_PROGRESS", "REVIEW", "DONE", "BLOCKED"]
+      "statusValues": [
+        "PENDING",
+        "IN_PROGRESS",
+        "REVIEW",
+        "DONE",
+        "BLOCKED"
+      ]
     }
   },
   "contracts": {
@@ -104,12 +110,65 @@
   },
   "workflows": {
     "featureTypes": {
-      "A": { "name": "UI-only", "pipeline": ["frontend-lead"] },
-      "B": { "name": "API+UI", "pipeline": ["backend-lead", "frontend-lead"] },
-      "C": { "name": "DB+API+UI", "pipeline": ["backend-database", "backend-lead", "frontend-lead"] },
-      "D": { "name": "Backend-only", "pipeline": ["backend-lead"] }
+      "A": {
+        "name": "UI-only",
+        "pipeline": [
+          "frontend-lead"
+        ]
+      },
+      "B": {
+        "name": "API+UI",
+        "pipeline": [
+          "backend-lead",
+          "frontend-lead"
+        ]
+      },
+      "C": {
+        "name": "DB+API+UI",
+        "pipeline": [
+          "backend-database",
+          "backend-lead",
+          "frontend-lead"
+        ]
+      },
+      "D": {
+        "name": "Backend-only",
+        "pipeline": [
+          "backend-lead"
+        ]
+      }
     },
-    "qualityGatesAfter": ["compliance-guardian", "security-auditor", "qa-automator"],
-    "releaseAfter": ["release-manager"]
+    "qualityGatesAfter": [
+      "compliance-guardian",
+      "security-auditor",
+      "qa-automator"
+    ],
+    "releaseAfter": [
+      "release-manager"
+    ]
+  },
+  "secretScan": {
+    "whitelist": [
+      {
+        "pattern": "TEST_PASSWORD",
+        "reason": "Test fixtures"
+      },
+      {
+        "pattern": "EXAMPLE_API_KEY",
+        "reason": "Example/demo values"
+      },
+      {
+        "pattern": "placeholder",
+        "reason": "Template placeholders"
+      },
+      {
+        "pattern": "\\.env\\.example$",
+        "reason": "Example env files are safe templates"
+      }
+    ]
+  },
+  "hitl": {
+    "callbackUrl": "http://localhost:3177/webhook/approve",
+    "serverPort": 3177
   }
 }

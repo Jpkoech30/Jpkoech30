@@ -1,0 +1,7 @@
+{"timestamp":"2026-07-10T17:20:58.643Z","agent":"code-agent","task":"test-7","event":"start","status":"DONE"}
+{"timestamp":"2026-07-10T17:21:27.561Z","task":"test-7","agent":"code-agent","inputTokens":15000,"outputTokens":3000,"costKES":0.399}
+{"timestamp":"2026-07-10T17:21:28.107Z","task":"test-7","gate":"security","failCount":2,"escalated":true}
+{"timestamp":"2026-07-10T17:25:33.279Z","agent":"test-agent","task":"test.1","event":"start","status":"IN_PROGRESS"}
+{"timestamp":"2026-07-10T17:25:43.051Z","task":"test.1","agent":"test-agent","inputTokens":1000,"outputTokens":500,"costKES":0.038,"cacheHitTokens":100}
+{"timestamp":"2026-07-10T17:26:01.356Z","task":"test.1","gate":"qa","failCount":5,"escalated":false}
+{"timestamp":"2026-07-10T17:36:27.583Z","agent":"lead-architect","task":"7.11","event":"start","status":"IN_PROGRESS"}

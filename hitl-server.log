@@ -1,0 +1,4 @@
+🧑‍💼 HITL Webhook Server running on http://localhost:3177
+   Health:   GET  http://localhost:3177/health
+   Webhook:  POST http://localhost:3177/webhook/approve/:taskId
+   Token:    configured

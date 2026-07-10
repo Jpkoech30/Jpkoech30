@@ -1,0 +1,192 @@
+{
+    "contractId": "agency-telemetry",
+    "version": "1.0.0",
+    "description": "Agency event telemetry pipeline — logs every agent invocation, handoff, and cost event to a JSONL file for real-time monitoring",
+    "storage": {
+        "format": "jsonl",
+        "path": "./.agency/telemetry/events.jsonl",
+        "maxFileSizeBytes": 10485760,
+        "rotationStrategy": "size_based",
+        "archiveDir": "./.agency/telemetry/archive/"
+    },
+    "eventTypes": {
+        "agent_invocation": {
+            "description": "Logged when an agent begins a task",
+            "fields": {
+                "timestamp": {
+                    "type": "string",
+                    "format": "ISO8601",
+                    "description": "Event time in UTC"
+                },
+                "agent": {
+                    "type": "string",
+                    "description": "Agent slug from .roomodes"
+                },
+                "task": {
+                    "type": "string",
+                    "description": "Task ID from ORCHESTRATION.md"
+                },
+                "event": {
+                    "type": "string",
+                    "enum": [
+                        "start",
+                        "end",
+                        "error",
+                        "handoff"
+                    ]
+                },
+                "tokens": {
+                    "type": "object",
+                    "properties": {
+                        "input": {
+                            "type": "number",
+                            "optional": true
+                        },
+                        "output": {
+                            "type": "number",
+                            "optional": true
+                        },
+                        "cache": {
+                            "type": "number",
+                            "optional": true
+                        }
+                    },
+                    "optional": true
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "PENDING",
+                        "IN_PROGRESS",
+                        "REVIEW",
+                        "DONE",
+                        "BLOCKED",
+                        "HOTFIX"
+                    ]
+                },
+                "duration_ms": {
+                    "type": "number",
+                    "optional": true
+                },
+                "error": {
+                    "type": "string",
+                    "optional": true
+                },
+                "model": {
+                    "type": "string",
+                    "optional": true,
+                    "description": "Model used for this invocation"
+                }
+            },
+            "required": [
+                "timestamp",
+                "agent",
+                "task",
+                "event",
+                "status"
+            ]
+        },
+        "cost_event": {
+            "description": "Logged when cost-track records tokens",
+            "fields": {
+                "timestamp": {
+                    "type": "string",
+                    "format": "ISO8601"
+                },
+                "task": {
+                    "type": "string"
+                },
+                "agent": {
+                    "type": "string"
+                },
+                "inputTokens": {
+                    "type": "number"
+                },
+                "outputTokens": {
+                    "type": "number"
+                },
+                "cacheHitTokens": {
+                    "type": "number",
+                    "optional": true
+                },
+                "costKES": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "timestamp",
+                "task",
+                "agent",
+                "inputTokens",
+                "outputTokens",
+                "costKES"
+            ]
+        },
+        "gate_failure": {
+            "description": "Logged when a quality gate fails",
+            "fields": {
+                "timestamp": {
+                    "type": "string",
+                    "format": "ISO8601"
+                },
+                "task": {
+                    "type": "string"
+                },
+                "gate": {
+                    "type": "string",
+                    "enum": [
+                        "security",
+                        "performance",
+                        "accessibility",
+                        "qa",
+                        "compliance"
+                    ]
+                },
+                "failCount": {
+                    "type": "number"
+                },
+                "escalated": {
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "timestamp",
+                "task",
+                "gate",
+                "failCount"
+            ]
+        }
+    },
+    "commands": {
+        "monitor": {
+            "usage": "node .agency/scripts/telemetry.js monitor [--filter <agent>] [--tail <lines>]",
+            "description": "Tails the telemetry JSONL file with color-coded output",
+            "options": {
+                "--filter": "Filter events by agent slug",
+                "--tail": "Number of recent lines to show (default: 50)",
+                "--json": "Output raw JSON instead of formatted table"
+            }
+        },
+        "stats": {
+            "usage": "node .agency/scripts/telemetry.js stats [--since <ISO8601>]",
+            "description": "Generate aggregate statistics from telemetry data",
+            "options": {
+                "--since": "Only consider events after this timestamp"
+            }
+        }
+    },
+    "integrationPoints": [
+        "Hook into handoff.js — log before/after each handoff",
+        "Hook into cost-track.js — log each cost event",
+        "Hook into status.js — log each status transition",
+        "Hook into escalate-lead.js — log each gate failure",
+        "Invoke at start/end of every agent script via telemetry.js wrapper"
+    ],
+    "changelog": [
+        {
+            "date": "2026-07-10",
+            "version": "1.0.0",
+            "description": "Initial agency telemetry contract"
+        }
+    ]
+}

@@ -29,6 +29,14 @@ const PROJECTS_JSON_PATH = path.join(ROOT, '.agency', 'projects.json');
 
 const VALID_STATUSES = ['PENDING', 'IN_PROGRESS', 'REVIEW', 'DONE', 'BLOCKED', 'HOTFIX'];
 
+const VALID_MODEL_VALUES = ['flash', 'pro', 'v4-flash', 'v4-pro'];
+const MODEL_PREFIX_MAP = {
+    flash: 'deepseek-flash',
+    pro: 'deepseek-pro',
+    'v4-flash': 'deepseek-v4-flash',
+    'v4-pro': 'deepseek-v4-pro',
+};
+
 // ── CWD Guard ────────────────────────────────────────────────────────────────
 
 /**
@@ -88,7 +96,7 @@ function checkCwdGuard() {
 
 function parseArgs() {
     const args = process.argv.slice(2);
-    const opts = { from: null, to: null, task: null, status: 'IN_PROGRESS', artifacts: 'pending' };
+    const opts = { from: null, to: null, task: null, status: 'IN_PROGRESS', artifacts: 'pending', model: null };
 
     for (let i = 0; i < args.length; i++) {
         if (args[i] === '--from' && i + 1 < args.length) opts.from = args[++i];
@@ -96,6 +104,7 @@ function parseArgs() {
         if (args[i] === '--task' && i + 1 < args.length) opts.task = args[++i];
         if (args[i] === '--status' && i + 1 < args.length) opts.status = args[++i].toUpperCase();
         if (args[i] === '--artifacts' && i + 1 < args.length) opts.artifacts = args[++i];
+        if (args[i] === '--model' && i + 1 < args.length) opts.model = args[++i].toLowerCase();
     }
 
     return opts;
@@ -143,7 +152,7 @@ function isValidAgent(slug, validSlugs) {
 /**
  * Generate the formatted commit body.
  */
-function generateCommitBody(from, to, task, status, artifacts) {
+function generateCommitBody(from, to, task, status, artifacts, model) {
     const lines = [
         '',
         `HANDOFF:${to}`,
@@ -156,6 +165,12 @@ function generateCommitBody(from, to, task, status, artifacts) {
     // Add optional context line
     if (from && to) {
         lines.splice(1, 0, `CONTEXT:Handoff from ${from} to ${to} for task ${task}`);
+    }
+
+    // Add model line if specified
+    if (model) {
+        const modelName = MODEL_PREFIX_MAP[model] || model;
+        lines.splice(lines.length - 1, 0, `MODEL:${modelName}`);
     }
 
     return lines.join('\n');
@@ -177,13 +192,19 @@ function main() {
 
     if (missing.length > 0) {
         console.error(`FAIL: Missing required argument(s): ${missing.join(', ')}`);
-        console.error('Usage: node handoff.js --from <agent> --to <agent> --task <id> [--status <STATUS>] [--artifacts <files>]');
+        console.error('Usage: node handoff.js --from <agent> --to <agent> --task <id> [--status <STATUS>] [--artifacts <files>] [--model <flash|pro|v4-flash|v4-pro>]');
         process.exit(1);
     }
 
     // Validate status
     if (!VALID_STATUSES.includes(opts.status)) {
         console.error(`FAIL: Invalid status "${opts.status}". Must be one of: ${VALID_STATUSES.join(', ')}`);
+        process.exit(1);
+    }
+
+    // Validate model if provided
+    if (opts.model && !VALID_MODEL_VALUES.includes(opts.model)) {
+        console.error(`FAIL: Invalid --model value "${opts.model}". Must be one of: ${VALID_MODEL_VALUES.join(', ')}`);
         process.exit(1);
     }
 
@@ -218,7 +239,7 @@ function main() {
     }
 
     // Generate commit body
-    const body = generateCommitBody(opts.from, opts.to, opts.task, opts.status, opts.artifacts);
+    const body = generateCommitBody(opts.from, opts.to, opts.task, opts.status, opts.artifacts, opts.model);
 
     console.log(body);
 

@@ -12,5 +12,13 @@
   "session": {
     "max_turns": 10,
     "checkpoint_after": 10
-  }
+  },
+  "model_overrides": {
+    "lead-architect": "deepseek-pro",
+    "security-auditor": "deepseek-pro",
+    "compliance-guardian": "deepseek-pro",
+    "backend-lead": "deepseek-pro"
+  },
+  "fallback_model": "deepseek-flash",
+  "apply_to_roomodes": true
 }

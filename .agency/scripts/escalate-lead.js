@@ -21,6 +21,7 @@ const { execSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '../..');
 const TELEMETRY_SCRIPT = path.join(__dirname, 'telemetry.js');
+const NOTIFY_SCRIPT = path.join(__dirname, 'notify-hitl.js');
 const ORCHESTRATION_PATH = path.join(ROOT, 'ORCHESTRATION.md');
 
 // ── CLI Parsing ──────────────────────────────────────────────────────────────
@@ -128,6 +129,16 @@ function generateAlert(task) {
 function printAlerts(failures) {
     for (const task of failures) {
         console.log(generateAlert(task));
+
+        // Send HITL notification via Telegram (non-blocking)
+        try {
+            execSync(
+                `node ${NOTIFY_SCRIPT} --task ${task.id} --agent ${task.agent} --gate ${task.gate} --failCount ${task.failCount} --description "Gate ${task.gate} failed ${task.failCount} times for task ${task.id}"`,
+                { stdio: 'ignore', timeout: 15000 }
+            );
+        } catch (_) {
+            // HITL notification failures must not block escalation
+        }
     }
 }
 

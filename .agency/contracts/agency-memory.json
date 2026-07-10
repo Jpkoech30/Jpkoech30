@@ -1,0 +1,131 @@
+{
+    "contractId": "agency-memory",
+    "version": "1.0.0",
+    "description": "Semantic memory (vector RAG) — stores embedded decisions, code patterns, and architecture rationales for long-term recall",
+    "storage": {
+        "type": "sqlite",
+        "path": "./.agency/memory/store.db",
+        "vectorExtension": "sqlite-vec",
+        "dimension": 768,
+        "distanceMetric": "cosine"
+    },
+    "tables": {
+        "memories": {
+            "description": "Core memory store — one row per stored memory",
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "TEXT",
+                    "constraint": "PRIMARY KEY",
+                    "description": "UUID v4"
+                },
+                {
+                    "name": "content",
+                    "type": "TEXT",
+                    "constraint": "NOT NULL",
+                    "description": "The raw text content of the memory"
+                },
+                {
+                    "name": "embedding",
+                    "type": "FLOAT[]",
+                    "constraint": "NOT NULL",
+                    "description": "768-dimensional vector embedding"
+                },
+                {
+                    "name": "tags",
+                    "type": "TEXT",
+                    "description": "Comma-separated tags (e.g. 'architecture,decision,invoice')"
+                },
+                {
+                    "name": "taskId",
+                    "type": "TEXT",
+                    "description": "Originating task ID from ORCHESTRATION.md"
+                },
+                {
+                    "name": "agentSlug",
+                    "type": "TEXT",
+                    "description": "Agent that created the memory"
+                },
+                {
+                    "name": "createdAt",
+                    "type": "TEXT",
+                    "constraint": "NOT NULL",
+                    "description": "ISO8601 timestamp"
+                },
+                {
+                    "name": "sourceFile",
+                    "type": "TEXT",
+                    "description": "Optional reference to source file"
+                }
+            ]
+        },
+        "tags_index": {
+            "description": "Index for fast tag-based filtering",
+            "columns": [
+                {
+                    "name": "tag",
+                    "type": "TEXT",
+                    "constraint": "NOT NULL"
+                },
+                {
+                    "name": "memoryId",
+                    "type": "TEXT",
+                    "constraint": "NOT NULL REFERENCES memories(id)"
+                }
+            ]
+        }
+    },
+    "commands": {
+        "store": {
+            "usage": "node .agency/scripts/memory.js store --content <text> --tags <tags> --task <id> [--agent <slug>] [--source <file>]",
+            "description": "Embed and store a new memory",
+            "required": [
+                "content",
+                "tags",
+                "task"
+            ],
+            "options": {
+                "--content": "Text content to remember",
+                "--tags": "Comma-separated tags",
+                "--task": "Task ID this memory originates from",
+                "--agent": "Agent slug (default: lead-architect)",
+                "--source": "Optional source file path"
+            }
+        },
+        "recall": {
+            "usage": "node .agency/scripts/memory.js recall --query <text> [--tags <filter>] [--limit <n>]",
+            "description": "Retrieve top-N semantically similar memories",
+            "required": [
+                "query"
+            ],
+            "options": {
+                "--query": "Search query text",
+                "--tags": "Optional comma-separated tag filter",
+                "--limit": "Number of results (default: 3, max: 10)"
+            }
+        },
+        "stats": {
+            "usage": "node .agency/scripts/memory.js stats",
+            "description": "Show memory store statistics (total memories, by tag, by agent)"
+        },
+        "purge": {
+            "usage": "node .agency/scripts/memory.js purge --older-than <days>",
+            "description": "Remove memories older than specified days",
+            "options": {
+                "--older-than": "Age in days"
+            }
+        }
+    },
+    "integrationPoints": [
+        "Inject `agency memory recall --query <task>` into lead-architect's customInstructions in .roomodes",
+        "Auto-call memory recall at start of every lead-architect task",
+        "Store key architectural decisions after each sprint review"
+    ],
+    "changelog": [
+        {
+            "date": "2026-07-10",
+            "version": "1.0.0",
+            "description": "Initial semantic memory contract"
+        }
+    ]
+}

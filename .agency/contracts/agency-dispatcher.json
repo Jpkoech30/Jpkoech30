@@ -1,0 +1,62 @@
+{
+    "contractId": "agency-dispatcher",
+    "version": "1.0.0",
+    "description": "Parallel task dispatcher — reads ORCHESTRATION.md depends_on graph and spawns independent tasks concurrently via child_process",
+    "dispatcher": {
+        "script": ".agency/scripts/dispatcher.js",
+        "schema": {
+            "orchestrationDependsOn": {
+                "description": "A new column in ORCHESTRATION.md tables: 'Depends On' lists task IDs that must be DONE before this task can start",
+                "format": "Comma-separated task IDs (e.g., '1.1, 1.2')",
+                "exampleRow": "| **1.3** | Invoice Creation | feature | 📱 Mobile Screen | 2d | — | 1.1, 1.2 |"
+            }
+        }
+    },
+    "commands": {
+        "dispatch": {
+            "usage": "node .agency/scripts/dispatcher.js --parallel <n> [--sprint <id>] [--dry-run]",
+            "description": "Identify tasks whose dependencies are met and spawn up to n concurrent agent processes",
+            "options": {
+                "--parallel": "Maximum number of concurrent agent processes (required)",
+                "--sprint": "Only consider tasks in this sprint (optional)",
+                "--dry-run": "Show what would be dispatched without executing",
+                "--agent": "Only dispatch tasks for a specific agent slug"
+            }
+        },
+        "status": {
+            "usage": "node .agency/scripts/dispatcher.js --status",
+            "description": "Show currently running dispatcher processes and their task assignments"
+        },
+        "kill": {
+            "usage": "node .agency/scripts/dispatcher.js --kill <taskId>",
+            "description": "Kill a specific dispatched task process"
+        }
+    },
+    "constraints": {
+        "maxParallel": 5,
+        "cwdGuard": "Each spawned process inherits the CWD guard from handoff.js to prevent cross-project pollution",
+        "telemetryContext": "Each spawned process receives a unique telemetry context ID for tracing",
+        "circuitBreaker": {
+            "maxIterations": 6,
+            "gateFailThreshold": 3,
+            "action": "If a task fails gate >3 times, it is removed from the parallel queue and escalated to HITL"
+        },
+        "resourceLimits": {
+            "maxMemoryPerProcess": 512,
+            "maxDurationMinutes": 60
+        }
+    },
+    "integrationPoints": [
+        "Add 'Depends On' column to all existing ORCHESTRATION.md task tables",
+        "Dispatcher calls handoff.js for each dispatched task",
+        "Dispatcher respects circuit breakers from escalate-lead.js",
+        "Telemetry events logged for each dispatched task start/end"
+    ],
+    "changelog": [
+        {
+            "date": "2026-07-10",
+            "version": "1.0.0",
+            "description": "Initial parallel dispatcher contract"
+        }
+    ]
+}

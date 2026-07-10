@@ -1,0 +1,60 @@
+{
+    "contractId": "agency-auto-docs",
+    "version": "1.0.0",
+    "description": "Self-updating documentation — parses source code, package.json scripts, and Git history to auto-generate AGENCY-RULES.md updates and CHANGELOG.md entries",
+    "commands": {
+        "sync": {
+            "usage": "node .agency/scripts/auto-docs.js --sync [--dry-run]",
+            "description": "Full documentation sync: parse scripts, update rules, generate changelog",
+            "options": {
+                "--dry-run": "Show what would change without modifying files",
+                "--scripts-only": "Only update the Scripts Reference table in AGENCY-RULES.md",
+                "--changelog-only": "Only generate changelog from Git history"
+            }
+        }
+    },
+    "sources": {
+        "scripts_reference": {
+            "description": "Parse .agency/scripts/ for JSDoc @desc and @param comments to auto-generate the Scripts Reference table",
+            "jsdocPattern": {
+                "@desc": "Script description (maps to Description column)",
+                "@param": "Parameter documentation (maps to Usage column)",
+                "@example": "Example usage (maps to Example column)"
+            },
+            "outputSection": "AGENCY-RULES.md → Section: Scripts Reference",
+            "tableFormat": "| Script | Description | Usage |"
+        },
+        "package_scripts": {
+            "description": "Parse jengabooks/package.json scripts section to ensure AGENCY-RULES.md has matching entries",
+            "outputSection": "AGENCY-RULES.md → Section: npm Scripts"
+        },
+        "git_changelog": {
+            "description": "Read Git log since last tag and append structured changelog entry to CHANGELOG.md",
+            "commitFormat": "Conventional Commits (<type>(<scope>): <description>)",
+            "changelogSections": {
+                "feat": "✨ Features",
+                "fix": "🐛 Bug Fixes",
+                "security": "🛡️ Security",
+                "perf": "⚡ Performance",
+                "docs": "📝 Documentation",
+                "refactor": "♻️ Refactoring",
+                "test": "🧪 Testing",
+                "ci": "🚀 CI/CD"
+            },
+            "outputFile": "CHANGELOG.md",
+            "entryTemplate": "## v{version} ({date})\n\n{grouped_commits}\n"
+        }
+    },
+    "integrationPoints": [
+        "Include as a required step in release-manager's workflow before cutting a new version",
+        "Can be run standalone via `agency docs --sync`",
+        "Respects DRY-RUN mode for review before execution"
+    ],
+    "changelog": [
+        {
+            "date": "2026-07-10",
+            "version": "1.0.0",
+            "description": "Initial auto-docs contract"
+        }
+    ]
+}

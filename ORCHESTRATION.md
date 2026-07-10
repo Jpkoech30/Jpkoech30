@@ -545,3 +545,123 @@ STATUS: <PENDING | IN_PROGRESS | REVIEW | DONE | BLOCKED>
 | Shared Types | [`jengabooks/packages/shared/src/`](jengabooks/packages/shared/src/) | Zod schemas, enums, permissions, theme |
 | Prisma Schema | [`jengabooks/apps/api/prisma/schema.prisma`](jengabooks/apps/api/prisma/schema.prisma) | Database schema |
 | PROJECT.md | [`jengabooks/PROJECT.md`](jengabooks/PROJECT.md) | Project constraints & context |
+
+---
+
+## 🧠 N-SPRINT v2.0 — Agency Intelligence Upgrade
+
+> **Status:** `SPRINT 7-8 DONE — SPRINT 9 IN PROGRESS` | **Lead:** Lead Architect & Orchestrator | **Created:** 2026-07-10
+> **Blueprint:** [`.agency/plans/n-sprint-blueprint.md`](.agency/plans/n-sprint-blueprint.md)
+> **Goal:** Transform agency from Reactive Tool into Proactive, Self-Optimizing Organism
+
+### N-SPRINT Contracts Registry
+
+| Contract ID | Version | Path | Status | Sprint |
+|---|---|---|---|---|
+| `agency-telemetry` | 1.0.0 | [`.agency/contracts/agency-telemetry.json`](.agency/contracts/agency-telemetry.json) | ✅ Created | 7 |
+| `agency-secret-scan` | 1.0.0 | [`.agency/contracts/agency-secret-scan.json`](.agency/contracts/agency-secret-scan.json) | ✅ Created | 7 |
+| `agency-hitl-webhook` | 1.0.0 | [`.agency/contracts/agency-hitl-webhook.json`](.agency/contracts/agency-hitl-webhook.json) | ✅ Created | 8 |
+| `agency-model-routing` | 1.0.0 | [`.agency/contracts/agency-model-routing.json`](.agency/contracts/agency-model-routing.json) | ✅ Created | 8 |
+| `agency-dispatcher` | 1.0.0 | [`.agency/contracts/agency-dispatcher.json`](.agency/contracts/agency-dispatcher.json) | ✅ Created | 9 |
+| `agency-auto-docs` | 1.0.0 | [`.agency/contracts/agency-auto-docs.json`](.agency/contracts/agency-auto-docs.json) | ✅ Created | 9 |
+| `agency-memory` | 1.0.0 | [`.agency/contracts/agency-memory.json`](.agency/contracts/agency-memory.json) | ✅ Created | 10 |
+
+### Sprint 7 — Security + Observability (Weeks 1-2, Est. 6 days)
+**Theme:** N5 (Secret Scanning) + N1 (Observability Dashboard)
+
+| # | Task | Type | Agent | Est. | Status | Depends On | Contract |
+|---|---|---|---|---|---|---|---|
+| **7.1** | Create secret-scan.js — regex-based secret detector | script | 🔧 JengaBooks Code | 1d | IN_PROGRESS | — | agency-secret-scan@1.0.0 |
+| **7.2** | Update .husky/pre-commit — append secret-scan | config | 🚀 DevOps | 0.25d | ✅ DONE | 7.1 | agency-secret-scan@1.0.0 |
+| **7.3** | Add secretScan.whitelist to .agency/config.json | config | 🧠 Lead Architect | 0.25d | ✅ DONE | 7.1 | agency-secret-scan@1.0.0 |
+| **7.4** | Create telemetry.js — JSONL logger + monitor CLI | script | 🔧 JengaBooks Code | 2d | IN_PROGRESS | — | agency-telemetry@1.0.0 |
+| **7.5** | Hook telemetry into handoff.js | integration | 🔧 JengaBooks Code | 0.5d | ✅ DONE | 7.4 | agency-telemetry@1.0.0 |
+| **7.6** | Hook telemetry into cost-track.js | integration | 🔧 JengaBooks Code | 0.5d | ✅ DONE | 7.4 | agency-telemetry@1.0.0 |
+| **7.7** | Hook telemetry into status.js | integration | 🔧 JengaBooks Code | 0.25d | ✅ DONE | 7.4 | agency-telemetry@1.0.0 |
+| **7.8** | Hook telemetry into escalate-lead.js | integration | 🔧 JengaBooks Code | 0.25d | ✅ DONE | 7.4 | agency-telemetry@1.0.0 |
+| **7.9** | Register telemetry + secret-scan in agency.js | config | 🔧 JengaBooks Code | 0.25d | ✅ DONE | 7.4, 7.1 | — |
+| **7.10** | Create telemetry storage dir + gitkeep | config | 🧠 Lead Architect | 0.1d | ✅ DONE | 7.4 | — |
+| **7.11** | Chaos Monkey: test secret scan blocks commit | qa | 🧪 QA Automator | 0.5d | ✅ DONE | 7.1-7.10 | — |
+
+### Sprint 8 — HITL + Model Routing (Weeks 3-4, Est. 5.5 days)
+
+| # | Task | Type | Agent | Est. | Status | Depends On | Contract |
+|---|---|---|---|---|---|---|---|
+| **8.1** | Create hitl-server.js — Express /webhook | script | 🔧 JengaBooks Code | 2d | ✅ DONE | — | agency-hitl-webhook@1.0.0 |
+| **8.2** | Create notify-hitl.js — Telegram buttons | script | 🔧 JengaBooks Code | 0.5d | ✅ DONE | — | agency-hitl-webhook@1.0.0 |
+| **8.3** | Modify escalate-lead.js to call notify-hitl | integration | 🔧 JengaBooks Code | 0.5d | ✅ DONE | 8.1, 8.2 | agency-hitl-webhook@1.0.0 |
+| **8.4** | Add hitl config to .agency/config.json | config | 🧠 Lead Architect | 0.25d | ✅ DONE | 8.1 | agency-hitl-webhook@1.0.0 |
+| **8.5** | Update .zoo/config.json — model_overrides | config | 🧠 Lead Architect | 0.25d | ✅ DONE | — | agency-model-routing@1.0.0 |
+| **8.6** | Create sync-models.js — sync overrides to .roomodes | script | 🔧 JengaBooks Code | 1d | ✅ DONE | 8.5 | agency-model-routing@1.0.0 |
+| **8.7** | Add --model pro flag to handoff.js | integration | 🔧 JengaBooks Code | 0.5d | ✅ DONE | 8.6 | agency-model-routing@1.0.0 |
+| **8.8** | Register hitl + model in agency.js | config | 🔧 JengaBooks Code | 0.25d | ✅ DONE | 8.1, 8.6 | — |
+| **8.9** | Chaos Monkey: gate failure → Telegram approve | qa | 🧪 QA Automator | 0.5d | ✅ DONE | 8.1-8.8 | — |
+
+### Sprint 9 — Parallel Execution + Auto-Docs (Weeks 5-6, Est. 7 days)
+
+| # | Task | Type | Agent | Est. | Status | Depends On | Contract |
+|---|---|---|---|---|---|---|---|
+| **9.1** | Create dispatcher.js — parallel task spawner | script | 🔧 JengaBooks Code | 3d | IN_PROGRESS | — | agency-dispatcher@1.0.0 |
+| **9.2** | Add Depends On column to all ORCHESTRATION.md tables | config | 🧠 Lead Architect | 0.5d | PENDING | — | agency-dispatcher@1.0.0 |
+| **9.3** | Wire dispatcher to handoff.js | integration | 🔧 JengaBooks Code | 0.5d | PENDING | 9.1 | agency-dispatcher@1.0.0 |
+| **9.4** | Wire dispatcher to telemetry.js | integration | 🔧 JengaBooks Code | 0.25d | PENDING | 9.1, 7.4 | agency-dispatcher@1.0.0 |
+| **9.5** | Create auto-docs.js — JSDoc + Git log parser | script | 🔧 JengaBooks Code | 2d | IN_PROGRESS | — | agency-auto-docs@1.0.0 |
+| **9.6** | Wire auto-docs into release-manager | integration | 📦 Release Manager | 0.5d | PENDING | 9.5 | agency-auto-docs@1.0.0 |
+| **9.7** | Register dispatcher + auto-docs in agency.js | config | 🔧 JengaBooks Code | 0.25d | PENDING | 9.1, 9.5 | — |
+| **9.8** | Chaos Monkey: dispatch --parallel 3 | qa | 🧪 QA Automator | 0.5d | PENDING | 9.1-9.7 | — |
+
+### Sprint 10 — Semantic Memory (Weeks 7-8, Est. 5.5 days)
+
+| # | Task | Type | Agent | Est. | Status | Depends On | Contract |
+|---|---|---|---|---|---|---|---|
+| **10.1** | Create .agency/memory/ + SQLite schema | config | 🧠 Lead Architect | 0.25d | PENDING | — | agency-memory@1.0.0 |
+| **10.2** | Create memory.js — embed, store, recall, purge | script | 🔧 JengaBooks Code | 3d | PENDING | 10.1 | agency-memory@1.0.0 |
+| **10.3** | Integrate sqlite-vec for cosine similarity | deps | 🔧 JengaBooks Code | 0.5d | PENDING | 10.2 | agency-memory@1.0.0 |
+| **10.4** | Inject memory recall into lead-architect .roomodes | config | 🧠 Lead Architect | 0.5d | PENDING | 10.2 | agency-memory@1.0.0 |
+| **10.5** | Register memory commands in agency.js | config | 🔧 JengaBooks Code | 0.25d | PENDING | 10.2 | — |
+| **10.6** | Update FLOW-DOC.md with memory diagram | docs | 📝 Documentarian | 0.5d | PENDING | 10.2 | — |
+| **10.7** | Chaos Monkey: store → clear → recall | qa | 🧪 QA Automator | 0.5d | PENDING | 10.1-10.6 | — |
+
+---
+
+### N-SPRINT Handoff Protocol
+
+| Handoff | From | To | Artifacts |
+|---|---|---|---|
+| **H7** | 🧠 Lead Architect | 🔧 JengaBooks Code | Sprint 7 contracts + n-sprint-blueprint.md |
+| **H8** | 🧠 Lead Architect | 🔧 JengaBooks Code | Sprint 8 contracts (hitl, model-routing) |
+| **H9** | 🧠 Lead Architect | 🔧 JengaBooks Code | Sprint 9 contracts (dispatcher, auto-docs) |
+| **H10** | 🧠 Lead Architect | 🔧 JengaBooks Code | Sprint 10 contract (memory) |
+| **HV** | 🧪 QA Automator | 🧠 Lead Architect | Chaos Monkey validation reports |
+
+### N-SPRINT Quality Gates
+
+| Gate | Trigger | Pass Criteria |
+|---|---|---|
+| **G11: Secret Scan** | Pre-commit | Blocks API_KEY commit |
+| **G12: Telemetry** | Script invocation | Events logged to telemetry.jsonl |
+| **G13: HITL Response** | Gate failure >3 | Telegram inline buttons sent |
+| **G14: Model Correctness** | Agent start | lead-architect uses deepseek-pro |
+| **G15: Parallel Safety** | Dispatch | No CWD collisions |
+| **G16: Docs Sync** | agency docs --sync | CHANGELOG.md auto-updates |
+| **G17: Memory Recall** | agency memory recall | Top-3 results returned |
+| **G18: Chaos Monkey** | Sprint end | All N features pass |
+
+---
+
+### ✅ N-SPRINT Architect Sign-Off Checklist
+
+- [ ] N5 (Secret Scan): Pre-commit blocks test commit containing API_KEY literal
+- [ ] N1 (Telemetry): telemetry.jsonl generated for every task and agent action
+- [ ] N1 (Monitor): agency monitor displays real-time color-coded event stream
+- [ ] N4 (HITL): Express server runs and responds to webhook approval callback
+- [ ] N4 (HITL): escalate-lead.js triggers Telegram with inline buttons
+- [ ] N6 (Model Routing): lead-architect uses deepseek-pro (verify via logs)
+- [ ] N6 (Model Routing): code-agent uses deepseek-flash (cost savings)
+- [ ] N3 (Dispatcher): ORCHESTRATION.md has Depends On column for all tasks
+- [ ] N3 (Dispatcher): 2-3 tasks run in parallel without CWD collisions
+- [ ] N7 (Auto-Docs): agency docs --sync updates AGENCY-RULES.md without manual edits
+- [ ] N7 (Auto-Docs): agency docs --sync generates CHANGELOG.md entry from Git log
+- [ ] N2 (Memory): agency memory recall returns relevant results for stored decision
+- [ ] N2 (Memory): Memory recall auto-invokes at lead-architect task start
+- [ ] All 7 N features pass Chaos Monkey validation suite

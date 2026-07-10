@@ -1,0 +1,134 @@
+{
+    "contractId": "agency-hitl-webhook",
+    "version": "1.0.0",
+    "description": "HITL (Human-in-the-Loop) webhook server — receives approval/rejection/retry decisions from Telegram/Slack inline buttons and updates ORCHESTRATION.md",
+    "server": {
+        "type": "express",
+        "port": 3177,
+        "host": "localhost",
+        "endpoints": [
+            {
+                "method": "GET",
+                "path": "/health",
+                "auth": false,
+                "description": "Health check for the HITL server",
+                "response": {
+                    "200": {
+                        "body": {
+                            "status": "ok",
+                            "uptime_seconds": "number"
+                        }
+                    }
+                }
+            },
+            {
+                "method": "POST",
+                "path": "/webhook/approve/:taskId",
+                "auth": true,
+                "authMethod": "query-token",
+                "description": "Receive approval decision from Telegram/Slack callback",
+                "request": {
+                    "body": {
+                        "decision": {
+                            "type": "string",
+                            "enum": [
+                                "APPROVE",
+                                "REJECT",
+                                "RETRY"
+                            ],
+                            "required": true
+                        },
+                        "comment": {
+                            "type": "string",
+                            "optional": true,
+                            "maxLength": 500
+                        },
+                        "callbackToken": {
+                            "type": "string",
+                            "required": true,
+                            "description": "Pre-shared secret for callback validation"
+                        }
+                    }
+                },
+                "response": {
+                    "200": {
+                        "body": {
+                            "status": "updated",
+                            "taskId": "string",
+                            "newStatus": "string"
+                        }
+                    },
+                    "400": {
+                        "body": {
+                            "error": "Invalid decision or missing fields"
+                        }
+                    },
+                    "401": {
+                        "body": {
+                            "error": "Invalid callback token"
+                        }
+                    },
+                    "404": {
+                        "body": {
+                            "error": "Task not found"
+                        }
+                    }
+                }
+            }
+        ],
+        "callbackTokenEnvVar": "HITL_CALLBACK_TOKEN"
+    },
+    "telegram": {
+        "botCommand": "/approve_<taskId>",
+        "messageTemplate": {
+            "alert": "🚨 **Task Escalation: {taskId}**\n\n**Agent:** {agent}\n**Gate:** {gate}\n**Failures:** {failCount}\n**Description:** {description}\n\n*Click a button to respond:*",
+            "buttons": [
+                {
+                    "text": "✅ Approve",
+                    "callback_data": "approve_{taskId}"
+                },
+                {
+                    "text": "❌ Reject",
+                    "callback_data": "reject_{taskId}"
+                },
+                {
+                    "text": "🔄 Retry",
+                    "callback_data": "retry_{taskId}"
+                }
+            ],
+            "onApproval": "✅ Task {taskId} approved by {user}. Proceeding.",
+            "onRejection": "❌ Task {taskId} rejected by {user}. Task blocked.",
+            "onRetry": "🔄 Task {taskId} queued for retry by {user}."
+        }
+    },
+    "integrationPoints": [
+        "Modify escalate-lead.js to call notify-hitl instead of just logging",
+        "Store callback URL in .agency/config.json",
+        "Server started via `node .agency/scripts/hitl-server.js` or `agency hitl`"
+    ],
+    "config": {
+        "callbackUrl": {
+            "description": "Public URL where the HITL server is reachable",
+            "configKey": "hitl.callbackUrl"
+        },
+        "telegramBotToken": {
+            "description": "Telegram bot token for sending inline button messages",
+            "envVar": "HITL_TELEGRAM_BOT_TOKEN"
+        },
+        "telegramChatId": {
+            "description": "Telegram chat ID for receiving HITL alerts",
+            "envVar": "HITL_TELEGRAM_CHAT_ID"
+        },
+        "callbackToken": {
+            "description": "Pre-shared secret for webhook callback validation",
+            "envVar": "HITL_CALLBACK_TOKEN"
+        }
+    },
+    "changelog": [
+        {
+            "date": "2026-07-10",
+            "version": "1.0.0",
+            "description": "Initial HITL webhook contract"
+        }
+    ]
+}
