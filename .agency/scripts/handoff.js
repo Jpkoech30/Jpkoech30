@@ -7,7 +7,7 @@
  * commit body for use in commit messages.
  *
  * Usage:
- *   node .agency/scripts/handoff.js --from lead-architect --to jengabooks-code --task "7.1"
+ *   node .agency/scripts/handoff.js --from lead-architect --to code-agent --task "7.1"
  *   node .agency/scripts/handoff.js --from backend-api --to frontend-state --task "S14.3" --status REVIEW
  *
  * Default STATUS is IN_PROGRESS.
