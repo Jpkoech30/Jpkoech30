@@ -5,7 +5,7 @@
  *
  * Features:
  *   - Command history per agent (stored in .agency/sessions/)
- *   - @-commands: @search, @find, @extract, @history, @cost, @stats, @help
+ *   - @-commands: @search, @find, @extract, @history, @cost, @stats, @switch, @help
  *   - Session persistence as JSON
  *   - Cost tracking (estimated token usage)
  *   - Output options: --agent, --task, --save, --json
@@ -554,6 +554,41 @@ function cmdStats(targetAgent) {
 }
 
 /**
+ * @switch <name> — Switch to a registered project.
+ * Calls projects-manager.js switch <name> internally.
+ * @param {string} name - Project name to switch to.
+ * @returns {string}
+ */
+function cmdSwitch(name) {
+    if (!name) {
+        return 'Error: @switch requires a project name (e.g., @switch jengabooks)';
+    }
+
+    var scriptPath = path.resolve(ROOT, '.agency', 'scripts', 'projects-manager.js');
+    if (!fs.existsSync(scriptPath)) {
+        return 'Error: projects-manager.js not found. Run Task 9.1 first.';
+    }
+
+    try {
+        var result = execSync(
+            'node "' + scriptPath + '" switch "' + name + '"',
+            { cwd: ROOT, encoding: 'utf-8', timeout: 15000 }
+        );
+
+        var lines = result.trim().split('\n');
+        var divider = ''.padStart(60, '─');
+        var output = '── @switch ' + name + ' ' + divider.slice(10 + name.length);
+        output += '\n' + lines.join('\n');
+
+        return output;
+    } catch (e) {
+        var stderr = e.stderr ? e.stderr.toString().trim() : '';
+        var stdout = e.stdout ? e.stdout.toString().trim() : '';
+        return 'Error switching to project "' + name + '":\n' + (stderr || stdout || e.message);
+    }
+}
+
+/**
  * @help — Display available commands and usage.
  * @returns {string}
  */
@@ -571,6 +606,7 @@ function cmdHelp() {
         '  @history [agent]      Show command history for an agent',
         '  @cost [task-id]       Show aggregated token cost estimates',
         '  @stats [agent]        Show agent productivity statistics',
+        '  @switch <name>        Switch to a registered project',
         '  @help                 Display this help message',
         '',
         'OPTIONS:',
@@ -590,6 +626,7 @@ function cmdHelp() {
         '  node .agency/scripts/terminal-session.js @history',
         '  node .agency/scripts/terminal-session.js @cost --task 5.1',
         '  node .agency/scripts/terminal-session.js @stats',
+        '  node .agency/scripts/terminal-session.js @switch jengabooks',
         '  node .agency/scripts/terminal-session.js @help',
         ''
     ].join('\n');
@@ -662,6 +699,10 @@ function main() {
 
         case '@stats':
             result = cmdStats(args[0] || null);
+            break;
+
+        case '@switch':
+            result = cmdSwitch(args[0] || '');
             break;
 
         case '@help':
