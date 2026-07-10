@@ -743,6 +743,90 @@ Add to package.json:
 | Roo auto-generated | ROO-PLAN.md, ROO-NOTES.md | Delete (not needed) |
 
 ===============================================================================
+PRINCIPAL 14: PROJECT ISOLATION — Multi-Project Support
+===============================================================================
+
+Problem: The agency supports multiple projects (zoocode-agency, jengabooks) but
+agents currently have no mechanism to scope their work to a single project.
+Without isolation, agents may accidentally modify files across projects, memory
+becomes polluted, and contracts may clash.
+
+14.1 The "Project Registry" Rule
+---------------------------------
+- ALL projects MUST be registered in `.agency/projects.json`.
+- Each project has a unique `id`, `rootPath`, and `contractPrefix`.
+- The `activeProject` field in `projects.json` indicates the current context.
+
+14.2 The "PROJECT Field" Rule
+------------------------------
+- EVERY handoff commit MUST include a `PROJECT:<project-id>` field.
+- The project-id MUST exist in `projects.json` and be `enabled: true`.
+- Missing PROJECT → `validate-commit.js` blocks the commit.
+- Global-only commits may use `PROJECT:global` with explicit Lead Architect approval.
+
+14.3 The "File Boundary" Rule
+------------------------------
+- Agents MUST only modify files within their assigned project's `rootPath`.
+- Exceptions: Global files (`.roomodes`, `.agency/AGENCY-RULES.md`,
+  `.agency/scripts/`, `.agency/contracts/agency-*.json`) are exempt.
+- The Compliance Guardian BLOCKs any PR that touches files from multiple projects
+  without explicit Lead Architect approval (documented in the handoff context).
+
+14.4 The "Memory Scope" Rule
+-----------------------------
+- `memory.js` accepts `--project <id>` to scope reads/writes.
+- When `--project` is given, data is stored in
+  `.agency/projects/<id>/memory/store.json`.
+- Without `--project`, memory operates on the global store (`.agency/memory/`).
+- Recall queries optionally filter by project tag.
+
+14.5 The "Contract Prefix" Rule
+--------------------------------
+- All project-specific contracts MUST use the project's `contractPrefix`.
+- Example: `jengabooks-ledger@1.0.0` (prefix `jengabooks-`).
+- Global agency contracts keep the `agency-` prefix (`.agency/contracts/`).
+- Project contracts live in `.agency/projects/<id>/contracts/`.
+
+14.6 Enforcement Summary
+-------------------------
+
+| Check | Enforced By | Blocking? |
+|-------|-------------|-----------|
+| PROJECT field in handoff | validate-commit.js | YES |
+| Project exists and enabled | validate-commit.js | YES |
+| File within project rootPath | Compliance Guardian | YES |
+| Single project per PR | Compliance Guardian | YES (unless PROJECT:global) |
+| Memory --project flag | memory.js | Recommendation |
+| Contract prefix match | Lead Architect review | YES |
+
+14.7 Directory Structure
+-------------------------
+
+```
+.agency/
+├── projects.json                    # Central registry
+├── projects/
+│   ├── zoocode-agency/              # Agency project
+│   │   ├── contracts/               # Agency-specific contracts
+│   │   ├── memory/                  # Agency memory store
+│   │   ├── plans/                   # Agency plans
+│   │   ├── notes/                   # Agency notes
+│   │   └── ORCHESTRATION.md         # Agency task tracking
+│   └── jengabooks/                  # JengaBooks project
+│       ├── contracts/               # JengaBooks contracts (mobile-*)
+│       ├── memory/                  # JengaBooks memory store
+│       ├── plans/                   # JengaBooks plans
+│       ├── notes/                   # JengaBooks notes
+│       └── ORCHESTRATION.md         # JengaBooks task tracking
+├── contracts/                       # Global contracts (agency-*)
+├── memory/                          # Global memory (cross-project)
+├── scripts/                         # All scripts (global)
+├── plans/                           # Global plans
+└── notes/                           # Global notes
+```
+
+
+===============================================================================
 SECTION 15: TAILWIND CSS STRICT PROTOCOL
 ===============================================================================
 
@@ -794,7 +878,7 @@ Added ZooCode + DeepSeek Flash optimisations| Section 11     | Specific to your 
 Unified coverage targets                    | Section 1.7    | Resolve 80% vs 95% conflict
 All costs converted to KES                  | Throughout     | Kenya Shilling denomination
 Added Principal 13: File Clutter Prevention  | Section 14     | No orphan files; one location rule
-
+Added Principal 14: Project Isolation        | Section 14 (new)| Multi-project support via projects.json
 ===============================================================================
 END OF AGENCY-RULES v5.0
 ===============================================================================

@@ -5,9 +5,12 @@
  *   1. Format: <type>(<scope>): <description> (>=10 characters)
  *   2. Type is one of: feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert
  *   3. Required HANDOFF metadata fields: HANDOFF, STATUS
+ *   4. PROJECT field is present and references a valid enabled project in .agency/projects.json
  *
  * Usage:
  *   node .agency/scripts/validate-commit.js
+ *   node .agency/scripts/validate-commit.js --project zoocode-agency
+ *   node .agency/scripts/validate-commit.js --allow-global
  *   COMMIT_MESSAGE="feat(api): add user login endpoint" node .agency/scripts/validate-commit.js
  *
  * Exit codes:
@@ -24,6 +27,9 @@ const VALID_TYPES = [
 ];
 
 const REQUIRED_FIELDS = ['HANDOFF', 'STATUS'];
+
+const ROOT = path.resolve(__dirname, '../..');
+const PROJECTS_JSON_PATH = path.join(ROOT, '.agency/projects.json');
 
 /**
  * Read the commit message from COMMIT_MESSAGE env var or .git/COMMIT_EDITMSG.
@@ -122,9 +128,107 @@ function validateHandoffMetadata(body) {
 }
 
 /**
+ * Load and parse .agency/projects.json.
+ * @returns {{ projects: Array<{id: string, enabled: boolean}>, activeProject: string }}
+ */
+function loadProjectsRegistry() {
+    try {
+        const raw = fs.readFileSync(PROJECTS_JSON_PATH, 'utf-8');
+        return JSON.parse(raw);
+    } catch (err) {
+        console.error(`FAIL: Could not read projects registry at ${PROJECTS_JSON_PATH}`);
+        console.error(`  ${err.message}`);
+        process.exit(1);
+    }
+}
+
+/**
+ * Validate the PROJECT field from the commit body or --project CLI flag.
+ *
+ * @param {string} body         Commit body text
+ * @param {string|null} cliProject  Value from --project CLI flag (overrides body)
+ * @param {boolean} allowGlobal     If true, commits without PROJECT are allowed
+ * @returns {{ valid: boolean, errors?: string[] }}
+ */
+function validateProjectField(body, cliProject, allowGlobal) {
+    let projectId = cliProject;
+
+    // If no CLI override, extract from commit body
+    if (!projectId) {
+        const projectMatch = body.match(/^PROJECT:\s*(\S+)/m);
+        if (projectMatch) {
+            projectId = projectMatch[1].trim();
+        }
+    }
+
+    // Allow global commits if --allow-global is set
+    if (!projectId) {
+        if (allowGlobal) {
+            return { valid: true };
+        }
+        return {
+            valid: false,
+            errors: [
+                'Missing PROJECT field in commit body (or use --project <id>).',
+                '  Add: PROJECT:<project-id>',
+                '  Or use --allow-global for project-agnostic commits.',
+            ],
+        };
+    }
+
+    // Load projects registry
+    const registry = loadProjectsRegistry();
+    const project = registry.projects.find((p) => p.id === projectId);
+
+    if (!project) {
+        const validIds = registry.projects.map((p) => p.id).join(', ');
+        return {
+            valid: false,
+            errors: [
+                `Unknown project ID: "${projectId}".`,
+                `  Valid projects: ${validIds}`,
+            ],
+        };
+    }
+
+    if (!project.enabled) {
+        return {
+            valid: false,
+            errors: [
+                `Project "${projectId}" exists but is disabled (enabled: false).`,
+                `  Enable it in .agency/projects.json before committing.`,
+            ],
+        };
+    }
+
+    return { valid: true };
+}
+
+/**
+ * Parse CLI arguments.
+ * @returns {{ project: string|null, allowGlobal: boolean }}
+ */
+function parseCliArgs() {
+    const args = process.argv.slice(2);
+    const opts = { project: null, allowGlobal: false };
+
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] === '--project' && i + 1 < args.length) {
+            opts.project = args[++i];
+        }
+        if (args[i] === '--allow-global') {
+            opts.allowGlobal = true;
+        }
+    }
+
+    return opts;
+}
+
+/**
  * Main entry point.
  */
 function main() {
+    const cliOpts = parseCliArgs();
     const fullMessage = readCommitMessage();
 
     if (!fullMessage) {
@@ -155,6 +259,18 @@ function main() {
     }
 
     console.log('  ✓ HANDOFF metadata fields present (HANDOFF, STATUS)');
+
+    // Validate PROJECT field
+    const projectResult = validateProjectField(body, cliOpts.project, cliOpts.allowGlobal);
+    if (!projectResult.valid) {
+        for (const err of projectResult.errors) {
+            console.error(`FAIL: ${err}`);
+        }
+        process.exit(1);
+    }
+
+    const projectLabel = cliOpts.project || (body.match(/^PROJECT:\s*(\S+)/m) || [])[1] || '(global)';
+    console.log(`  ✓ PROJECT field valid: "${projectLabel}"`);
     console.log('PASS: Commit message is valid.');
     process.exit(0);
 }

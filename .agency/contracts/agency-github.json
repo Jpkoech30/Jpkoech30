@@ -1,0 +1,179 @@
+{
+    "contractId": "agency-github",
+    "version": "1.0.0",
+    "description": "GitHub API integration — create repos, push, manage issues and PRs directly from the agency",
+    "featureType": "D",
+    "endpoints": [
+        {
+            "method": "POST",
+            "path": "/user/repos",
+            "auth": "GITHUB_TOKEN",
+            "rateLimit": "5000/hour",
+            "request": {
+                "headers": {
+                    "Authorization": "Bearer <token>",
+                    "Accept": "application/vnd.github.v3+json"
+                },
+                "body": {
+                    "contentType": "application/json",
+                    "schema": {
+                        "name": "string (required)",
+                        "description": "string (optional)",
+                        "private": "boolean (default: false)",
+                        "auto_init": "boolean (default: false)"
+                    }
+                }
+            },
+            "response": {
+                "201": {
+                    "description": "Repository created"
+                },
+                "422": {
+                    "description": "Repository already exists or name invalid"
+                }
+            }
+        },
+        {
+            "method": "POST",
+            "path": "/repos/{owner}/{repo}/issues",
+            "auth": "GITHUB_TOKEN",
+            "rateLimit": "5000/hour",
+            "request": {
+                "headers": {
+                    "Authorization": "Bearer <token>",
+                    "Accept": "application/vnd.github.v3+json"
+                },
+                "body": {
+                    "contentType": "application/json",
+                    "schema": {
+                        "title": "string (required)",
+                        "body": "string (optional)",
+                        "labels": "string[] (optional)",
+                        "assignees": "string[] (optional)"
+                    }
+                }
+            },
+            "response": {
+                "201": {
+                    "description": "Issue created"
+                },
+                "401": {
+                    "description": "Bad credentials"
+                }
+            }
+        },
+        {
+            "method": "POST",
+            "path": "/repos/{owner}/{repo}/pulls",
+            "auth": "GITHUB_TOKEN",
+            "rateLimit": "5000/hour",
+            "request": {
+                "headers": {
+                    "Authorization": "Bearer <token>",
+                    "Accept": "application/vnd.github.v3+json"
+                },
+                "body": {
+                    "contentType": "application/json",
+                    "schema": {
+                        "title": "string (required)",
+                        "head": "string (required)",
+                        "base": "string (required)",
+                        "body": "string (optional)"
+                    }
+                }
+            },
+            "response": {
+                "201": {
+                    "description": "Pull request created"
+                },
+                "422": {
+                    "description": "Validation error"
+                }
+            }
+        }
+    ],
+    "types": {
+        "GitHubAuth": {
+            "description": "GitHub API authentication configuration",
+            "fields": {
+                "token": {
+                    "type": "string",
+                    "required": true,
+                    "note": "From env: GITHUB_TOKEN or GH_TOKEN"
+                },
+                "owner": {
+                    "type": "string",
+                    "required": true,
+                    "description": "GitHub username or org"
+                }
+            }
+        },
+        "RemoteConfig": {
+            "description": "Git remote configuration",
+            "fields": {
+                "remote": {
+                    "type": "string",
+                    "required": true,
+                    "default": "origin"
+                },
+                "url": {
+                    "type": "string",
+                    "required": true,
+                    "description": "https://github.com/owner/repo.git"
+                },
+                "branch": {
+                    "type": "string",
+                    "required": true,
+                    "default": "master"
+                }
+            }
+        }
+    },
+    "commands": [
+        {
+            "name": "init",
+            "usage": "agency github init <repo-name> [--private] [--description <text>]",
+            "description": "Create GitHub repo + set as remote + first push"
+        },
+        {
+            "name": "push",
+            "usage": "agency github push [--message <msg>]",
+            "description": "Stage all, commit, and push to remote"
+        },
+        {
+            "name": "remote",
+            "usage": "agency github remote <url>",
+            "description": "Set git remote manually"
+        },
+        {
+            "name": "issue",
+            "usage": "agency github issue create --title <t> --body <b> [--labels <l>]",
+            "description": "Create GitHub issue from CLI"
+        },
+        {
+            "name": "pr",
+            "usage": "agency github pr create --title <t> --head <b> --base <b> [--body <b>]",
+            "description": "Create pull request"
+        },
+        {
+            "name": "status",
+            "usage": "agency github status",
+            "description": "Show remote status and auth state"
+        }
+    ],
+    "env": {
+        "GITHUB_TOKEN": "GitHub personal access token (required for API calls)",
+        "GH_TOKEN": "Alternative env var for GitHub token (fallback)"
+    },
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2026-07-10",
+            "changes": [
+                "Initial contract — GitHub API service for agency",
+                "Supports: init repo, push, issue create, PR create, remote set, status check",
+                "Uses GITHUB_TOKEN or GH_TOKEN env var for authentication"
+            ]
+        }
+    ]
+}

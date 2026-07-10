@@ -76,7 +76,7 @@ const MODEL_MAP = {
 
 function parseArgs() {
     const args = process.argv.slice(2);
-    const opts = { task: null, tokens: null, agent: null, rawUsage: null };
+    const opts = { task: null, tokens: null, agent: null, rawUsage: null, project: null };
 
     for (let i = 0; i < args.length; i++) {
         if (args[i] === '--task' && i + 1 < args.length) {
@@ -90,6 +90,9 @@ function parseArgs() {
         }
         if (args[i] === '--raw-usage' && i + 1 < args.length) {
             opts.rawUsage = args[++i];
+        }
+        if (args[i] === '--project' && i + 1 < args.length) {
+            opts.project = args[++i];
         }
     }
 
@@ -156,10 +159,11 @@ function calculateKesCost(inputTokens, outputTokens) {
 /**
  * Build the new table row to append.
  */
-function buildEntryRow(taskId, tokens, agent, costKes, isAudited) {
+function buildEntryRow(taskId, tokens, agent, costKes, isAudited, project) {
     const model = MODEL_MAP[agent] || 'deepseek-v4-flash';
     const today = new Date().toISOString().split('T')[0];
     const auditedTag = isAudited ? ' [AUDITED]' : '';
+    const projectTag = project ? ` [PROJECT:${project}]` : '';
 
     const inputStr = tokens.inputTokens >= 1000
         ? `${(tokens.inputTokens / 1000).toFixed(0)}K`
@@ -174,7 +178,7 @@ function buildEntryRow(taskId, tokens, agent, costKes, isAudited) {
     const tokenCol = `${inputStr} / ${outputStr} / ${cacheStr}`;
     const costUsd = (costKes / 130).toFixed(3);  // approximate USD at 130 KES/USD
 
-    return `| **${taskId}** | cost-track entry${auditedTag} | ${model} | ${tokenCol} | $${costUsd} | — | ${agent} | ${today} |`;
+    return `| **${taskId}** | cost-track entry${auditedTag}${projectTag} | ${model} | ${tokenCol} | $${costUsd} | — | ${agent} | ${today} |`;
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
@@ -192,8 +196,8 @@ function main() {
 
     if (missing.length > 0) {
         console.error(`FAIL: Missing required argument(s): ${missing.join(', ')}`);
-        console.error('Usage: node cost-track.js --task <id> --tokens <in>/<out>[/<cache>] --agent <slug>');
-        console.error('   or: node cost-track.js --task <id> --raw-usage \'{"input_tokens":5000,"output_tokens":1000}\' --agent <slug>');
+        console.error('Usage: node cost-track.js --task <id> --tokens <in>/<out>[/<cache>] --agent <slug> [--project <id>]');
+        console.error('   or: node cost-track.js --task <id> --raw-usage \'{"input_tokens":5000,"output_tokens":1000}\' --agent <slug> [--project <id>]');
         process.exit(1);
     }
 
@@ -259,7 +263,7 @@ function main() {
     }
 
     // Build the new entry row
-    const newRow = buildEntryRow(opts.task, tokens, opts.agent, costKes, isAudited);
+    const newRow = buildEntryRow(opts.task, tokens, opts.agent, costKes, isAudited, opts.project);
 
     // Read current content
     const rawContent = fs.readFileSync(COST_LEDGER_PATH, 'utf-8');
@@ -312,6 +316,9 @@ function main() {
     console.log(`  Agent:  ${opts.agent}`);
     console.log(`  Tokens: ${tokens.inputTokens} in / ${tokens.outputTokens} out / ${tokens.cacheHitTokens} cache`);
     console.log(`  Cost:   KSh ${costKesFormatted}`);
+    if (opts.project) {
+        console.log(`  Project: ${opts.project}`);
+    }
     if (isAudited) {
         console.log(`  Audit:  Entry tagged [AUDITED] — API-reported usage used`);
     }
@@ -319,7 +326,7 @@ function main() {
     // ── Telemetry: cost event ────────────────────────────────────────
     try {
         execSync(
-            `node ${TELEMETRY_SCRIPT} log --event cost_event --task ${opts.task} --agent ${opts.agent} --inputTokens ${tokens.inputTokens} --outputTokens ${tokens.outputTokens} --cacheHit ${tokens.cacheHitTokens} --costKES ${costKesFormatted}`,
+            `node ${TELEMETRY_SCRIPT} log --event cost_event --task ${opts.task} --agent ${opts.agent} --inputTokens ${tokens.inputTokens} --outputTokens ${tokens.outputTokens} --cacheHit ${tokens.cacheHitTokens} --costKES ${costKesFormatted}${opts.project ? ` --project ${opts.project}` : ''}`,
             { stdio: 'ignore', timeout: 10000 }
         );
     } catch (_) {

@@ -1,0 +1,167 @@
+{
+    "contractId": "agency-multi-project",
+    "version": "1.0.0",
+    "description": "Multi-project orchestration — project registry, isolation rules, and per-project scoping for all agency assets",
+    "featureType": "D",
+    "endpoints": [],
+    "types": {
+        "Project": {
+            "description": "Registered project in the agency",
+            "fields": {
+                "id": {
+                    "type": "string (slug)",
+                    "required": true,
+                    "description": "Unique project identifier"
+                },
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "description": "Human-readable project name"
+                },
+                "description": {
+                    "type": "string",
+                    "required": true,
+                    "description": "Brief project description"
+                },
+                "rootPath": {
+                    "type": "string",
+                    "required": true,
+                    "description": "Relative path from agency root to project root"
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "required": true,
+                    "description": "Whether the project is active"
+                },
+                "defaultBranch": {
+                    "type": "string",
+                    "required": true,
+                    "description": "Default git branch"
+                },
+                "techStack": {
+                    "type": "object",
+                    "required": false,
+                    "description": "Technology stack description"
+                },
+                "agents": {
+                    "type": "object",
+                    "required": true,
+                    "description": "Agent mapping for this project",
+                    "fields": {
+                        "lead": {
+                            "type": "string",
+                            "required": true
+                        },
+                        "backendLead": {
+                            "type": "string (nullable)",
+                            "required": false
+                        },
+                        "frontendLead": {
+                            "type": "string (nullable)",
+                            "required": false
+                        },
+                        "mobileLead": {
+                            "type": "string (nullable)",
+                            "required": false
+                        },
+                        "devopsLead": {
+                            "type": "string (nullable)",
+                            "required": false
+                        }
+                    }
+                },
+                "contractPrefix": {
+                    "type": "string",
+                    "required": true,
+                    "description": "Prefix for all project contracts (e.g. 'jengabooks-')"
+                },
+                "memoryTag": {
+                    "type": "string",
+                    "required": true,
+                    "description": "Tag used to scope memory entries to this project"
+                },
+                "isAgency": {
+                    "type": "boolean",
+                    "required": true,
+                    "description": "Whether this project IS an agency (not a consumer)"
+                }
+            }
+        },
+        "HandoffV2": {
+            "description": "Project-aware handoff commit body",
+            "fields": {
+                "HANDOFF": {
+                    "type": "string (agent-slug)",
+                    "required": true
+                },
+                "PROJECT": {
+                    "type": "string (project-id)",
+                    "required": true,
+                    "description": "Must exist in projects.json"
+                },
+                "ARTIFACTS": {
+                    "type": "string (csv)",
+                    "required": true
+                },
+                "CONTRACT": {
+                    "type": "string (id@version)",
+                    "required": true
+                },
+                "CONTEXT": {
+                    "type": "string",
+                    "required": true,
+                    "description": "Summary of what was done"
+                },
+                "STATUS": {
+                    "type": "enum (PENDING|IN_PROGRESS|REVIEW|DONE|BLOCKED)",
+                    "required": true
+                },
+                "BACKEND-DEPENDENCY": {
+                    "type": "string",
+                    "required": false
+                },
+                "COST-ESTIMATE": {
+                    "type": "string",
+                    "required": false
+                }
+            }
+        }
+    },
+    "directoryStructure": {
+        "global": {
+            ".agency/contracts/": "Global/infrastructure contracts (agency-*)",
+            ".agency/memory/": "Global cross-project memory store",
+            ".agency/scripts/": "All automation scripts",
+            ".agency/plans/": "Global planning documents",
+            ".agency/notes/": "Global temporary notes"
+        },
+        "perProject": {
+            ".agency/projects/<id>/contracts/": "Project-specific contracts (prefixed with contractPrefix)",
+            ".agency/projects/<id>/memory/": "Project-specific memory store",
+            ".agency/projects/<id>/plans/": "Project-specific plans",
+            ".agency/projects/<id>/notes/": "Project-specific notes",
+            ".agency/projects/<id>/ORCHESTRATION.md": "Project-specific task tracking"
+        }
+    },
+    "rules": [
+        "All handoffs MUST include PROJECT field matching a project in projects.json",
+        "validate-commit.js MUST reject commits without PROJECT field",
+        "memory.js MUST accept --project flag to scope reads/writes",
+        "cost-track.js MUST include project field in cost entries",
+        "Agents MUST only modify files within their assigned project's rootPath",
+        "Compliance Guardian MUST block PRs touching files from multiple projects without explicit approval",
+        "Global files (.roomodes, .agency/AGENCY-RULES.md, .agency/scripts/) are exempt from project scoping"
+    ],
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2026-07-10",
+            "changes": [
+                "Initial contract — multi-project isolation framework",
+                "Defined Project, HandoffV2 types",
+                "Established global vs per-project directory structure",
+                "7 enforcement rules for project isolation"
+            ]
+        }
+    ]
+}

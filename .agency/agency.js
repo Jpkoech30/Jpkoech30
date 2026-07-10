@@ -49,12 +49,14 @@ const COMMANDS = [
     ['telemetry', 'telemetry.js', 'Event telemetry pipeline — log, monitor, stats'],
     ['chaos-monkey', 'chaos-monkey.js', 'Run P0 guard chaos monkey tests'],
     ['escalate', 'escalate-lead.js', 'Check gate circuit breaker for failing tasks'],
+    ['github', 'github.js', 'GitHub API — init repo, push, issues, PRs'],
     ['terminal', 'terminal-session.js', 'Terminal helper & session manager'],
     ['hitl', 'hitl-server.js', 'HITL approval webhook server — Express on port 3177'],
     ['notify-hitl', 'notify-hitl.js', 'Send Telegram HITL notification with inline buttons'],
     ['sync-models', 'sync-models.js', 'Sync model_overrides from .zoo/config.json to .roomodes'],
     ['dispatch', 'dispatcher.js', 'Parallel task dispatcher — spawns independent tasks concurrently'],
     ['docs', 'auto-docs.js', 'Self-updating documentation — sync scripts + changelog'],
+    ['memory', 'memory.js', 'Semantic memory — store, recall, stats, purge'],
 
     // ── PowerShell scripts (invoked via powershell -File) ──────────────────────
     ['release', 'release-s14.5.ps1', '[PS] Run release script for sprint s14.5'],
@@ -99,12 +101,12 @@ function showHelp(exitCode = 0) {
     }
     console.log('');
     console.log('  ── DevOps ─────────────────────────────────────');
-    for (const [cmd, , desc] of COMMANDS.slice(10, 24)) {
+    for (const [cmd, , desc] of COMMANDS.slice(10, 25)) {
         console.log(`    ${cmd.padEnd(18)} ${desc}`);
     }
     console.log('');
     console.log('  ── PowerShell (via powershell -File) ──────────');
-    for (const [cmd, , desc] of COMMANDS.slice(24)) {
+    for (const [cmd, , desc] of COMMANDS.slice(25)) {
         console.log(`    ${cmd.padEnd(18)} ${desc}`);
     }
     console.log('');

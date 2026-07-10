@@ -48,6 +48,7 @@ Each sprint entry captures:
 | **S14.4** | QA — Frontend Regression | deepseek-v4-flash | 40K / 8K / 20K | $0.002 | 5m | qa-automator, code | 2026-07-09 |
 | **S14.5** | Release v1.0.2 (tag, changelog, version bump) | deepseek-v4-flash | 15K / 3K / 8K | $0.001 | 5m | release-manager | 2026-07-09 |
 | **S13** | Security + Compliance + Payroll + QA + Release | *rollup* | 262K / 57K / 135K | $0.017 | 65m | — | 2026-07-09 |
+| **MP-1.13-E2E** | cost-track entry [PROJECT:jenga] | deepseek-v4-flash | 100 / 50 / 0 | $0.000 | — | qa-automator | 2026-07-10 |
 
 ---
 

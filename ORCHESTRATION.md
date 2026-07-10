@@ -522,9 +522,9 @@ STATUS: <PENDING | IN_PROGRESS | REVIEW | DONE | BLOCKED>
 
 | # | Task | Type | Agent | Status | Files |
 |---|------|------|-------|--------|-------|
-| **6.1** | Create `.agency/scripts/init-project.js` bootstrap script | `script` | `🔧 JengaBooks Code` | PENDING | — |
-| **6.2** | Add `agency:init` npm script to `jengabooks/package.json` | `config` | `🔧 JengaBooks Code` | PENDING | — |
-| **6.3** | Create `.agency/temp/` directory (cleanup temp location) | `config` | `🧠 Lead Architect` | PENDING | — |
+| **6.1** | Create `.agency/scripts/init-project.js` bootstrap script | `script` | `🔧 JengaBooks Code` | ✅ DONE — |
+| **6.2** | Add `agency:init` npm script to `jengabooks/package.json` | `config` | `🔧 JengaBooks Code` | ✅ DONE — |
+| **6.3** | Create `.agency/temp/` directory (cleanup temp location) | `config` | `🧠 Lead Architect` | ✅ DONE — |
 | **6.4** | Document both `.roomodes` formats (ZooCode + Roo Code) | `docs` | `📝 Documentarian` | ✅ DONE | [`.agency/roomodes-formats.md`](.agency/roomodes-formats.md) |
 
 ---
@@ -571,10 +571,10 @@ STATUS: <PENDING | IN_PROGRESS | REVIEW | DONE | BLOCKED>
 
 | # | Task | Type | Agent | Est. | Status | Depends On | Contract |
 |---|---|---|---|---|---|---|---|
-| **7.1** | Create secret-scan.js — regex-based secret detector | script | 🔧 JengaBooks Code | 1d | IN_PROGRESS | — | agency-secret-scan@1.0.0 |
+| **7.1** | Create secret-scan.js | script | 🔧 JengaBooks Code | 1d | ✅ DONE — | agency-secret-scan@1.0.0 |
 | **7.2** | Update .husky/pre-commit — append secret-scan | config | 🚀 DevOps | 0.25d | ✅ DONE | 7.1 | agency-secret-scan@1.0.0 |
 | **7.3** | Add secretScan.whitelist to .agency/config.json | config | 🧠 Lead Architect | 0.25d | ✅ DONE | 7.1 | agency-secret-scan@1.0.0 |
-| **7.4** | Create telemetry.js — JSONL logger + monitor CLI | script | 🔧 JengaBooks Code | 2d | IN_PROGRESS | — | agency-telemetry@1.0.0 |
+| **7.4** | Create telemetry.js | script | 🔧 JengaBooks Code | 2d | ✅ DONE — | agency-telemetry@1.0.0 |
 | **7.5** | Hook telemetry into handoff.js | integration | 🔧 JengaBooks Code | 0.5d | ✅ DONE | 7.4 | agency-telemetry@1.0.0 |
 | **7.6** | Hook telemetry into cost-track.js | integration | 🔧 JengaBooks Code | 0.5d | ✅ DONE | 7.4 | agency-telemetry@1.0.0 |
 | **7.7** | Hook telemetry into status.js | integration | 🔧 JengaBooks Code | 0.25d | ✅ DONE | 7.4 | agency-telemetry@1.0.0 |
@@ -601,25 +601,25 @@ STATUS: <PENDING | IN_PROGRESS | REVIEW | DONE | BLOCKED>
 
 | # | Task | Type | Agent | Est. | Status | Depends On | Contract |
 |---|---|---|---|---|---|---|---|
-| **9.1** | Create dispatcher.js — parallel task spawner | script | 🔧 JengaBooks Code | 3d | IN_PROGRESS | — | agency-dispatcher@1.0.0 |
-| **9.2** | Add Depends On column to all ORCHESTRATION.md tables | config | 🧠 Lead Architect | 0.5d | PENDING | — | agency-dispatcher@1.0.0 |
-| **9.3** | Wire dispatcher to handoff.js | integration | 🔧 JengaBooks Code | 0.5d | PENDING | 9.1 | agency-dispatcher@1.0.0 |
-| **9.4** | Wire dispatcher to telemetry.js | integration | 🔧 JengaBooks Code | 0.25d | PENDING | 9.1, 7.4 | agency-dispatcher@1.0.0 |
-| **9.5** | Create auto-docs.js — JSDoc + Git log parser | script | 🔧 JengaBooks Code | 2d | IN_PROGRESS | — | agency-auto-docs@1.0.0 |
-| **9.6** | Wire auto-docs into release-manager | integration | 📦 Release Manager | 0.5d | PENDING | 9.5 | agency-auto-docs@1.0.0 |
-| **9.7** | Register dispatcher + auto-docs in agency.js | config | 🔧 JengaBooks Code | 0.25d | PENDING | 9.1, 9.5 | — |
-| **9.8** | Chaos Monkey: dispatch --parallel 3 | qa | 🧪 QA Automator | 0.5d | PENDING | 9.1-9.7 | — |
+| **9.1** | Create dispatcher.js | script | 🔧 JengaBooks Code | 3d | ✅ DONE — | agency-dispatcher@1.0.0 |
+| **9.2** | Add Depends On to ORCHESTRATION.md | config | 🧠 Lead Architect | 0.5d | ✅ DONE — | agency-dispatcher@1.0.0 |
+| **9.3** | Wire dispatcher to handoff.js | integration | 🔧 JengaBooks Code | 0.5d | ✅ DONE 9.1 | agency-dispatcher@1.0.0 |
+| **9.4** | Wire dispatcher to telemetry.js | integration | 🔧 JengaBooks Code | 0.25d | ✅ DONE 9.1, 7.4 | agency-dispatcher@1.0.0 |
+| **9.5** | Create auto-docs.js | script | 🔧 JengaBooks Code | 2d | ✅ DONE — | agency-auto-docs@1.0.0 |
+| **9.6** | Wire auto-docs to release-manager | integration | 📦 Release Manager | 0.5d | ✅ DONE 9.5 | agency-auto-docs@1.0.0 |
+| **9.7** | Register in agency.js | config | 🔧 JengaBooks Code | 0.25d | ✅ DONE 9.1, 9.5 | — |
+| **9.8** | Chaos Monkey validation | qa | 🧪 QA Automator | 0.5d | ✅ DONE 9.1-9.7 | — |
 
 ### Sprint 10 — Semantic Memory (Weeks 7-8, Est. 5.5 days)
 
 | # | Task | Type | Agent | Est. | Status | Depends On | Contract |
 |---|---|---|---|---|---|---|---|
-| **10.1** | Create .agency/memory/ + SQLite schema | config | 🧠 Lead Architect | 0.25d | PENDING | — | agency-memory@1.0.0 |
-| **10.2** | Create memory.js — embed, store, recall, purge | script | 🔧 JengaBooks Code | 3d | PENDING | 10.1 | agency-memory@1.0.0 |
-| **10.3** | Integrate sqlite-vec for cosine similarity | deps | 🔧 JengaBooks Code | 0.5d | PENDING | 10.2 | agency-memory@1.0.0 |
+| **10.1** | Create .agency/memory/ + SQLite | config | 🧠 Lead Architect | 0.25d | ✅ DONE — | agency-memory@1.0.0 |
+| **10.2** | Create memory.js | script | 🔧 JengaBooks Code | 3d | ✅ DONE 10.1 | agency-memory@1.0.0 |
+| **10.3** | Integrate sqlite-vec for cosine similarity | deps | 🔧 JengaBooks Code | 0.5d | ✅ DONE | 10.2 | agency-memory@1.0.0 |
 | **10.4** | Inject memory recall into lead-architect .roomodes | config | 🧠 Lead Architect | 0.5d | ✅ DONE | 10.2 | agency-memory@1.0.0 |
 | **10.5** | Register memory commands in agency.js | config | 🔧 JengaBooks Code | 0.25d | ✅ DONE | 10.2 | — |
-| **10.6** | Update FLOW-DOC.md with memory diagram | docs | 📝 Documentarian | 0.5d | PENDING | 10.2 | — |
+| **10.6** | Update FLOW-DOC.md with memory diagram | docs | 📝 Documentarian | 0.5d | ✅ DONE | 10.2 | — |
 | **10.7** | Chaos Monkey: store → clear → recall | qa | 🧪 QA Automator | 0.5d | ✅ DONE | 10.1-10.6 | — |
 
 ---

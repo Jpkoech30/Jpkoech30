@@ -98,6 +98,8 @@ Quality Gates (post-implementation):
     → 🧪 QA Automator → 🛡️ Compliance Guardian → 📦 Release Manager
 ```
 
+> **🏗️ Multi-Project Handoff:** All handoffs in this graph now include the mandatory `PROJECT:<project-id>` field (see [§5 Handoff Protocol Summary](#5-handoff-protocol-summary)). The project ID must match a registered project in [`projects.json`](.agency/projects.json).
+
 ### Agent Legend
 
 | Slug | Role | File Regex |
@@ -173,16 +175,19 @@ Quality Gates (post-implementation):
 
 ## 5. Handoff Protocol Summary
 
-Per [`§2 HANDOFF PROTOCOL`](.agency/AGENCY-RULES.md:264):
+Per [`§2 HANDOFF PROTOCOL`](.agency/AGENCY-RULES.md:264) and Principal 14 (PROJECT ISOLATION):
 
 ```
 HANDOFF:<next-agent-slug>
+PROJECT:<project-id>
 ARTIFACTS:<comma-separated-file-list>
 CONTRACT:<contract-id@version>
 STATUS:<PENDING|IN_PROGRESS|REVIEW|DONE|BLOCKED|HOTFIX>
 BACKEND-DEPENDENCY:<optional>
 COST-ESTIMATE:~Xk tokens (~KES Y.YY)
 ```
+
+> **`PROJECT`** is now **mandatory** and must match a project `id` in [`projects.json`](.agency/projects.json). The [`validate-commit.js`](.agency/scripts/validate-commit.js) hook will reject any commit missing this field.
 
 ### Cross-Agent Communication
 
@@ -211,11 +216,12 @@ The agency maintains its API contracts in [`.agency/contracts/`](.agency/contrac
 | [`agency-telemetry`](.agency/contracts/agency-telemetry.json) | `1.0.0` | Telemetry and cost tracking |
 | [`agency-auto-docs`](.agency/contracts/agency-auto-docs.json) | `1.0.0` | Auto-documentation generation |
 | [`cost-ledger.schema`](.agency/contracts/cost-ledger.schema.json) | `1.0.0` | Cost ledger schema |
-| Mobile contracts (`mobile-*.json`) | `1.0.0` | Mobile feature contracts (auth, backup, barcode, biometric, client-portal, clients, credit-notes, dashboard, documents, etims, expenses, export, gamification, hitl, ledger, mpesa, payments, payroll, products, receipts, reports, share, sms-import, sync) |
+| [`agency-multi-project`](.agency/contracts/agency-multi-project.json) | `1.0.0` | Multi-project isolation framework (Principal 14) |
+| JengaBooks contracts (`mobile-*.json`) | `1.0.0` | 24 mobile feature contracts — **moved** to [`.agency/projects/jengabooks/contracts/`](.agency/projects/jengabooks/contracts/) per Principal 14 |
 
 ### Contract Lifecycle
 
-1. **Creation** — [`lead-architect`](.roomodes:4) creates a new contract in `.agency/contracts/<feature>.json`
+1. **Creation** — [`lead-architect`](.roomodes:4) creates a new contract in `.agency/contracts/<feature>.json` (global) or `.agency/projects/<id>/contracts/<feature>.json` (per-project)
 2. **Versioning** — Each contract follows semver (`major.minor.patch`)
 3. **Updates** — Follow [§4.3 Contract Update Flow](#43-contract-update-flow-101)
 4. **Deprecation** — Set `"deprecated": true` and reference the replacement contract

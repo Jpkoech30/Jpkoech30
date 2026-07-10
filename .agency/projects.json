@@ -1,16 +1,29 @@
 {
     "projects": [
         {
-            "name": "jengabooks",
-            "path": "jengabooks",
-            "description": "JengaBooks — Kenyan accounting SaaS (NestJS + Postgres + React/Expo)",
-            "registered": "2026-07-10"
-        },
-        {
-            "name": "zoocode-agency",
-            "path": ".",
-            "description": "ZooCode Agency — reusable multi-agent orchestration system",
-            "registered": "2026-07-10"
+            "id": "jengabooks",
+            "name": "JengaBooks",
+            "description": "Kenyan accounting SaaS — NestJS + Postgres + React/Expo. Managed by Jenga Agency.",
+            "rootPath": "projects/jengabooks/",
+            "enabled": true,
+            "defaultBranch": "main",
+            "techStack": {
+                "backend": "NestJS + Prisma + PostgreSQL",
+                "frontend": "React (Vite) + TailwindCSS",
+                "mobile": "Expo (React Native) + NativeWind"
+            },
+            "agents": {
+                "lead": "lead-architect",
+                "backendLead": "backend-lead",
+                "frontendLead": "frontend-lead",
+                "mobileLead": "mobile-lead",
+                "devopsLead": "devops-lead"
+            },
+            "contractPrefix": "jengabooks-",
+            "memoryTag": "jengabooks",
+            "isAgency": false
         }
-    ]
+    ],
+    "activeProject": "jengabooks",
+    "schema": "2.0"
 }

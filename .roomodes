@@ -19,7 +19,7 @@
       "apiConfiguration": {
         "model": "deepseek-v4-flash"
       },
-      "customInstructions": "You are the Lead Architect & Orchestrator. Follow ALL rules defined in .agency/AGENCY-RULES.md (v3.0). Your domain is restricted by groups.fileRegex; never violate it. Before any work, output the pre-task oath from AGENCY-RULES.md. Only read the sections applicable to your mode (see 'How to Read This File').\n\nYou are the central orchestrator. You do not write code. You plan, contract, route, and track.\n\n## SEMANTIC MEMORY INTEGRATION\nBefore starting ANY new task, run: node .agency/scripts/memory.js recall --query \"<brief description of the task>\" --limit 3\nThis retrieves relevant architectural decisions and patterns from the agency's long-term memory, preventing repeated mistakes and redundant design discussions."
+      "customInstructions": "You are the Lead Architect & Orchestrator. Follow ALL rules defined in .agency/AGENCY-RULES.md (v3.0). Your domain is restricted by groups.fileRegex; never violate it. Before any work, output the pre-task oath from AGENCY-RULES.md. Only read the sections applicable to your mode (see 'How to Read This File').\n\nYou are the central orchestrator. You do not write code. You plan, contract, route, and track.\n\n## SEMANTIC MEMORY INTEGRATION\nBefore starting ANY new task, run: node .agency/scripts/memory.js recall --query \"<brief description of the task>\" --limit 3\nThis retrieves relevant architectural decisions and patterns from the agency's long-term memory, preventing repeated mistakes and redundant design discussions.\n\n## MULTI-PROJECT AWARENESS\nBefore planning ANY task, read `.agency/projects.json` to identify the active project context. Every HANDOFF you issue MUST include `PROJECT:<project-id>` as the second field. If a task spans multiple projects, list them as `PROJECT:<id1>,<id2>`. The `activeProject` field in `projects.json` determines which project's ORCHESTRATION.md to update unless the task explicitly targets a different project."
     },
     {
       "slug": "code-agent",
@@ -72,7 +72,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?(apps/api/src/.*\\.controller\\.ts|apps/api/src/.*\\.route\\.ts|apps/api/src/.*\\.dto\\.ts)$",
+            "fileRegex": "^(?:projects/[^/]+/)?(?:[^/]+/)?(apps/api/src/.*\\.controller\\.ts|apps/api/src/.*\\.route\\.ts|apps/api/src/.*\\.dto\\.ts)$",
             "description": "API controllers, DTOs, routes"
           }
         ],
@@ -93,7 +93,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?(apps/api/src/.*\\.service\\.ts|apps/api/src/.*\\.provider\\.ts|apps/api/src/.*\\.module\\.ts)$",
+            "fileRegex": "^(?:projects/[^/]+/)?(?:[^/]+/)?(apps/api/src/.*\\.service\\.ts|apps/api/src/.*\\.provider\\.ts|apps/api/src/.*\\.module\\.ts)$",
             "description": "Service layer and business logic"
           }
         ],
@@ -114,7 +114,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?(apps/api/src/.*\\.integration\\.ts|apps/api/src/.*\\.adapter\\.ts|apps/api/src/.*\\.client\\.ts)$",
+            "fileRegex": "^(?:projects/[^/]+/)?(?:[^/]+/)?(apps/api/src/.*\\.integration\\.ts|apps/api/src/.*\\.adapter\\.ts|apps/api/src/.*\\.client\\.ts)$",
             "description": "Queues, webhooks, integrations"
           }
         ],
@@ -156,7 +156,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?apps/web/src/components/.*$",
+            "fileRegex": "^(?:projects/[^/]+/)?(?:[^/]+/)?apps/web/src/components/.*$",
             "description": "Reusable UI components"
           }
         ],
@@ -177,7 +177,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?apps/web/src/pages/.*$",
+            "fileRegex": "^(?:projects/[^/]+/)?(?:[^/]+/)?apps/web/src/pages/.*$",
             "description": "Page composition"
           }
         ],
@@ -198,7 +198,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?apps/web/src/(stores/|hooks/).*$",
+            "fileRegex": "^(?:projects/[^/]+/)?(?:[^/]+/)?apps/web/src/(stores/|hooks/).*$",
             "description": "State and data fetching"
           }
         ],
@@ -240,7 +240,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?apps/mobile/src/components/.*",
+            "fileRegex": "^(?:projects/[^/]+/)?(?:[^/]+/)?apps/mobile/src/components/.*",
             "description": "Mobile components"
           }
         ],
@@ -261,7 +261,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?apps/mobile/src/app/.*",
+            "fileRegex": "^(?:projects/[^/]+/)?(?:[^/]+/)?apps/mobile/src/app/.*",
             "description": "Mobile screens"
           }
         ],
@@ -282,7 +282,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?apps/mobile/src/(stores/|hooks/|lib/).*",
+            "fileRegex": "^(?:projects/[^/]+/)?(?:[^/]+/)?apps/mobile/src/(stores/|hooks/|lib/).*",
             "description": "Mobile state and data"
           }
         ],
@@ -387,7 +387,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?(apps/web/src/|packages/shared/src/).*",
+            "fileRegex": "^(?:projects/[^/]+/)?(?:[^/]+/)?(apps/web/src/|packages/shared/src/).*",
             "description": "Web frontend"
           }
         ],
@@ -408,7 +408,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?(apps/mobile/src/|packages/shared/src/).*",
+            "fileRegex": "^(?:projects/[^/]+/)?(?:[^/]+/)?(apps/mobile/src/|packages/shared/src/).*",
             "description": "Mobile frontend"
           }
         ],
@@ -429,7 +429,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?(apps/api/src/.*\\.logic\\.ts|apps/api/src/.*\\.business\\.ts|packages/shared/src/.*)$",
+            "fileRegex": "^(?:projects/[^/]+/)?(?:[^/]+/)?(apps/api/src/.*\\.logic\\.ts|apps/api/src/.*\\.business\\.ts|packages/shared/src/.*)$",
             "description": "Backend source"
           }
         ],
@@ -450,7 +450,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?(apps/api/prisma/|.*\\.sql$).*",
+            "fileRegex": "^(?:projects/[^/]+/)?(?:[^/]+/)?(apps/api/prisma/|.*\\.sql$).*",
             "description": "Prisma schema and SQL"
           }
         ],
@@ -471,7 +471,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?(scripts/|docker-compose|Dockerfile|\\.github/|.*deployment.*).*",
+            "fileRegex": "^(?:projects/[^/]+/)?(?:[^/]+/)?(scripts/|docker-compose|Dockerfile|\\.github/|.*deployment.*).*",
             "description": "Infrastructure"
           }
         ],
@@ -513,7 +513,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(?:[^/]+/)?(e2e/|tests/playwright/).*\\.spec\\.[jt]s$",
+            "fileRegex": "^(?:projects/[^/]+/)?(?:[^/]+/)?(e2e/|tests/playwright/).*\\.spec\\.[jt]s$",
             "description": "E2E tests"
           }
         ],
@@ -555,7 +555,7 @@
         [
           "edit",
           {
-            "fileRegex": "^(packages/shared/src/theme\\.ts|packages/shared/src/.*\\.ts$|.*\\.stories\\.[jt]sx?$).*",
+            "fileRegex": "^(?:projects/[^/]+/)?(?:[^/]+/)?(packages/shared/src/theme\\.ts|packages/shared/src/.*\\.ts$|.*\\.stories\\.[jt]sx?$).*",
             "description": "Design tokens and stories"
           }
         ],

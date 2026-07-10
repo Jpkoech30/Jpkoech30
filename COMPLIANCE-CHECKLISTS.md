@@ -116,8 +116,10 @@ From [`§13.5`](.agency/AGENCY-RULES.md:528)
 - [ ] Commit body includes:
   ```
   HANDOFF:<next-agent-slug>
+  PROJECT:<project-id>
   ARTIFACTS:<file-list>
   CONTRACT:<contract-id@version>
+  CONTEXT:<summary-of-what-was-done>
   STATUS:<status>
   COST-ESTIMATE:~Xk tokens (~KES Y.YY)
   ```
@@ -153,7 +155,19 @@ From [`§13.5`](.agency/AGENCY-RULES.md:528)
 
 ---
 
-## 11. Cost Awareness Checklist (§11)
+## 11. Project Isolation Checklist (§14 — Principal 14)
+
+- [ ] Commit body includes `PROJECT:<project-id>` field
+- [ ] `project-id` exists and is `enabled: true` in `.agency/projects.json`
+- [ ] All modified files are within the project's `rootPath`
+- [ ] No PR touches files from multiple projects (unless `PROJECT:global` approved)
+- [ ] Contract IDs use project's `contractPrefix` (e.g., `jengabooks-*`)
+- [ ] Memory recall used `--project <id>` flag (if project-specific)
+- [ ] Global-only files (`.roomodes`, `.agency/AGENCY-RULES.md`, `.agency/scripts/`) explicitly noted as exempt
+
+---
+
+## 12. Cost Awareness Checklist (§11)
 
 - [ ] Pre-task cost estimate output in oath
 - [ ] Used `rg`/`find`/`head` before `Read` tool
