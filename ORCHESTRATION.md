@@ -617,10 +617,10 @@ STATUS: <PENDING | IN_PROGRESS | REVIEW | DONE | BLOCKED>
 | **10.1** | Create .agency/memory/ + SQLite schema | config | 🧠 Lead Architect | 0.25d | PENDING | — | agency-memory@1.0.0 |
 | **10.2** | Create memory.js — embed, store, recall, purge | script | 🔧 JengaBooks Code | 3d | PENDING | 10.1 | agency-memory@1.0.0 |
 | **10.3** | Integrate sqlite-vec for cosine similarity | deps | 🔧 JengaBooks Code | 0.5d | PENDING | 10.2 | agency-memory@1.0.0 |
-| **10.4** | Inject memory recall into lead-architect .roomodes | config | 🧠 Lead Architect | 0.5d | PENDING | 10.2 | agency-memory@1.0.0 |
-| **10.5** | Register memory commands in agency.js | config | 🔧 JengaBooks Code | 0.25d | PENDING | 10.2 | — |
+| **10.4** | Inject memory recall into lead-architect .roomodes | config | 🧠 Lead Architect | 0.5d | ✅ DONE | 10.2 | agency-memory@1.0.0 |
+| **10.5** | Register memory commands in agency.js | config | 🔧 JengaBooks Code | 0.25d | ✅ DONE | 10.2 | — |
 | **10.6** | Update FLOW-DOC.md with memory diagram | docs | 📝 Documentarian | 0.5d | PENDING | 10.2 | — |
-| **10.7** | Chaos Monkey: store → clear → recall | qa | 🧪 QA Automator | 0.5d | PENDING | 10.1-10.6 | — |
+| **10.7** | Chaos Monkey: store → clear → recall | qa | 🧪 QA Automator | 0.5d | ✅ DONE | 10.1-10.6 | — |
 
 ---
 
@@ -662,6 +662,6 @@ STATUS: <PENDING | IN_PROGRESS | REVIEW | DONE | BLOCKED>
 - [ ] N3 (Dispatcher): 2-3 tasks run in parallel without CWD collisions
 - [ ] N7 (Auto-Docs): agency docs --sync updates AGENCY-RULES.md without manual edits
 - [ ] N7 (Auto-Docs): agency docs --sync generates CHANGELOG.md entry from Git log
-- [ ] N2 (Memory): agency memory recall returns relevant results for stored decision
-- [ ] N2 (Memory): Memory recall auto-invokes at lead-architect task start
-- [ ] All 7 N features pass Chaos Monkey validation suite
+- [x] N2 (Memory): agency memory recall returns relevant results for stored decision
+- [x] N2 (Memory): Memory recall auto-invokes at lead-architect task start
+- [x] All 7 N features pass Chaos Monkey validation suite
