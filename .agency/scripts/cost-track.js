@@ -10,9 +10,15 @@
  * Usage:
  *   node .agency/scripts/cost-track.js --task S14.6 --tokens 15000/3000/5000 --agent code-agent
  *   node .agency/scripts/cost-track.js --task S14.6 --tokens 15000/3000 --agent code-agent
+ *   node .agency/scripts/cost-track.js --task S14.6 --raw-usage '{"input_tokens":5000,"output_tokens":1000}' --agent code-agent
  *
  * Token format: <input>/<output>[/<cache>]
  *   e.g., 15000/3000/5000  or  15000/3000
+ *
+ * --raw-usage <json>:
+ *   Accepts a JSON string like '{"input_tokens":5000,"output_tokens":1000}'.
+ *   Overrides --tokens when provided. Logs a WARNING if manual --tokens flag
+ *   differs by >10%. Writes [AUDITED] tag to the ledger entry.
  *
  * Exit codes:
  *   0 — Entry appended successfully
@@ -68,7 +74,7 @@ const MODEL_MAP = {
 
 function parseArgs() {
     const args = process.argv.slice(2);
-    const opts = { task: null, tokens: null, agent: null };
+    const opts = { task: null, tokens: null, agent: null, rawUsage: null };
 
     for (let i = 0; i < args.length; i++) {
         if (args[i] === '--task' && i + 1 < args.length) {
@@ -80,9 +86,43 @@ function parseArgs() {
         if (args[i] === '--agent' && i + 1 < args.length) {
             opts.agent = args[++i];
         }
+        if (args[i] === '--raw-usage' && i + 1 < args.length) {
+            opts.rawUsage = args[++i];
+        }
     }
 
     return opts;
+}
+
+/**
+ * Parse --raw-usage JSON string.
+ * Returns { inputTokens, outputTokens } or null on failure.
+ */
+function parseRawUsage(rawJson) {
+    try {
+        const data = JSON.parse(rawJson);
+        const inputTokens = parseInt(data.input_tokens, 10);
+        const outputTokens = parseInt(data.output_tokens, 10);
+
+        if (isNaN(inputTokens) || isNaN(outputTokens)) {
+            throw new Error('input_tokens and output_tokens must be numbers');
+        }
+
+        return { inputTokens, outputTokens };
+    } catch (err) {
+        console.error(`FAIL: Invalid --raw-usage JSON: ${err.message}`);
+        process.exit(1);
+    }
+}
+
+/**
+ * Calculate the percentage difference between two values.
+ * Returns absolute percentage difference.
+ */
+function percentDiff(a, b) {
+    if (a === 0 && b === 0) return 0;
+    if (a === 0 || b === 0) return 100;
+    return Math.abs((a - b) / b) * 100;
 }
 
 /**
@@ -114,9 +154,10 @@ function calculateKesCost(inputTokens, outputTokens) {
 /**
  * Build the new table row to append.
  */
-function buildEntryRow(taskId, tokens, agent, costKes) {
+function buildEntryRow(taskId, tokens, agent, costKes, isAudited) {
     const model = MODEL_MAP[agent] || 'deepseek-v4-flash';
     const today = new Date().toISOString().split('T')[0];
+    const auditedTag = isAudited ? ' [AUDITED]' : '';
 
     const inputStr = tokens.inputTokens >= 1000
         ? `${(tokens.inputTokens / 1000).toFixed(0)}K`
@@ -131,7 +172,7 @@ function buildEntryRow(taskId, tokens, agent, costKes) {
     const tokenCol = `${inputStr} / ${outputStr} / ${cacheStr}`;
     const costUsd = (costKes / 130).toFixed(3);  // approximate USD at 130 KES/USD
 
-    return `| **${taskId}** | cost-track entry | ${model} | ${tokenCol} | $${costUsd} | — | ${agent} | ${today} |`;
+    return `| **${taskId}** | cost-track entry${auditedTag} | ${model} | ${tokenCol} | $${costUsd} | — | ${agent} | ${today} |`;
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
@@ -142,22 +183,68 @@ function main() {
     // Validate required args
     const missing = [];
     if (!opts.task) missing.push('--task');
-    if (!opts.tokens) missing.push('--tokens');
     if (!opts.agent) missing.push('--agent');
+
+    // --tokens is required unless --raw-usage is provided
+    if (!opts.tokens && !opts.rawUsage) missing.push('--tokens or --raw-usage');
 
     if (missing.length > 0) {
         console.error(`FAIL: Missing required argument(s): ${missing.join(', ')}`);
         console.error('Usage: node cost-track.js --task <id> --tokens <in>/<out>[/<cache>] --agent <slug>');
+        console.error('   or: node cost-track.js --task <id> --raw-usage \'{"input_tokens":5000,"output_tokens":1000}\' --agent <slug>');
         process.exit(1);
     }
 
-    // Parse tokens
+    // Parse --raw-usage if provided (overrides --tokens)
+    let isAudited = false;
+    let apiTokens = null;
+    if (opts.rawUsage) {
+        isAudited = true;
+        apiTokens = parseRawUsage(opts.rawUsage);
+
+        // If manual --tokens also provided, compare and warn
+        if (opts.tokens) {
+            let manualTokens;
+            try {
+                manualTokens = parseTokens(opts.tokens);
+            } catch (err) {
+                console.error(`FAIL: ${err.message}`);
+                process.exit(1);
+            }
+
+            const inDiff = percentDiff(manualTokens.inputTokens, apiTokens.inputTokens);
+            const outDiff = percentDiff(manualTokens.outputTokens, apiTokens.outputTokens);
+
+            if (inDiff > 10 || outDiff > 10) {
+                const maxDiff = Math.max(inDiff, outDiff);
+                console.warn(`⚠️ Manual token count differs from API by ${maxDiff.toFixed(1)}%`);
+            }
+        }
+    }
+
+    // Parse manual tokens (used directly or as fallback when --raw-usage not provided)
     let tokens;
-    try {
-        tokens = parseTokens(opts.tokens);
-    } catch (err) {
-        console.error(`FAIL: ${err.message}`);
-        process.exit(1);
+    if (isAudited) {
+        // Use API tokens, but keep cache from manual if available
+        tokens = {
+            inputTokens: apiTokens.inputTokens,
+            outputTokens: apiTokens.outputTokens,
+            cacheHitTokens: 0,
+        };
+        // If manual tokens were provided, carry over cache hit info
+        if (opts.tokens) {
+            try {
+                const manualTokens = parseTokens(opts.tokens);
+                tokens.cacheHitTokens = manualTokens.cacheHitTokens;
+            } catch (_) { /* ignore */ }
+        }
+    } else {
+        try {
+            tokens = parseTokens(opts.tokens);
+        } catch (err) {
+            console.error(`FAIL: ${err.message}`);
+            process.exit(1);
+        }
     }
 
     // Calculate cost
@@ -170,7 +257,7 @@ function main() {
     }
 
     // Build the new entry row
-    const newRow = buildEntryRow(opts.task, tokens, opts.agent, costKes);
+    const newRow = buildEntryRow(opts.task, tokens, opts.agent, costKes, isAudited);
 
     // Read current content
     const rawContent = fs.readFileSync(COST_LEDGER_PATH, 'utf-8');
@@ -223,6 +310,9 @@ function main() {
     console.log(`  Agent:  ${opts.agent}`);
     console.log(`  Tokens: ${tokens.inputTokens} in / ${tokens.outputTokens} out / ${tokens.cacheHitTokens} cache`);
     console.log(`  Cost:   KSh ${costKesFormatted}`);
+    if (isAudited) {
+        console.log(`  Audit:  Entry tagged [AUDITED] — API-reported usage used`);
+    }
     process.exit(0);
 }
 

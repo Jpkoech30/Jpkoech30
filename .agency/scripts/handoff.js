@@ -22,8 +22,65 @@ const path = require('path');
 
 const ROOT = path.resolve(__dirname, '../..');
 const ROOMODES_PATH = path.join(ROOT, '.roomodes');
+const ACTIVE_PROJECT_PATH = path.join(ROOT, '.agency', '.active-project');
+const PROJECTS_JSON_PATH = path.join(ROOT, '.agency', 'projects.json');
 
 const VALID_STATUSES = ['PENDING', 'IN_PROGRESS', 'REVIEW', 'DONE', 'BLOCKED', 'HOTFIX'];
+
+// ── CWD Guard ────────────────────────────────────────────────────────────────
+
+/**
+ * Verify that the current working directory matches the active project.
+ * Prevents cross-project git commits from the wrong root.
+ */
+function checkCwdGuard() {
+    const cwd = process.cwd();
+
+    // Read active project name
+    if (!fs.existsSync(ACTIVE_PROJECT_PATH)) {
+        console.error(`FAIL: Active project file not found at ${ACTIVE_PROJECT_PATH}`);
+        process.exit(1);
+    }
+    const activeProject = fs.readFileSync(ACTIVE_PROJECT_PATH, 'utf-8').trim();
+
+    // Read projects.json to resolve the project path
+    if (!fs.existsSync(PROJECTS_JSON_PATH)) {
+        console.error(`FAIL: Projects config not found at ${PROJECTS_JSON_PATH}`);
+        process.exit(1);
+    }
+
+    let projectsConfig;
+    try {
+        projectsConfig = JSON.parse(fs.readFileSync(PROJECTS_JSON_PATH, 'utf-8'));
+    } catch (err) {
+        console.error(`FAIL: Could not parse projects.json: ${err.message}`);
+        process.exit(1);
+    }
+
+    const project = projectsConfig.projects.find(p => p.name === activeProject);
+    if (!project) {
+        console.error(`FAIL: Active project "${activeProject}" not found in projects.json`);
+        process.exit(1);
+    }
+
+    // Resolve the project's absolute path
+    const projectAbsPath = path.resolve(ROOT, project.path);
+
+    // Normalize both paths for comparison
+    const normalizedCwd = path.normalize(cwd);
+    const normalizedProjectPath = path.normalize(projectAbsPath);
+
+    // Allow zoocode-agency (root) or the project path
+    const isAgencyRoot = normalizedCwd === path.normalize(ROOT);
+    const isProjectRoot = normalizedCwd.startsWith(normalizedProjectPath);
+
+    if (!isAgencyRoot && !isProjectRoot) {
+        console.error(`❌ ERROR: CWD does not match active project. Run 'npm run project:switch -- <name>' first.`);
+        console.error(`  CWD:            ${cwd}`);
+        console.error(`  Active project: ${activeProject} (${projectAbsPath})`);
+        process.exit(1);
+    }
+}
 
 // ── CLI Parsing ──────────────────────────────────────────────────────────────
 
@@ -105,6 +162,9 @@ function generateCommitBody(from, to, task, status, artifacts) {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 function main() {
+    // CWD guard — verify we are in the right project root
+    checkCwdGuard();
+
     const opts = parseArgs();
 
     // Validate required args
