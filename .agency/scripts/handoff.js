@@ -19,8 +19,10 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '../..');
+const TELEMETRY_SCRIPT = path.join(__dirname, 'telemetry.js');
 const ROOMODES_PATH = path.join(ROOT, '.roomodes');
 const ACTIVE_PROJECT_PATH = path.join(ROOT, '.agency', '.active-project');
 const PROJECTS_JSON_PATH = path.join(ROOT, '.agency', 'projects.json');
@@ -205,10 +207,31 @@ function main() {
         process.exit(1);
     }
 
+    // ── Telemetry: handoff start ─────────────────────────────────────
+    try {
+        execSync(
+            `node ${TELEMETRY_SCRIPT} log --event agent_invocation --agent ${opts.from} --task ${opts.task} --status IN_PROGRESS`,
+            { stdio: 'ignore', timeout: 10000 }
+        );
+    } catch (_) {
+        // Telemetry failures must not block the handoff
+    }
+
     // Generate commit body
     const body = generateCommitBody(opts.from, opts.to, opts.task, opts.status, opts.artifacts);
 
     console.log(body);
+
+    // ── Telemetry: handoff complete ──────────────────────────────────
+    try {
+        execSync(
+            `node ${TELEMETRY_SCRIPT} log --event agent_invocation --agent ${opts.to} --task ${opts.task} --status DONE`,
+            { stdio: 'ignore', timeout: 10000 }
+        );
+    } catch (_) {
+        // Telemetry failures must not block the handoff
+    }
+
     process.exit(0);
 }
 

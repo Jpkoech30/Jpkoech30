@@ -21,8 +21,10 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '../..');
+const TELEMETRY_SCRIPT = path.join(__dirname, 'telemetry.js');
 const ORCHESTRATION_PATH = path.join(ROOT, 'ORCHESTRATION.md');
 
 const VALID_STATUSES = ['PENDING', 'IN_PROGRESS', 'REVIEW', 'DONE', 'BLOCKED', 'HOTFIX'];
@@ -31,11 +33,12 @@ const VALID_STATUSES = ['PENDING', 'IN_PROGRESS', 'REVIEW', 'DONE', 'BLOCKED', '
 
 function parseArgs() {
     const args = process.argv.slice(2);
-    const opts = { task: null, status: null };
+    const opts = { task: null, status: null, agent: null };
 
     for (let i = 0; i < args.length; i++) {
         if (args[i] === '--task' && i + 1 < args.length) opts.task = args[++i];
         if (args[i] === '--status' && i + 1 < args.length) opts.status = args[++i].toUpperCase();
+        if (args[i] === '--agent' && i + 1 < args.length) opts.agent = args[++i];
     }
 
     return opts;
@@ -188,6 +191,18 @@ function main() {
     console.log('');
     console.log('Updated line (paste into ORCHESTRATION.md):');
     console.log(updatedLine);
+
+    // ── Telemetry: status transition ─────────────────────────────────
+    if (opts.agent) {
+        try {
+            execSync(
+                `node ${TELEMETRY_SCRIPT} log --event agent_invocation --task ${opts.task} --agent ${opts.agent} --status ${opts.status}`,
+                { stdio: 'ignore', timeout: 10000 }
+            );
+        } catch (_) {
+            // Telemetry failures must not block status updates
+        }
+    }
 
     process.exit(0);
 }

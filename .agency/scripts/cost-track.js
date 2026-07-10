@@ -27,8 +27,10 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '../..');
+const TELEMETRY_SCRIPT = path.join(__dirname, 'telemetry.js');
 const COST_LEDGER_PATH = path.join(ROOT, 'COST-LEDGER.md');
 
 // KES rates per million tokens
@@ -313,6 +315,17 @@ function main() {
     if (isAudited) {
         console.log(`  Audit:  Entry tagged [AUDITED] — API-reported usage used`);
     }
+
+    // ── Telemetry: cost event ────────────────────────────────────────
+    try {
+        execSync(
+            `node ${TELEMETRY_SCRIPT} log --event cost_event --task ${opts.task} --agent ${opts.agent} --inputTokens ${tokens.inputTokens} --outputTokens ${tokens.outputTokens} --cacheHit ${tokens.cacheHitTokens} --costKES ${costKesFormatted}`,
+            { stdio: 'ignore', timeout: 10000 }
+        );
+    } catch (_) {
+        // Telemetry failures must not block cost tracking
+    }
+
     process.exit(0);
 }
 

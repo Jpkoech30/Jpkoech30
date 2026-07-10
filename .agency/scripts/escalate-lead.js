@@ -17,8 +17,10 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '../..');
+const TELEMETRY_SCRIPT = path.join(__dirname, 'telemetry.js');
 const ORCHESTRATION_PATH = path.join(ROOT, 'ORCHESTRATION.md');
 
 // ── CLI Parsing ──────────────────────────────────────────────────────────────
@@ -85,7 +87,7 @@ function findFailingTasks(content, targetTaskId) {
         if (failCount > 3) {
             failures.push({
                 id: taskId,
-                gate: 'quality',
+                gate: 'qa',
                 failCount,
                 escalated: escalated === 'YES',
                 agent: extractAgentFromRow(line),
@@ -160,6 +162,19 @@ function main() {
 
     // Print escalation alerts
     printAlerts(failures);
+
+    // ── Telemetry: log gate failures ─────────────────────────────────
+    for (const task of failures) {
+        try {
+            execSync(
+                `node ${TELEMETRY_SCRIPT} log --event gate_failure --task ${task.id} --gate ${task.gate} --failCount ${task.failCount}`,
+                { stdio: 'ignore', timeout: 10000 }
+            );
+        } catch (_) {
+            // Telemetry failures must not block escalation
+        }
+    }
+
     process.exit(1);
 }
 
