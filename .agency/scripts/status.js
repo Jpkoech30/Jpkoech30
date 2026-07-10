@@ -47,7 +47,7 @@ function parseArgs() {
  * Parse ORCHESTRATION.md and find the line containing the task reference.
  *
  * Task rows in ORCHESTRATION.md look like:
- *   | **7.1** | Create `.agency/scripts/cost-report.js` ... | `script` | `🔧 JengaBooks Code` | PENDING | — |
+ *   | **7.1** | Create `.agency/scripts/cost-report.js` ... | `script` | `🔧 Code Agent` | PENDING | — |
  *
  * We search for the task ID in table rows (lines starting with '|').
  *

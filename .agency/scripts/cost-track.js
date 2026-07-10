@@ -8,8 +8,8 @@
  *   (input_tokens × 19 + output_tokens × 38) / 1,000,000
  *
  * Usage:
- *   node .agency/scripts/cost-track.js --task S14.6 --tokens 15000/3000/5000 --agent jengabooks-code
- *   node .agency/scripts/cost-track.js --task S14.6 --tokens 15000/3000 --agent jengabooks-code
+ *   node .agency/scripts/cost-track.js --task S14.6 --tokens 15000/3000/5000 --agent code-agent
+ *   node .agency/scripts/cost-track.js --task S14.6 --tokens 15000/3000 --agent code-agent
  *
  * Token format: <input>/<output>[/<cache>]
  *   e.g., 15000/3000/5000  or  15000/3000
@@ -31,7 +31,7 @@ const OUTPUT_RATE_KES = 38;  // 38 KES per 1M output tokens
 
 // Default model mapping (can be extended)
 const MODEL_MAP = {
-    'jengabooks-code': 'deepseek-v4-flash',
+    'code-agent': 'deepseek-v4-flash',
     'lead-architect': 'deepseek-v4-flash',
     'backend-api': 'deepseek-v4-flash',
     'backend-service': 'deepseek-v4-flash',

@@ -68,7 +68,7 @@ function buildMessage(opts) {
     }
 
     // Default: generic message
-    return opts.message || 'ℹ️ Notification from JengaBooks Agency';
+    return opts.message || 'ℹ️ Notification from ZooCode Agency';
 }
 
 // ── Telegram API ─────────────────────────────────────────────────────────────
