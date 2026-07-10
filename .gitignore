@@ -1,1 +1,4 @@
 .env
+
+# Managed projects (each in their own repo)
+projects/*
