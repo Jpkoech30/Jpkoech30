@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+// Top of file
+try { require('./version-check'); } catch (e) { }
+
 /**
  * projects-manager.js — Project Registry Manager
  *
@@ -184,8 +187,12 @@ function cmdSwitch(name) {
     // Update active project
     writeActiveProject(name);
 
+    // Sync CWD to the target project
+    process.chdir(absolutePath);
+    console.log('✅ Switched CWD to: ' + process.cwd());
+    console.log('   To sync your shell, run: cd ' + absolutePath);
+
     console.log(green('📂 Switched to ' + bold(name) + ' at ' + absolutePath));
-    console.log(cyan('💡 Run: cd ' + absolutePath));
 
     // Auto-open VS Code
     try {

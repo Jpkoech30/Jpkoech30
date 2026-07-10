@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+// Top of file
+try { require('./version-check'); } catch (e) { }
+
 /**
  * terminal-session.js — Terminal Helper & Session Manager for AI Agents
  *
@@ -27,7 +30,26 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execSync: _rawExecSync } = require('child_process');
+
+/**
+ * Safe exec wrapper with default 2-minute timeout and error handling.
+ * @param {string} cmd - Command to execute.
+ * @param {object} [opts] - Options override (same as execSync options).
+ * @returns {string} stdout from the command.
+ */
+function execSync(cmd, opts) {
+    var defaultOpts = { timeout: 120000, stdio: 'pipe' };
+    var mergedOpts = Object.assign({}, defaultOpts, opts || {});
+    try {
+        return _rawExecSync(cmd, mergedOpts);
+    } catch (e) {
+        if (e.killed || (e.message && e.message.indexOf('timeout') !== -1)) {
+            console.error('⏱️ CI command timed out. DO NOT assume success.');
+        }
+        throw e;
+    }
+}
 
 const ROOT = path.resolve(__dirname, '../..');
 const SESSIONS_DIR = path.join(ROOT, '.agency', 'sessions');
@@ -378,6 +400,15 @@ function cmdExtract(filePath, rangeStr) {
     }
 
     try {
+        // Context Chunk Guard: warn and truncate for files > 50KB (~12,500 tokens)
+        var stats = fs.statSync(absolutePath);
+        if (stats.size > 50000) {
+            console.warn('⚠️ [WARN] File exceeds 50KB. Extracting first 4000 chars only.');
+            var partial = fs.readFileSync(absolutePath, 'utf-8').slice(0, 4000);
+            var header = '📄 ' + filePath + ' (TRUNCATED — file is >50KB)';
+            return formatOutput(header, partial + '\n... [TRUNCATED - use @extract with smaller range]');
+        }
+
         var content = fs.readFileSync(absolutePath, 'utf-8');
         var lines = content.split('\n');
         var totalLines = lines.length;
