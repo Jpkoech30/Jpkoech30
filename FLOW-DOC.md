@@ -12,19 +12,21 @@
 Every feature follows these stages through the agency:
 
 ```
-PLAN → CONTRACT → IMPLEMENT → REVIEW → DEPLOY
-  │        │           │           │         │
-  │        │           │           │         └── Release Manager
-  │        │           │           └── Quality Gates (Security → Compliance → Tests)
-  │        │           └── Specialist Agent (assigned via HANDOFF)
-  │        └── API Contract (.agency/contracts/<feature>.api.json)
-  └── Lead Architect (plan, route, track)
+RECALL → PLAN → CONTRACT → IMPLEMENT → REVIEW → DEPLOY
+  │        │        │           │           │         │
+  │        │        │           │           │         └── Release Manager
+  │        │        │           │           └── Quality Gates (Security → Compliance → Tests)
+  │        │        │           └── Specialist Agent (assigned via HANDOFF)
+  │        │        └── API Contract (.agency/contracts/<feature>.api.json)
+  │        └── Lead Architect (plan, route, track)
+  └── Semantic Memory recall ([`.agency/scripts/memory.js`](.agency/scripts/memory.js))
 ```
 
 ### Stage Details
 
 | Stage | Owner | Artifact | Gate |
 |-------|-------|----------|------|
+| **RECALL** | [`🧠 Lead Architect`](.roomodes:4) | [`Semantic Memory`](.agency/memory/store.db) | Vector RAG recall via [`memory.js`](.agency/scripts/memory.js) |
 | **PLAN** | [`🧠 Lead Architect`](.roomodes:4) | [`ORCHESTRATION.md`](ORCHESTRATION.md) | Socratic (Principal 3) |
 | **CONTRACT** | [`🧠 Lead Architect`](.roomodes:4) | `.agency/contracts/<feature>.api.json` | Contract versioned (semver) |
 | **IMPLEMENT** | Specialist Agent | Source code + tests | SWARM (Principal 5) |
@@ -55,8 +57,15 @@ PLAN → CONTRACT → IMPLEMENT → REVIEW → DEPLOY
 
 ```
                     ┌──────────────────────────┐
+                    │  📖 Memory Recall         │
+                    │  (Pre-task: auto-recall   │
+                    │   via [`memory.js`](.agency/scripts/memory.js)) │
+                    └────────────┬─────────────┘
+                                │
+                    ┌──────────────────────────┐
                     │  🧠 Lead Architect        │
-                    │  (Plan → Contract → Route)│
+                    │  (Recall → Plan → Contract│
+                    │   → Route)                │
                     └────────────┬─────────────┘
                                  │
               ┌──────────────────┼──────────────────┐
@@ -131,6 +140,8 @@ Quality Gates (post-implementation):
 
 ### 4.1 New Feature Flow
 ```
+0. 🧠 Lead Architect performs semantic memory recall via [`memory.js`](.agency/scripts/memory.js)
+   → retrieves relevant past decisions, code patterns, and architecture rationales
 1. 🧠 Lead Architect creates plan in ORCHESTRATION.md
 2. 🧠 Lead Architect writes/updates API contract in .agency/contracts/
 3. 🧠 Lead Architect assigns task (HANDOFF:backend-api, HANDOFF:mobile-screen, etc.)
@@ -172,3 +183,41 @@ STATUS:<PENDING|IN_PROGRESS|REVIEW|DONE|BLOCKED|HOTFIX>
 BACKEND-DEPENDENCY:<optional>
 COST-ESTIMATE:~Xk tokens (~KES Y.YY)
 ```
+
+### Cross-Agent Communication
+
+| Artifact | Producer | Consumer | Location |
+|----------|----------|----------|----------|
+| Semantic Memory | [`lead-architect`](.roomodes:4) | [`lead-architect`](.roomodes:4) | [`.agency/memory/store.db`](.agency/memory/store.db) |
+| Orchestration Plan | [`lead-architect`](.roomodes:4) | All agents | [`ORCHESTRATION.md`](ORCHESTRATION.md) |
+| API Contract | [`lead-architect`](.roomodes:4) | Specialist agents | `.agency/contracts/<feature>.api.json` |
+| HANDOFF Payload | Producer agent | Consumer agent | Commit message body |
+
+---
+
+## 6. API Contract Inventory
+
+The agency maintains its API contracts in [`.agency/contracts/`](.agency/contracts/). Each contract follows the [`TEMPLATE.api.json`](.agency/contracts/TEMPLATE.api.json) schema and is versioned with semver.
+
+### Current Contracts
+
+| Contract | Version | Description |
+|----------|---------|-------------|
+| [`agency-memory`](.agency/contracts/agency-memory.json) | `1.0.0` | Semantic memory (vector RAG) — stores embedded decisions, code patterns, and architecture rationales for long-term recall |
+| [`agency-dispatcher`](.agency/contracts/agency-dispatcher.json) | `1.0.0` | Agent-to-agent task dispatch protocol |
+| [`agency-hitl-webhook`](.agency/contracts/agency-hitl-webhook.json) | `1.0.0` | Human-in-the-loop webhook integration |
+| [`agency-model-routing`](.agency/contracts/agency-model-routing.json) | `1.0.0` | LLM model routing configuration |
+| [`agency-secret-scan`](.agency/contracts/agency-secret-scan.json) | `1.0.0` | Secret scanning configuration |
+| [`agency-telemetry`](.agency/contracts/agency-telemetry.json) | `1.0.0` | Telemetry and cost tracking |
+| [`agency-auto-docs`](.agency/contracts/agency-auto-docs.json) | `1.0.0` | Auto-documentation generation |
+| [`cost-ledger.schema`](.agency/contracts/cost-ledger.schema.json) | `1.0.0` | Cost ledger schema |
+| Mobile contracts (`mobile-*.json`) | `1.0.0` | Mobile feature contracts (auth, backup, barcode, biometric, client-portal, clients, credit-notes, dashboard, documents, etims, expenses, export, gamification, hitl, ledger, mpesa, payments, payroll, products, receipts, reports, share, sms-import, sync) |
+
+### Contract Lifecycle
+
+1. **Creation** — [`lead-architect`](.roomodes:4) creates a new contract in `.agency/contracts/<feature>.json`
+2. **Versioning** — Each contract follows semver (`major.minor.patch`)
+3. **Updates** — Follow [§4.3 Contract Update Flow](#43-contract-update-flow-101)
+4. **Deprecation** — Set `"deprecated": true` and reference the replacement contract
+
+> **Note:** [`agency-memory`](.agency/contracts/agency-memory.json) (`v1.0.0`) was added on 2026-07-10 as the first cross-cutting agency contract, governing the semantic memory system at [`.agency/scripts/memory.js`](.agency/scripts/memory.js).
