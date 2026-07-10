@@ -156,6 +156,7 @@ function cmdRegister(name, projectPath, description) {
     });
 
     writeRegistry(registry);
+    writeActiveProject(name);
     console.log(green('✓ Registered project "' + name + '" at ' + projectPath));
     process.exit(0);
 }

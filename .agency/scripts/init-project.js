@@ -647,7 +647,14 @@ function main() {
         'file'
     );
 
-    // 5. Install dev dependencies
+    // 5. Create .active-project
+    writeFile(
+        path.join(AGENCY_DIR, '.active-project'),
+        'jengabooks\n',
+        'file'
+    );
+
+    // 6. Install dev dependencies
     console.log('\n📦 Installing dev dependencies...');
     try {
         execSync('npm install -D husky lint-staged cross-env', {
@@ -661,7 +668,7 @@ function main() {
         return;
     }
 
-    // 6. Initialize Husky
+    // 7. Initialize Husky
     console.log('\n🐶 Initializing Husky...');
     try {
         execSync('npx husky init', { cwd: ROOT_DIR, stdio: 'inherit' });
@@ -681,7 +688,7 @@ function main() {
         return;
     }
 
-    // 7. Summary
+    // 8. Summary
     console.log('\n📋 Summary:');
     log('ok', `Project root: ${ROOT_DIR}`);
     log('ok', 'Directory structure ready');

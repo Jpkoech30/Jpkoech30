@@ -665,3 +665,38 @@ STATUS: <PENDING | IN_PROGRESS | REVIEW | DONE | BLOCKED>
 - [x] N2 (Memory): agency memory recall returns relevant results for stored decision
 - [x] N2 (Memory): Memory recall auto-invokes at lead-architect task start
 - [x] All 7 N features pass Chaos Monkey validation suite
+
+---
+
+## 🚨 Sprint MP — Critical Infrastructure Patches
+
+> **Status:** `IN PROGRESS` | **Lead:** 🧠 Lead Architect & Orchestrator | **Created:** 2026-07-11
+> **Priority:** CRITICAL
+> **Plan:** [`.agency/plans/critical-patches-plan.md`](.agency/plans/critical-patches-plan.md)
+
+### Problem Summary
+
+Two critical issues were identified during agency setup review:
+
+1. **Patch 1 — Project Switching Mismatch:** `.agency/.active-project` contains `zoocode-agency` (legacy) while `.agency/projects.json` declares `activeProject: "jengabooks"`. The `cmdRegister()` function in [`projects-manager.js`](.agency/scripts/projects-manager.js) does not update `.active-project`, and [`init-project.js`](.agency/scripts/init-project.js) does not create it at all.
+
+2. **Patch 2 — FileRegex Overlap (Swarm Rule #5):** `frontend-web` has `apps/web/src/` which is a parent of `frontend-ui`'s `apps/web/src/components/`, `frontend-page`'s `apps/web/src/pages/`, and `frontend-state`'s sub-paths. Same issue with `frontend-mobile` vs mobile specialists. Also `packages/shared/src/` is claimed by both `frontend-web` and `backend-logic`.
+
+### Sprint MP Task Board
+
+| # | Task | Type | Agent | Est. | Status | Depends On | Plan Ref |
+|---|------|------|-------|------|--------|------------|----------|
+| **MP-1** | Sync `.active-project` + fix `cmdRegister()` + `init-project.js` | `script-fix` | 🔧 JengaBooks Code | 0.5d | ✅ `DONE` | — | §Patch 1 |
+| **MP-2** | Fix agent fileRegex overlaps in `.roomodes` | `config-fix` | 🔧 JengaBooks Code | 0.5d | ✅ `DONE` | — | §Patch 2 |
+| **MP-3** | One-time sync: overwrite `.active-project` to `jengabooks` | `manual` | 🧠 Lead Architect | 0.1d | ✅ `DONE` | MP-1 | §Patch 1 |
+| **MP-V** | Post-implementation verification | `qa` | 🧪 QA Automator | 0.25d | ✅ `DONE` | MP-1, MP-2 | §Verification |
+
+### Handoff Chain
+
+| Handoff | From | To | Artifacts |
+|---------|------|----|-----------|
+| **H-MP1** | 🧠 Lead Architect | 🔧 JengaBooks Code | [`.agency/scripts/projects-manager.js`](.agency/scripts/projects-manager.js), [`.agency/scripts/init-project.js`](.agency/scripts/init-project.js), [`.agency/plans/critical-patches-plan.md`](.agency/plans/critical-patches-plan.md) |
+| **H-MP2** | 🔧 JengaBooks Code | 🧠 Lead Architect | Updated scripts |
+| **H-MP3** | 🧠 Lead Architect | (self) | `.agency/.active-project` |
+| **H-MP4** | 🔧 JengaBooks Code | 🧠 Lead Architect | Updated `.roomodes` |
+| **H-MPV** | 🧠 Lead Architect | 🧪 QA Automator | Verification checklist |
