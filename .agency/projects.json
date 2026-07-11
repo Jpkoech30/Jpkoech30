@@ -25,28 +25,25 @@
             "isAgency": false
         },
         {
-            "id": "simba-code",
-            "name": "Simba Code",
-            "description": "The King of the Coding Jungle — VS Code extension with native PFG/PTG/QG enforcement, 31 agents, semantic memory, quality gates",
-            "rootPath": "projects/simba-code/",
-            "repoUrl": "https://github.com/Jpkoech30/simba-code.git",
+            "id": "zoocode-agency",
+            "name": "ZooCode Agency",
+            "description": "The agency engine itself — .roomodes, .agency/scripts/, documentation",
+            "rootPath": "",
+            "repoUrl": "https://github.com/Jpkoech30/zoocode-agency.git",
             "enabled": true,
-            "defaultBranch": "main",
+            "defaultBranch": "master",
             "techStack": {
-                "extension": "VS Code Extension (TypeScript + esbuild)",
-                "runtime": "Node.js + tree-sitter + tiktoken"
+                "scripts": "Node.js",
+                "agents": "31 ZooCode agents"
             },
             "agents": {
-                "lead": "lead-architect",
-                "backendLead": "backend-service",
-                "devopsLead": "devops-lead",
-                "frontendLead": "frontend-lead"
+                "lead": "lead-architect"
             },
-            "contractPrefix": "zoocode-fork-",
-            "memoryTag": "zoocode-fork",
-            "isAgency": false
+            "contractPrefix": "agency-",
+            "memoryTag": "agency",
+            "isAgency": true
         }
     ],
-    "activeProject": "zoocode-fork",
+    "activeProject": "jengabooks",
     "schema": "2.0"
 }
