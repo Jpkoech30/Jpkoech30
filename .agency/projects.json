@@ -25,25 +25,28 @@
             "isAgency": false
         },
         {
-            "id": "agency-mcp",
-            "name": "Agency MCP Server",
-            "description": "MCP server enforcing PFG/PTG/QG gates natively within ZooCode — replaces all .agency/scripts with native MCP tools",
-            "rootPath": "projects/agency-mcp/",
+            "id": "zoocode-fork",
+            "name": "ZooCode Fork",
+            "description": "Fork of ZooCode VS Code extension — our own agentic runtime with native PFG/PTG/QG enforcement built into the engine",
+            "rootPath": "projects/zoocode-fork/",
             "repoUrl": "",
             "enabled": true,
             "defaultBranch": "main",
             "techStack": {
-                "server": "Node.js + MCP SDK"
+                "extension": "VS Code Extension (TypeScript + esbuild)",
+                "runtime": "Node.js + tree-sitter + tiktoken"
             },
             "agents": {
                 "lead": "lead-architect",
-                "backendLead": "backend-service"
+                "backendLead": "backend-service",
+                "devopsLead": "devops-lead",
+                "frontendLead": "frontend-lead"
             },
-            "contractPrefix": "agency-mcp-",
-            "memoryTag": "agency-mcp",
+            "contractPrefix": "zoocode-fork-",
+            "memoryTag": "zoocode-fork",
             "isAgency": false
         }
     ],
-    "activeProject": "agency-mcp",
+    "activeProject": "zoocode-fork",
     "schema": "2.0"
 }
