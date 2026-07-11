@@ -1,0 +1,81 @@
+{
+    "contractId": "agency-mcp-gate",
+    "version": "1.0.0",
+    "description": "MCP server tools for Pre-Flight Gate, Post-Task Gate, Quality Gate, Memory, and Telemetry — replaces .agency/scripts/ with native MCP",
+    "status": "DRAFT",
+    "tools": [
+        {
+            "name": "preflight_check",
+            "description": "Check if PFG sentinel exists for current agent. Blocks tool calls before oath is recited.",
+            "input": {
+                "agent": "string"
+            },
+            "output": {
+                "passed": "boolean",
+                "sentinel": "object|null"
+            }
+        },
+        {
+            "name": "preflight_pass",
+            "description": "Record PFG oath recitation. Creates sentinel file.",
+            "input": {
+                "agent": "string",
+                "task": "string",
+                "oath": "string"
+            },
+            "output": {
+                "passed": "boolean",
+                "timestamp": "string"
+            }
+        },
+        {
+            "name": "posttask_complete",
+            "description": "Run PTG checks (C1-C6) after task completion.",
+            "input": {
+                "task": "string",
+                "agent": "string"
+            },
+            "output": {
+                "passed": "boolean",
+                "checkpoints": "object"
+            }
+        },
+        {
+            "name": "quality_check",
+            "description": "Run QG checks (C1-C9) on current diff.",
+            "input": {
+                "project": "string"
+            },
+            "output": {
+                "passed": "boolean",
+                "blocks": "string[]",
+                "warnings": "string[]"
+            }
+        },
+        {
+            "name": "memory_store",
+            "description": "Store a decision in semantic memory.",
+            "input": {
+                "content": "string",
+                "tags": "string",
+                "task": "string",
+                "agent": "string"
+            },
+            "output": {
+                "stored": "boolean",
+                "id": "string"
+            }
+        },
+        {
+            "name": "memory_recall",
+            "description": "Recall relevant past decisions.",
+            "input": {
+                "query": "string",
+                "limit": "number"
+            },
+            "output": {
+                "results": "array"
+            }
+        }
+    ]
+}

@@ -23,8 +23,27 @@
             "contractPrefix": "jengabooks-",
             "memoryTag": "jengabooks",
             "isAgency": false
+        },
+        {
+            "id": "agency-mcp",
+            "name": "Agency MCP Server",
+            "description": "MCP server enforcing PFG/PTG/QG gates natively within ZooCode — replaces all .agency/scripts with native MCP tools",
+            "rootPath": "projects/agency-mcp/",
+            "repoUrl": "",
+            "enabled": true,
+            "defaultBranch": "main",
+            "techStack": {
+                "server": "Node.js + MCP SDK"
+            },
+            "agents": {
+                "lead": "lead-architect",
+                "backendLead": "backend-service"
+            },
+            "contractPrefix": "agency-mcp-",
+            "memoryTag": "agency-mcp",
+            "isAgency": false
         }
     ],
-    "activeProject": "jengabooks",
+    "activeProject": "agency-mcp",
     "schema": "2.0"
 }
