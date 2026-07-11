@@ -1,4 +1,4 @@
-# 🏢 Jenga Agency — Complete Setup Overview
+# 🏢 ZooCode Agency — Complete Setup Overview
 
 > **Generated:** 2026-07-11  
 > **Purpose:** Comprehensive snapshot of the entire agency setup — copy-paste friendly  
@@ -27,13 +27,13 @@
 
 | Property | Value |
 |----------|-------|
-| **Agency Name** | Jenga Agency |
+| **Agency Name** | ZooCode Agency |
 | **Version** | 5.0 |
 | **Target Stack** | ZooCode + DeepSeek Flash (with DeepSeek Pro escalation) |
 | **Currency** | Kenyan Shillings (KES) — 1 USD = 135 KES |
 | **Total Agents** | **31** (3 Orchestration · 4 Domain Leads · 17 Specialists · 7 Quality/Support) |
 | **Foundational Principals** | **14** enforceable rules |
-| **API Contracts** | **37** (9 global agency + 24 JengaBooks feature + 4 templates/schemas) |
+| **API Contracts** | **37** (9 global agency + 24 feature + 4 templates/schemas) |
 | **Scripts** | **33** Node.js scripts in `.agency/scripts/` |
 | **Projects Managed** | **1** — `jengabooks` (Kenyan accounting SaaS) |
 | **Backend Stack** | NestJS + Prisma + PostgreSQL |
@@ -120,7 +120,7 @@
 | ♿ Accessibility | Accessibility Auditor | `accessibility-auditor` | axe-core, color contrast, keyboard nav |
 | 🎨 Design | Design System Keeper | `design-keeper` | Design tokens, WCAG AA enforcement |
 | 📦 Release | Release Manager | `release-manager` | SemVer, CHANGELOG, release PRs |
-| 🔧 Fixer | JengaBooks Code | `jengabooks-code` | User-supervised fixes, scope-constrained |
+| 🔧 Fixer | Code Agent | `code-agent` | User-supervised fixes, scope-constrained |
 
 ### Agent Hierarchy Diagram
 

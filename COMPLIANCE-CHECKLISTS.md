@@ -1,5 +1,5 @@
 
-# JengaBooks Agency — Compliance Checklists
+# ZooCode Agency — Compliance Checklists
 
 > **Version:** 1.0  
 > **Companion to:** [`.agency/AGENCY-RULES.md`](.agency/AGENCY-RULES.md) v5.0  

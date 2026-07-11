@@ -1,4 +1,4 @@
-# 🏢 Jenga Agency — Multi-Agent Orchestration Framework
+# 🏢 ZooCode Agency — Multi-Agent Orchestration Framework
 
 > **Version:** 5.0  
 > **Generated:** 2026-07-10  
@@ -30,7 +30,7 @@
 
 ## 1. Executive Summary
 
-The **JengaBooks Agency** is a purpose-built multi-agent orchestration framework designed to develop and maintain [**JengaBooks**](jengabooks/README.md) — a Kenyan accounting SaaS platform built on NestJS + PostgreSQL + React (web) + Expo (mobile).
+The **ZooCode Agency** is a purpose-built multi-agent orchestration framework designed for [ZooCode](https://zoocode.ai) users. It provides 31 specialised agents, 14 enforceable principals, formal handoff protocols, and automated quality gates — all running on DeepSeek Flash with optional Pro escalation.
 
 Unlike generic AI coding setups, this agency provides:
 
@@ -748,7 +748,7 @@ At end of EVERY task:
 
 ## 15. LLM Evaluation Criteria
 
-This section provides structured criteria for LLMs to **rate** the JengaBooks Agency framework. Each dimension is scored 1-10.
+This section provides structured criteria for LLMs to **rate** the ZooCode Agency framework. Each dimension is scored 1-10.
 
 ### Dimension 1: Completeness (1-10)
 
@@ -783,7 +783,7 @@ This section provides structured criteria for LLMs to **rate** the JengaBooks Ag
 |----------|--------|-------------|
 | Agent count | 25% | Can the framework support 30+ agents without confusion? |
 | Contract versioning | 25% | Is there a clear contract lifecycle and versioning strategy? |
-| Cross-project support | 25% | Can the agency manage multiple projects (JengaBooks + ZooCode)? |
+| Cross-project support | 25% | Can the agency manage multiple projects simultaneously? |
 | Parallel workflows | 25% | Can multiple features flow through the pipeline simultaneously? |
 
 ### Dimension 5: Adaptability (1-10)

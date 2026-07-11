@@ -5,11 +5,13 @@
  *
  * Contract: agency-post-task-gate@1.0.0
  *
- * Validates 4 checkpoints before handoff is allowed:
+ * Validates 6 checkpoints before handoff is allowed:
  *   C1: Memory stored for this task+agent
  *   C2: Temp files cleaned (root + e2e/)
  *   C3: Handoff metadata valid (HANDOFF, ARTIFACTS, CONTRACT, STATUS, MEMORY)
  *   C4: PFG sentinel reset
+ *   C5: Quality Gate (7 checks: hallucination, contract, diff size, tests, plan, TS, deps)
+ *   C6: Compliance Check (CC-1 through CC-7)
  *
  * Usage:
  *   node .agency/scripts/post-task-gate.js complete --task <id> --agent <slug>
@@ -17,7 +19,7 @@
  *       [--status <STATUS>] [--memory <field>]
  *
  * Exit codes:
- *   0 — All 4 checkpoints pass
+ *   0 — All 5 checkpoints pass
  *   1 — One or more checkpoints fail
  */
 
@@ -30,6 +32,8 @@ const MEMORY_STORE_PATH = path.join(ROOT, '.agency', 'memory', 'store.json');
 const SENTINEL_PATH = path.join(ROOT, '.agency', '.preflight-passed');
 const E2E_DIR = path.join(ROOT, 'e2e');
 const TELEMETRY_SCRIPT = path.join(__dirname, 'telemetry.js');
+const QUALITY_GATE_SCRIPT = path.join(__dirname, 'quality-gate.js');
+const COMPLIANCE_CHECK_SCRIPT = path.join(__dirname, 'compliance-check.js');
 
 // ── Temp file patterns ──────────────────────────────────────────────────────
 
@@ -266,6 +270,88 @@ function checkPfgSentinel() {
     }
 }
 
+// ── PTG-C5: Quality Gate ────────────────────────────────────────────────────
+
+/**
+ * Run the quality gate script (QG-C1 through QG-C7).
+ * Delegates to quality-gate.js check --project <ROOT>.
+ * If quality-gate.js exits 0 → pass. If exits 1 → block.
+ */
+function checkQualityGate() {
+    console.log('');
+    console.log('  ── PTG-C5: Quality Gate ──');
+
+    if (!fs.existsSync(QUALITY_GATE_SCRIPT)) {
+        fail(`❌ PTG-C5: Quality Gate script not found at ${QUALITY_GATE_SCRIPT}`);
+        return;
+    }
+
+    try {
+        const qgResult = execSync(
+            `node "${QUALITY_GATE_SCRIPT}" check --project "${ROOT}"`,
+            { cwd: ROOT, stdio: 'pipe', timeout: 120000, encoding: 'utf-8' }
+        );
+        const qgOutput = qgResult.toString();
+        console.log(qgOutput);
+        if (qgOutput.includes('[BLOCK]')) {
+            fail('❌ PTG-C5: Quality Gate FAILED — blocking issues found');
+        } else {
+            pass('✅ PTG-C5: Quality Gate passed');
+        }
+    } catch (qgErr) {
+        // quality-gate.js exits 1 on block — this is expected
+        const qgOutput = qgErr.stdout ? qgErr.stdout.toString() : (qgErr.message || '');
+        console.log(qgOutput);
+
+        if (qgOutput.includes('[BLOCK]') || qgErr.status === 1) {
+            fail('❌ PTG-C5: Quality Gate FAILED — blocking issues found');
+        } else {
+            // Non-blocking error (e.g., script crash)
+            fail(`❌ PTG-C5: Quality Gate error — ${qgErr.message || 'Unknown error'}`);
+        }
+    }
+}
+
+// ── PTG-C6: Compliance Check ────────────────────────────────────────────────
+
+/**
+ * Run the compliance check script (CC-1 through CC-7).
+ * Delegates to compliance-check.js --project <ROOT>.
+ * If compliance-check.js exits 0 → pass. If exits 1 → block.
+ */
+function checkComplianceCheck() {
+    console.log('');
+    console.log('  ── PTG-C6: Compliance Check ──');
+
+    if (!fs.existsSync(COMPLIANCE_CHECK_SCRIPT)) {
+        fail(`❌ PTG-C6: Compliance Check script not found at ${COMPLIANCE_CHECK_SCRIPT}`);
+        return;
+    }
+
+    try {
+        const ccResult = execSync(
+            `node "${COMPLIANCE_CHECK_SCRIPT}" --project "${ROOT}"`,
+            { cwd: ROOT, stdio: 'pipe', timeout: 120000, encoding: 'utf-8' }
+        );
+        const ccOutput = ccResult.toString();
+        console.log(ccOutput);
+        if (ccOutput.includes('[BLOCK]')) {
+            fail('❌ PTG-C6: Compliance Check FAILED — blocking issues found');
+        } else {
+            pass('✅ PTG-C6: Compliance Check passed');
+        }
+    } catch (ccErr) {
+        const ccOutput = ccErr.stdout ? ccErr.stdout.toString() : (ccErr.message || '');
+        console.log(ccOutput);
+
+        if (ccOutput.includes('[BLOCK]') || ccErr.status === 1) {
+            fail('❌ PTG-C6: Compliance Check FAILED — blocking issues found');
+        } else {
+            fail(`❌ PTG-C6: Compliance Check error — ${ccErr.message || 'Unknown error'}`);
+        }
+    }
+}
+
 // ── CLI Parsing ─────────────────────────────────────────────────────────────
 
 function parseArgs() {
@@ -304,7 +390,7 @@ function main() {
     if (!command || command === '--help' || command === '-h') {
         console.log(`
   ╔══════════════════════════════════════════════════════╗
-  ║        Post-Task Gate — 4 Checkpoint Enforcement     ║
+  ║        Post-Task Gate — 6 Checkpoint Enforcement     ║
   ╚══════════════════════════════════════════════════════╝
 
   Usage:
@@ -313,13 +399,15 @@ function main() {
         [--status <STATUS>] [--memory <field>]
 
   Commands:
-    complete    Run all 4 PTG checkpoints (C1-C4)
+    complete    Run all 6 PTG checkpoints (C1-C6)
 
   Checkpoints:
-    PTG-C1  Memory stored?     — Checks store.json for matching task+agent
-    PTG-C2  Temp files cleaned? — Scans root + e2e/ for temp patterns
-    PTG-C3  Handoff valid?      — Validates HANDOFF, ARTIFACTS, CONTRACT, STATUS, MEMORY
-    PTG-C4  Sentinel reset?     — Auto-resets if .preflight-passed exists
+    PTG-C1  Memory stored?       — Checks store.json for matching task+agent
+    PTG-C2  Temp files cleaned?   — Scans root + e2e/ for temp patterns
+    PTG-C3  Handoff valid?        — Validates HANDOFF, ARTIFACTS, CONTRACT, STATUS, MEMORY
+    PTG-C4  Sentinel reset?       — Auto-resets if .preflight-passed exists
+    PTG-C5  Quality Gate?         — Runs 8 QG checks (hallucination, contract, diff, tests, plan, TS, deps, design principles)
+    PTG-C6  Compliance Check?     — Runs CC-1 through CC-7 (compliance checklist)
 
   Exit codes:
     0 — All checkpoints pass
@@ -354,12 +442,14 @@ function main() {
     console.log(`  ║   Agent: ${opts.agent.padEnd(40)}║`);
     console.log(`  ╚══════════════════════════════════════════╝`);
 
-    // ── Run all 4 checkpoints ─────────────────────────────────────────
+    // ── Run all 6 checkpoints ─────────────────────────────────────────
 
     checkMemoryStored(opts.task, opts.agent);
     checkTempFiles();
     checkHandoffMetadata(opts.handoff, opts.artifacts, opts.contract, opts.status, opts.memory);
     checkPfgSentinel();
+    checkQualityGate();
+    checkComplianceCheck();
 
     // ── Summary ────────────────────────────────────────────────────────
 

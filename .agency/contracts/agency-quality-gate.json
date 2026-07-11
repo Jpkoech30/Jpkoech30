@@ -1,0 +1,86 @@
+{
+    "contractId": "agency-quality-gate",
+    "version": "1.0.0",
+    "description": "Quality Gate system — 7 automated checks that validate LLM output quality before handoff",
+    "status": "DRAFT",
+    "changelog": [
+        "1.0.0 — Initial contract: QG-C1 through QG-C7"
+    ],
+    "architecture": {
+        "integration": "PTG-C5: Quality Gate — runs after PTG-C1 through C4, before handoff.js allows commit",
+        "checks": [
+            {
+                "id": "QG-C1",
+                "name": "Hallucination Detector",
+                "severity": "BLOCK on secrets, WARN on TODO"
+            },
+            {
+                "id": "QG-C2",
+                "name": "Contract Compliance",
+                "severity": "WARN"
+            },
+            {
+                "id": "QG-C3",
+                "name": "Diff Size Limiter",
+                "severity": "WARN at 500, BLOCK at 2000"
+            },
+            {
+                "id": "QG-C4",
+                "name": "Test Gate",
+                "severity": "WARN on missing, BLOCK on failures"
+            },
+            {
+                "id": "QG-C5",
+                "name": "Plan-vs-Implementation",
+                "severity": "WARN"
+            },
+            {
+                "id": "QG-C6",
+                "name": "TypeScript Compile",
+                "severity": "BLOCK on errors"
+            },
+            {
+                "id": "QG-C7",
+                "name": "Dependency Sanity",
+                "severity": "BLOCK on missing, WARN on monorepo"
+            }
+        ]
+    },
+    "qualityGates": [
+        {
+            "id": "QG-G1",
+            "name": "Hallucination",
+            "criteria": "Script catches MISSING_API_DATA in non-test files"
+        },
+        {
+            "id": "QG-G2",
+            "name": "Contract Compliance",
+            "criteria": "Script warns when endpoint doesn't match contract"
+        },
+        {
+            "id": "QG-G3",
+            "name": "Diff Size",
+            "criteria": "2000+ line diff is blocked; 500+ warned"
+        },
+        {
+            "id": "QG-G4",
+            "name": "Test Gate",
+            "criteria": "npm test is run when test files change"
+        },
+        {
+            "id": "QG-G5",
+            "name": "Plan Diff",
+            "criteria": "Files in plan but not changed are warned"
+        },
+        {
+            "id": "QG-G6",
+            "name": "TypeScript",
+            "criteria": "tsc --noEmit blocks on errors"
+        },
+        {
+            "id": "QG-G7",
+            "name": "Dependencies",
+            "criteria": "Missing packages in package.json are blocked"
+        }
+    ]
+}

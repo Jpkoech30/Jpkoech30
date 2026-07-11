@@ -12,6 +12,7 @@
  *   node .agency/scripts/github.js remote <url>
  *   node .agency/scripts/github.js issue create --title <t> --body <b> [--labels <l>]
  *   node .agency/scripts/github.js pr create --title <t> --head <b> --base <b> [--body <b>]
+ *   node .agency/scripts/github.js pr create --from <branch> --to <branch> --title "<t>" [--dry-run]
  *   node .agency/scripts/github.js status
  *
  * Environment:
@@ -379,12 +380,128 @@ async function cmdIssueCreate(options) {
     }
 }
 
+// ── Changelog Generation ─────────────────────────────────────────────────────
+
+/**
+ * Get commits since the last tag (or initial commit) and group by type.
+ * @param {string} headBranch - The branch to get commits from
+ * @returns {{ grouped: object, markdown: string, raw: string[] }}
+ */
+function getChangelog(headBranch) {
+    // Get the range: last tag → HEAD, or initial commit → HEAD
+    const rangeCmd = 'log --oneline $(git describe --tags --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD';
+    let logOutput;
+
+    try {
+        logOutput = execSync(`git ${rangeCmd}`, {
+            encoding: 'utf-8',
+            stdio: ['pipe', 'pipe', 'pipe'],
+        }).trim();
+    } catch {
+        // Fallback: try just HEAD
+        try {
+            logOutput = execSync('git log --oneline -20 HEAD', {
+                encoding: 'utf-8',
+                stdio: ['pipe', 'pipe', 'pipe'],
+            }).trim();
+        } catch {
+            return { grouped: {}, markdown: '*No commits found*', raw: [] };
+        }
+    }
+
+    const lines = logOutput.split('\n').filter(Boolean);
+    if (lines.length === 0) {
+        return { grouped: {}, markdown: '*No commits found*', raw: [] };
+    }
+
+    const grouped = { feat: [], fix: [], docs: [], test: [], chore: [], other: [] };
+
+    for (const line of lines) {
+        const match = line.match(/^[a-f0-9]+\s+(feat|fix|docs|test|chore)(?:\([^)]+\))?:\s*(.+)/i);
+        if (match) {
+            const type = match[1].toLowerCase();
+            const msg = match[2].trim();
+            if (grouped[type]) {
+                grouped[type].push(msg);
+            } else {
+                grouped.other.push(line);
+            }
+        } else {
+            grouped.other.push(line);
+        }
+    }
+
+    // Build markdown body
+    const typeLabels = {
+        feat: '🚀 Features',
+        fix: '🐛 Bug Fixes',
+        docs: '📝 Documentation',
+        test: '🧪 Tests',
+        chore: '🔧 Chores',
+        other: '📦 Other',
+    };
+
+    let md = `## Changelog\n\n`;
+    let hasContent = false;
+
+    for (const [type, label] of Object.entries(typeLabels)) {
+        const items = grouped[type];
+        if (items && items.length > 0) {
+            md += `### ${label}\n\n`;
+            for (const item of items) {
+                md += `- ${item}\n`;
+            }
+            md += '\n';
+            hasContent = true;
+        }
+    }
+
+    if (!hasContent) {
+        md += '*No conventional commits found.*\n';
+    }
+
+    return { grouped, markdown: md.trim(), raw: lines };
+}
+
 // ── Command: pr create ────────────────────────────────────────────────────────
 
 async function cmdPrCreate(options) {
-    if (!options.title || !options.head || !options.base) {
+    const isAutoChangelog = !!options.from;
+
+    if (!options.title) {
         fail('Usage: node .agency/scripts/github.js pr create --title <t> --head <b> --base <b> [--body <b>]');
+        fail('       node .agency/scripts/github.js pr create --from <branch> --to <branch> --title "<t>" [--dry-run]');
         return 1;
+    }
+
+    // Resolve head/base from --from/--to if provided
+    const head = options.from || options.head;
+    const base = options.to || options.base;
+
+    if (!head || !base) {
+        fail('Provide either --head/--base or --from/--to');
+        return 1;
+    }
+
+    // Auto-generate body from changelog
+    let body = options.body;
+    if (isAutoChangelog && !options.body) {
+        const changelog = getChangelog(head);
+        body = changelog.markdown;
+    }
+
+    // Dry-run mode
+    if (options.dryRun) {
+        info(`${COLOR.bold}[DRY RUN]${COLOR.reset} Would create PR:`);
+        info(`  Title: ${options.title}`);
+        info(`  From:  ${head}`);
+        info(`  To:    ${base}`);
+        info(`  Body:`);
+        console.log('');
+        console.log(body || '(no body)');
+        console.log('');
+        ok('Dry-run complete. No PR was created.');
+        return 0;
     }
 
     const remoteUrl = getRemoteUrl();
@@ -400,16 +517,16 @@ async function cmdPrCreate(options) {
         return 1;
     }
 
-    const body = {
+    const prBody = {
         title: options.title,
-        head: options.head,
-        base: options.base,
+        head,
+        base,
     };
-    if (options.body) body.body = options.body;
+    if (body) prBody.body = body;
 
     try {
         info(`Creating PR in ${owner}/${repo}...`);
-        const result = await githubRequest('POST', `/repos/${owner}/${repo}/pulls`, body);
+        const result = await githubRequest('POST', `/repos/${owner}/${repo}/pulls`, prBody);
         ok(`PR #${result.data.number} created: ${result.data.html_url}`);
         return 0;
     } catch (err) {
@@ -506,7 +623,10 @@ async function main() {
                         title: opts.title,
                         head: opts.head,
                         base: opts.base,
+                        from: opts.from,
+                        to: opts.to,
                         body: opts.body,
+                        dryRun: opts['dry-run'] || opts.dryRun || false,
                     });
                 }
                 fail('Unknown pr subcommand. Use: pr create');

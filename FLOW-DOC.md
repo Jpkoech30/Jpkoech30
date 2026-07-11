@@ -1,5 +1,5 @@
 
-# JengaBooks Agency — Flow Document
+# ZooCode Agency — Flow Document
 
 > **Version:** 1.0  
 > **Companion to:** [`.agency/AGENCY-RULES.md`](.agency/AGENCY-RULES.md) v5.0  
@@ -105,7 +105,7 @@ Quality Gates (post-implementation):
 | Slug | Role | File Regex |
 |------|------|------------|
 | [`lead-architect`](.roomodes:4) | 🧠 Lead Architect & Orchestrator | `.md\|json\|yaml\|prisma\|sql` |
-| [`jengabooks-code`](.roomodes:12) | 🔧 JengaBooks Code | `.tsx?\|jsx?\|css\|json` |
+| [`code-agent`](.roomodes:12) | 🔧 Code Agent | `.tsx?\|jsx?\|css\|json` |
 | [`backend-lead`](.roomodes:20) | ⚙️ Backend Lead | `.md\|json` |
 | [`backend-api`](.roomodes:28) | ⚙️ Backend API | `apps/api/src/` (not prisma) |
 | [`backend-service`](.roomodes:36) | ⚙️ Backend Service | `apps/api/src/` (not prisma) |
@@ -217,7 +217,7 @@ The agency maintains its API contracts in [`.agency/contracts/`](.agency/contrac
 | [`agency-auto-docs`](.agency/contracts/agency-auto-docs.json) | `1.0.0` | Auto-documentation generation |
 | [`cost-ledger.schema`](.agency/contracts/cost-ledger.schema.json) | `1.0.0` | Cost ledger schema |
 | [`agency-multi-project`](.agency/contracts/agency-multi-project.json) | `1.0.0` | Multi-project isolation framework (Principal 14) |
-| JengaBooks contracts (`mobile-*.json`) | `1.0.0` | 24 mobile feature contracts — **moved** to [`.agency/projects/jengabooks/contracts/`](.agency/projects/jengabooks/contracts/) per Principal 14 |
+| Project contracts (`<prefix>-*.json`) | `1.0.0` | Feature contracts — stored per-project in `.agency/projects/<id>/contracts/` per Principal 14 |
 
 ### Contract Lifecycle
 

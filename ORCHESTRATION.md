@@ -1,3 +1,5 @@
+> **📋 TEMPLATE FILE** — This is a **template** for task orchestration. The sprints, tasks, and handoffs below are examples from a real project (JengaBooks). Replace them with your own project's tasks. Keep the structure (sprint headers, task tables, handoff chains, quality gates) as a pattern for your own orchestration.
+
 # ZooCode Agency — Orchestration
 
 See .agency/projects/jengabooks/ORCHESTRATION.md for JengaBooks sprints S1-S4
@@ -348,10 +350,105 @@ Two critical issues were identified during agency setup review:
 | **15.6** | cleanup.js — fix BASE_DIR to use __dirname | 🟢 P4 | 🔧 JengaBooks Code | ✅ Done |
 | **15.7** | terminal-session.js — var→const/let + cmdSwitch fix | 🟢 P4 | 🔧 JengaBooks Code | ✅ Done |
 
-### Handoff (2026-07-11 08:43:53)
-**From:** lead-architect → **To:** qa-automator
-**Task:** scope-test
+---
+
+### Sprint 16 — Quality Gate System (Est. 3.5 days)
+> **Status:** `PLANNED` | **Lead:** 🧠 Lead Architect | **Contract:** `agency-quality-gate@1.0.0`
+> **Plan:** [`.agency/plans/quality-gate-plan.md`](.agency/plans/quality-gate-plan.md)
+> **Problem:** 7 unenforced quality gaps — no automated check validates LLM output before handoff
+
+| # | Task | Type | Agent | Est. | Severity | Status |
+|---|------|------|-------|------|----------|--------|
+| **16.1** | Create `.agency/scripts/quality-gate.js` — 7 checks (hallucination, contract, diff, test, plan, TS, deps) | `script` | 🔧 JengaBooks Code | 2d | 🔴 P0 | `PENDING` |
+| **16.2** | Wire QG into PTG as C5 in `post-task-gate.js` | `integration` | 🔧 JengaBooks Code | 0.5d | 🔴 P0 | `PENDING` |
+| **16.3** | Create contract & plan | `docs` | 🧠 Lead Architect | 0.25d | — | ✅ DONE |
+| **16.4** | Update AGENCY-RULES.md §3 with new QG gates | `docs` | 🧠 Lead Architect | 0.25d | — | `PENDING` |
+| **16.5** | 🧪 Validate QG-G1 through QG-G7 | `qa` | 🧪 QA Automator | 0.5d | — | `PENDING` |
+
+---
+
+### Sprint 17 — Automation Sprint (Est. 5.25 days)
+> **Status:** `IN PROGRESS` | **Lead:** 🧠 Lead Architect | **Plan:** [`.agency/plans/automation-sprint-plan.md`](.agency/plans/automation-sprint-plan.md)
+> **Goal:** Automate top 5 manual processes — remove ~80% of manual work
+
+| # | Task | Type | Agent | Est. | Priority | Status |
+|---|------|------|-------|------|----------|--------|
+| **17.1** | Add DP3/DP4/DP12 design principle checks to quality-gate.js (QG-C8) | `enhance` | 🔧 JengaBooks Code | 0.5d | 🟡 P1 | ✅ `DONE` |
+| **17.2** | Create `.agency/scripts/compliance-check.js` — 7 automated checks (QG-C9) | `script` | 🔧 JengaBooks Code | 1d | 🔴 P0 | ✅ `DONE` |
+| **17.3** | Wire cost-report.js into post-commit hook | `integration` | 🔧 JengaBooks Code | 0.25d | 🟡 P1 | ✅ `DONE` |
+| **17.4** | Create E2E persona tests (Jane/David/Grace workflows) | `qa` | 🧪 QA Automator | 2d | 🟢 P2 | `PENDING` |
+| **17.5** | Create plan-sprint.js — generate task tables from feature descriptions | `script` | 🔧 JengaBooks Code | 1d | 🟢 P2 | `PENDING` |
+| **17.6** | 🧪 Validate all automation | `qa` | 🧪 QA Automator | 0.5d | — | `PENDING` |
+
+### Handoff Chain
+
+| Handoff | From | To | Artifacts |
+|---------|------|----|-----------|
+| **H17.0** | 🧠 Lead Architect | 🔧 JengaBooks Code | Sprint 17 tasks 17.1-17.3, 17.5 |
+| **H17.1** | 🧠 Lead Architect | 🧪 QA Automator | Sprint 17 task 17.4 |
+| **H17.2** | 🔧 JengaBooks Code | 🧪 QA Automator | Updated scripts for validation |
+| **H17.3** | 🧪 QA Automator | 🧠 Lead Architect | Validation report |
+
+---
+
+### Sprint 18 — Final Automation Push (Est. 5.5 days)
+> **Status:** `CODE DONE — AWAITING QA` | **Lead:** 🧠 Lead Architect | **Plan:** [`.agency/plans/sprint18-automation-2.md`](.agency/plans/sprint18-automation-2.md)
+
+| # | Task | Type | Agent | Est. | Status |
+|---|------|------|-------|------|--------|
+| **18.1** | Create `auto-assign.js` — match tasks to agents via fileRegex | `script` | 🔧 JengaBooks Code | 1d | ✅ `DONE` |
+| **18.2** | Enhance `github.js` — add `pr create` with auto-changelog | `enhance` | 🔧 JengaBooks Code | 1d | ✅ `DONE` |
+| **18.3** | Create `retro-report.js` — sprint retro from telemetry+memory+commits | `script` | 🔧 JengaBooks Code | 1d | ✅ `DONE` |
+| **18.4** | Create `contract-gen.js` — scan code → draft contracts | `script` | 🔧 JengaBooks Code | 1.5d | ✅ `DONE` |
+| **18.5** | 🧪 Validate all automation | `qa` | 🧪 QA Automator | 1d | `PENDING` |
+
+### Handoff Chain
+
+| Handoff | From | To | Artifacts |
+|---------|------|----|-----------|
+| **H18.0** | 🧠 Lead Architect | 🔧 JengaBooks Code | Sprint 18 tasks 18.1-18.4 |
+| **H18.1** | 🔧 JengaBooks Code | 🧪 QA Automator | All 4 scripts + retro report |
+
+### Quality Gates
+
+| Gate | Check | Severity | Pass Criteria |
+|------|-------|----------|---------------|
+| **QG-G1** | Hallucination Detector | 🔴 BLOCK | No hardcoded secrets in non-test files |
+| **QG-G2** | Contract Compliance | 🟡 WARN | API calls match .agency/contracts/ |
+| **QG-G3** | Diff Size Limiter | 🔴 BLOCK at 2000 | Diff < 2000 lines |
+| **QG-G4** | Test Gate | 🔴 BLOCK on fail | Tests pass when test files change |
+| **QG-G5** | Plan-vs-Implementation | 🟡 WARN | Files match Socratic plan |
+| **QG-G6** | TypeScript Compile | 🔴 BLOCK | tsc --noEmit passes |
+| **QG-G7** | Dependency Sanity | 🔴 BLOCK | All imports exist in package.json |
+
+### Handoff (2026-07-11 13:28:00)
+**From:** jengabooks-code → **To:** qa-automator
+**Task:** sprint18-automation
 **Status:** DONE
 **Scope:** global
-**Artifacts:** pending
-**Contract:** pending
+**Artifacts:**
+- [`.agency/scripts/auto-assign.js`](.agency/scripts/auto-assign.js) — Task-to-agent matcher via fileRegex
+- [`.agency/scripts/github.js`](.agency/scripts/github.js) — Enhanced with auto-changelog PR creation
+- [`.agency/scripts/retro-report.js`](.agency/scripts/retro-report.js) — Sprint retro report generator
+- [`.agency/scripts/contract-gen.js`](.agency/scripts/contract-gen.js) — Draft contract generator from source
+- [`.agency/reports/retro-sprint18.md`](.agency/reports/retro-sprint18.md) — Generated retro report
+- [`.agency/contracts/draft-github.json`](.agency/contracts/draft-github.json) — Generated draft contract
+**Memory:** `8de8146a-f136-4498-b5dd-ed4b898ca417`
+
+### Handoff (2026-07-11 13:36:00)
+**From:** documentarian → **To:** lead-architect
+**Task:** open-source-release-prep
+**Status:** DONE
+**Scope:** global
+**Artifacts:**
+- [`README.md`](README.md) — Comprehensive project overview with architecture, quick start, 31 agents, quality gates
+- [`SETUP.md`](SETUP.md) — Step-by-step new project setup guide
+- [`QUICKSTART.md`](QUICKSTART.md) — Existing ZooCode users add agency
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — New agents, contracts, tests, PR process
+- [`AGENCY.md`](AGENCY.md) — Cleaned up: "Jenga Agency" → "ZooCode Agency"
+- [`AGENCY-SETUP-OVERVIEW.md`](AGENCY-SETUP-OVERVIEW.md) — Cleaned up: "Jenga Agency" → "ZooCode Agency"
+- [`COMPLIANCE-CHECKLISTS.md`](COMPLIANCE-CHECKLISTS.md) — Cleaned up: "JengaBooks Agency" → "ZooCode Agency"
+- [`FLOW-DOC.md`](FLOW-DOC.md) — Cleaned up: "JengaBooks Agency" → "ZooCode Agency"
+- [`ORCHESTRATION.md`](ORCHESTRATION.md) — Marked as template with header notice
+**Note:** Non-.md files still contain jengabooks references requiring manual cleanup: `.roomodes` (agent name "jengabooks-code"), `.agency/contracts/` (JSON contracts), `package.json` (name "jenga-agency")
+**Memory:** `6e27c2e9-5c3f-48e0-b4f1-9dbbcfb5a2c1`

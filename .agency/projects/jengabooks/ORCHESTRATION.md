@@ -363,3 +363,11 @@ apps/mobile/src/
 | Shared Types | [`../../projects/jengabooks/packages/shared/src/`](../../projects/jengabooks/packages/shared/src/) | Zod schemas, enums, permissions, theme |
 | Prisma Schema | [`../../projects/jengabooks/apps/api/prisma/schema.prisma`](../../projects/jengabooks/apps/api/prisma/schema.prisma) | Database schema |
 | PROJECT.md | [`../../projects/jengabooks/PROJECT.md`](../../projects/jengabooks/PROJECT.md) | Project constraints & context |
+
+### Handoff (2026-07-11 08:44:09)
+**From:** lead-architect → **To:** qa-automator
+**Task:** scope-test-project
+**Status:** DONE
+**Scope:** project
+**Artifacts:** pending
+**Contract:** pending

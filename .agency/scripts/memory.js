@@ -295,9 +295,10 @@ function storeMemorySQLite(content, tags, taskId, agentSlug, sourceFile) {
  * @param {string} query
  * @param {string} [tagFilter] - Comma-separated tags to filter by
  * @param {number} [limit=3]
+ * @param {number} [minScore=0.01] - Minimum similarity score threshold (0.0 to 1.0)
  * @returns {Array<{id: string, content: string, tags: string, taskId: string, agentSlug: string, createdAt: string, sourceFile: string, score: number}>}
  */
-function recallMemoriesSQLite(query, tagFilter, limit) {
+function recallMemoriesSQLite(query, tagFilter, limit, minScore) {
     const queryVec = embed(query);
     const rows = db.prepare('SELECT * FROM memories').all();
 
@@ -352,7 +353,8 @@ function recallMemoriesSQLite(query, tagFilter, limit) {
 
     // Sort by score descending, filter below threshold, limit results
     withScores.sort((a, b) => b.score - a.score);
-    const scoredFiltered = withScores.filter((r) => r.score >= MIN_SCORE);
+    const threshold = typeof minScore === 'number' ? minScore : MIN_SCORE;
+    const scoredFiltered = withScores.filter((r) => r.score >= threshold);
     const results = scoredFiltered.slice(0, limit);
 
     // Strip embedding from output
@@ -479,7 +481,7 @@ function storeMemoryJSON(content, tags, taskId, agentSlug, sourceFile) {
     return memory.id;
 }
 
-function recallMemoriesJSON(query, tagFilter, limit) {
+function recallMemoriesJSON(query, tagFilter, limit, minScore) {
     const queryVec = embed(query);
     let store = loadJSONStore();
 
@@ -502,7 +504,8 @@ function recallMemoriesJSON(query, tagFilter, limit) {
 
     // Sort, filter below threshold, limit
     withScores.sort((a, b) => b.score - a.score);
-    const filtered = withScores.filter((r) => r.score >= MIN_SCORE);
+    const threshold = typeof minScore === 'number' ? minScore : MIN_SCORE;
+    const filtered = withScores.filter((r) => r.score >= threshold);
     return filtered.slice(0, limit).map(({ embedding, ...rest }) => rest);
 }
 
@@ -558,12 +561,13 @@ function storeMemory(content, tags, taskId, agentSlug, sourceFile) {
     return storeMemoryJSON(content, tags, taskId, agentSlug, sourceFile);
 }
 
-function recallMemories(query, tagFilter, limit) {
+function recallMemories(query, tagFilter, limit, minScore) {
     const effectiveLimit = Math.min(limit || DEFAULT_LIMIT, MAX_LIMIT);
+    const effectiveMinScore = typeof minScore === 'number' ? minScore : undefined;
     if (isSQLiteAvailable()) {
-        return recallMemoriesSQLite(query, tagFilter, effectiveLimit);
+        return recallMemoriesSQLite(query, tagFilter, effectiveLimit, effectiveMinScore);
     }
-    return recallMemoriesJSON(query, tagFilter, effectiveLimit);
+    return recallMemoriesJSON(query, tagFilter, effectiveLimit, effectiveMinScore);
 }
 
 function getStats() {
@@ -674,7 +678,7 @@ function showUsage() {
 
   Usage:
     node ${script} store   --content <text> --tags <tags> --task <id> [--agent <slug>] [--source <file>] [--project <id>]
-    node ${script} recall  --query <text> [--tags <filter>] [--limit <n>] [--project <id>]
+    node ${script} recall  --query <text> [--tags <filter>] [--limit <n>] [--min-score <float>] [--project <id>]
     node ${script} stats   [--project <id>]
     node ${script} purge   --older-than <days> [--project <id>]
 
@@ -691,10 +695,11 @@ function showUsage() {
               --agent     Agent slug (default: lead-architect)
               --source    Optional source file path
 
-    recall    Retrieve top-N semantically similar memories.
+    recall     Retrieve top-N semantically similar memories.
               --query     Search query text (required)
               --tags      Optional comma-separated tag filter
               --limit     Number of results (default: 3, max: 10)
+              --min-score Minimum similarity score threshold 0.0-1.0 (default: 0.01)
 
     stats     Show memory store statistics (total, by tag, by agent).
 
@@ -758,7 +763,7 @@ function main() {
             // Validate required args
             if (!opts.query) {
                 console.error('FAIL: Missing required argument: --query');
-                console.error('Usage: node memory.js recall --query <text> [--tags <filter>] [--limit <n>]');
+                console.error('Usage: node memory.js recall --query <text> [--tags <filter>] [--limit <n>] [--min-score <float>]');
                 process.exit(1);
             }
 
@@ -768,11 +773,21 @@ function main() {
                 process.exit(1);
             }
 
-            const results = recallMemories(opts.query, opts.tags || null, limit);
+            let minScore = undefined;
+            if (opts.minScore !== undefined) {
+                minScore = parseFloat(opts.minScore);
+                if (isNaN(minScore) || minScore < 0 || minScore > 1) {
+                    console.error('FAIL: --min-score must be a float between 0.0 and 1.0');
+                    process.exit(1);
+                }
+            }
+
+            const results = recallMemories(opts.query, opts.tags || null, limit, minScore);
 
             console.log('');
             console.log(`  🔍 Recall: "${opts.query}"`);
             if (opts.tags) console.log(`  Filter:    tags in [${opts.tags}]`);
+            if (minScore !== undefined) console.log(`  Min score: ${minScore.toFixed(2)}`);
             console.log(`  Results:   ${results.length}`);
             formatResults(results);
             process.exit(0);

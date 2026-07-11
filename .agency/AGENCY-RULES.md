@@ -1,8 +1,8 @@
 
 ===============================================================================
-JENGABOOKS AGENCY — COMPLETE RULES PACKAGE
+ZOOCODE AGENCY — COMPLETE RULES PACKAGE
 ===============================================================================
-Version: 5.0 (Final)
+Version: 5.1
 Last Updated: 2026-07-11
 Status: Active — Single Source of Truth
 Target: ZooCode + DeepSeek Flash
@@ -15,12 +15,12 @@ HOW TO READ THIS FILE (TIERED SYSTEM)
 
 Agent Type                    | Sections to Read
 -----------------------------|--------------------------------------------------
-All Agents (Mandatory)       | File Priority, Pre-Task Oath, Principals 1-12,
-                              | + Section 14 (File Clutter Prevention),
+All Agents (Mandatory)       | File Priority, Pre-Task Oath, Principals 1-14,
+                              | + Section 14 (File Clutter Prevention) + Section 18 (Project Isolation),
                               | Handoff, Quality Gates
-Frontend / UI / Mobile       | + Section 9 (Error Handling), Section 13 (Frontend),
+Frontend / UI / Mobile       | + Section 9 (Error Handling), Section 15 (Tailwind),
                               | Tailwind Rules
-Backend / API                | + Section 12 (Backend), Backend Checklist
+Backend / API                | + Section 10 (Contracts), Backend Checklist
 DevOps / Infrastructure      | + Section 8 (Cross-Platform), skip frontend/backend
 Compliance-Guardian          | Read the entire file — you are the enforcer
 Documentarian                | + Section 6 (Dynamic Context)
@@ -44,13 +44,13 @@ PRE-TASK OATH (MANDATORY)
 
 Before writing ANY code, output this single-line oath:
 
-"🧠 Bound by AGENCY-RULES v5.0. Pre-flight passed. Cost estimate: ~X,XXX tokens (~KES Y.YY). Sections: [list applicable sections]."
+"🧠 Bound by AGENCY-RULES v5.1. Pre-flight passed. Cost estimate: ~X,XXX tokens (~KES Y.YY). Sections: [list applicable sections]."
 
 Note: Token cost is estimated in KES using the formula: (input_tokens × 19 + output_tokens × 38) / 1,000,000, using DeepSeek Flash pricing. If using DeepSeek Pro, use 270 and 1080 respectively.
 
 
 ===============================================================================
-SECTION 1: THE 11 FOUNDATIONAL PRINCIPALS
+SECTION 1: THE 14 FOUNDATIONAL PRINCIPALS
 ===============================================================================
 
 PRINCIPAL 1: VERIFICATION — Anti-Hallucination + Security
@@ -96,32 +96,100 @@ Required: Use DB-provided timestamps (SELECT NOW(), Prisma @default(now()),
 PRINCIPAL 3: SOCRATIC — Plan Before Code
 ----------------------------------------
 
-Before writing ANY code:
-1. List exactly which files will change and why.
-2. Describe the approach in max 3 sentences.
-3. State at least 2 edge cases you have considered.
+### Scope
 
-If following an approved master plan (in ORCHESTRATION.md or /plans/), proceed
-immediately.
+This principal applies to ANY file modification — code, configs (.json, .yaml),
+schemas (.prisma, .sql), documentation (.md), and scripts (.js). "Code" means
+"any file change." Non-code agents (Lead Architect planning, Documentarian) are
+exempt from the "list files" step but MUST still state edge cases.
 
-If deviating, wait for user approval.
+### Planning Steps
+
+Before modifying ANY file:
+
+1. **GROUND first** — Run `memory.js recall --query "<task>"` (Principal 4 Step 1).
+   If recall returns relevant context at >50%, incorporate it — don't re-list
+   what memory already covers.
+
+2. **List files** — Exactly which files will change and why. Be specific:
+   - ✅ `apps/api/src/invoices/service.ts` — Add credit note validation logic
+   - ❌ `apps/api/src/` — Fix stuff
+
+3. **Describe approach** — Max 5 sentences OR a structured bullet list (3-6 items).
+   For complex tasks (financial, security, multi-step), a bullet list is PREFERRED
+   over sentences. Keep total under ~300 tokens.
+
+4. **State edge cases** — Minimum depends on context:
+   - Simple task (CSS change, typo fix, single-field add): **at least 2**
+   - Normal task (new component, API endpoint, store): **at least 3**
+   - Complex task (financial logic, security, offline sync, multi-currency): **at least 5**
+   - If in doubt, list more — unused edge cases cost 0 tokens but missing ones cost debugging time.
+
+### Master Plan Exemption
+
+If a task is explicitly defined in an approved master plan (in ORCHESTRATION.md
+or `/plans/`) AND the plan already covers steps 2-4, the agent may skip planning
+BUT must:
+- Reference the specific plan section (e.g., "Per Sprint 11 Plan §3.2")
+- Confirm the plan actually covers this specific task — "following the plan" is
+  NOT an excuse to skip thinking
+- Still state at least 1 new edge case not already in the plan (if applicable)
+
+### Deviations & Timeout
+
+If deviating from the plan:
+- State the deviation explicitly alongside the original plan intent
+- Wait for user approval with a suggested resolution
+- If no response within 10 minutes → log the deviation, revert to plan, proceed
+
+### Post-Implementation Audit
+
+After completing the task, the agent MUST:
+- Compare actual changed files against the plan list
+- If extra files were changed beyond what was planned, flag them in the handoff
+  with a reason (e.g., "Also modified test-helper.ts — needed for test setup")
+
+### Hotfix Exception
+
+Hotfixes (Principal 10) are exempt from steps 2-4 but MUST still state edge
+cases (step 4 minimum). The hotfix commit body must include `HOTFIX-REASON:<why>`.
 
 
-PRINCIPAL 4: GROUNDING — Read Context + Tool-First Retrieval
-------------------------------------------------------------
+PRINCIPAL 4: GROUNDING — Hybrid Memory + Tool-First Retrieval
+--------------------------------------------------------------
 
-Before starting:
-1. Read PROJECT.md and ORCHESTRATION.md (they are small, ~300 tokens total).
-2. Use Bash tools (rg, find, head, sed, git diff) to locate exact files — do
-   NOT use the Read tool without first searching.
-3. Only then read exactly one full file per unit of work (unless Lead Architect
-   explicitly approves more).
-4. Tab Discipline: Keep <=3 editor tabs open; close inspection-only files
-   immediately.
-5. Verify your role: Ensure your agent slug is listed in .roomodes and matches
-   the HANDOFF you received.
+Before starting, use the HYBRID approach (recall first, read only if needed):
 
-Forbidden: Reading files from node_modules/, dist/, build/, .git/.
+### Step 1: Recall from Memory (0 tokens)
+Run: `node .agency/scripts/memory.js recall --query "<task context>" --limit 5`
+- If top result has score > 50% → proceed with recalled context (~200 tokens)
+- If NO result > 50% → proceed to Step 2 (partial read, ~500 tokens)
+- If NO results at all (first session) → proceed to Step 3 (full read, ~5K tokens)
+
+### Step 2: Partial Read (fallback, ~500 tokens)
+Use Bash tools to read ONLY the relevant sections:
+- `findstr /n "PRINCIPAL" .agency\AGENCY-RULES.md` → locate relevant sections
+- `node -e "const f=require('fs');console.log(f.readFileSync('ORCHESTRATION.md','utf-8').split('\n').slice(50,80).join('\n'))"` → read specific line range
+- Read max 50 lines per file unless no relevant snippet found
+
+### Step 3: Full Read (last resort, ~5K tokens)
+Only if Steps 1-2 yield nothing useful:
+- Read PROJECT.md (small, ~50 lines)
+- Read ORCHESTRATION.md sprint header and relevant task section
+- Use `rg` or `findstr` to locate exact content before reading
+
+### Mandatory safety reads (always do these):
+- **If task involves SECURITY**: Read PRINCIPAL 1 (AGENCY-RULES.md:56-77)
+- **If task involves FINANCE**: Read PRINCIPAL 2 (AGENCY-RULES.md:79-93)
+- **If task involves MOBILE**: Read Key Constraints from PROJECT.md
+- **If task involves COMMIT/HANDOFF**: Read §8 GIT HANDSHAKE (AGENCY-RULES.md:159-188)
+- **If task involves CODE**: Read PRINCIPAL 7 (AGENCY-RULES.md:144-156)
+
+### Tool-First Retrieval (always)
+Use rg, findstr, head before Read. The Read tool is a LAST RESORT.
+
+### Tab Discipline
+Keep <=3 editor tabs open; close inspection-only files immediately.
 
 
 PRINCIPAL 5: SWARM — Domain Boundary Enforcement
@@ -173,6 +241,8 @@ After completing your task:
    CONTRACT:<contract-id@version>
    STATUS:<PENDING|IN_PROGRESS|REVIEW|DONE|BLOCKED|HOTFIX>
    MEMORY:<stored|not-required>   # MANDATORY — confirms memory was stored
+   SCOPE:<project|global>   # MANDATORY — project scope of the task
+   PREFLIGHT:<PASSED|NOT_REQUIRED>   # RECOMMENDED — confirms pre-flight oath was recited
    BACKEND-DEPENDENCY:<optional>
    COST-ESTIMATE:<optional>   # e.g., "~2.5k tokens (~KES 0.07)"
 
@@ -216,7 +286,7 @@ PRINCIPAL 10: HOTFIX EXCEPTION
 
 For critical production fixes that require immediate action:
 
-1. Lead Architect approves verbally.
+1. Lead Architect approves via commit with STATUS:HOTFIX.
 2. Agent may skip the full pipeline, but MUST:
    - Run Security scan locally.
    - Run smoke tests (minimum).
@@ -335,6 +405,8 @@ ARTIFACTS              | Yes      | ARTIFACTS:apps/api/src/.../service.ts
 CONTRACT               | Yes      | CONTRACT:mobile-billing@1.0.0
 STATUS                 | Yes      | STATUS:DONE
 MEMORY                 | Yes      | MEMORY:stored (run `node .agency/scripts/memory.js store --content "..." --tags "..." --task "..." --agent "<slug>"`)
+SCOPE                  | Yes      | SCOPE:project or SCOPE:global
+PREFLIGHT              | Recommended | PREFLIGHT:PASSED
 BACKEND-DEPENDENCY     | If using Mock | BACKEND-DEPENDENCY:GET /users/me not yet live
 COST-ESTIMATE          | Recommended | COST-ESTIMATE:~2.5k tokens (~KES 0.07)
 
@@ -457,36 +529,32 @@ FORBIDDEN.
 
 8.5 Windows Command Reference for AI Agents
 
-The default shell on this system is PowerShell. Use the table below to avoid
-common cmd/PowerShell confusion:
+The default shell on this system is cmd.exe (Windows Command Prompt).
+PowerShell is NOT the default — use cmd syntax unless explicitly told otherwise.
+Use the table below to avoid common cmd/PowerShell confusion:
 
-| Task | Correct (PowerShell) | Wrong (cmd syntax) |
-|------|---------------------|-------------------|
-| Check file exists | `Test-Path file` | `if exist file` |
-| Search file contents | `Select-String -Path file -Pattern 'regex'` | `findstr "regex" file` |
-| List directory | `Get-ChildItem` or `dir` | `ls` (works in PS but not cmd) |
-| Chain commands | `command1 ; command2` | `command1 && command2` |
-| For loop | `foreach ($i in 1..10) { ... }` | `for %i in (1,2,3) do ...` |
-| Variable access | `$env:VAR` | `%VAR%` |
-| Pipeline variable | `$_` (automatic) | `%%i` (batch) |
-| Delete file | `Remove-Item file -Force` | `del /f /q file` |
-| Delete directory | `Remove-Item dir -Recurse -Force` | `rd /s /q dir` |
-| Move file | `Move-Item from to` | `move from to` |
-| Command output to variable | `$output = command` | `for /f ...` (complex) |
-| Read file content | `Get-Content file` | `type file` |
+| Task | Correct (cmd.exe) | Wrong (PowerShell-only) |
+|------|-------------------|------------------------|
+| Check file exists | `if exist file` | `Test-Path file` |
+| Search file contents | `findstr "regex" file` | `Select-String -Path file -Pattern 'regex'` |
+| List directory | `dir` | `Get-ChildItem` |
+| Chain commands | `command1 && command2` | `command1 ; command2` |
+| Variable access | `%VAR%` | `$env:VAR` |
+| Delete file | `del /f /q file` | `Remove-Item file -Force` |
+| Delete directory | `rd /s /q dir` | `Remove-Item dir -Recurse -Force` |
+| Move file | `move from to` | `Move-Item from to` |
+| Read file content | `type file` | `Get-Content file` |
+| Change directory | `cd path` | `Set-Location path` |
 
 Key rules:
-1. ALWAYS assume PowerShell syntax unless explicitly using `cmd /c`.
-2. When running PowerShell from `cmd.exe`, escape `$_` as `\$_` and `$` as `\$`.
+1. ALWAYS assume cmd.exe syntax — this is the default shell on this system.
+2. When using Node.js scripts, use `path.join()` — never hardcode separators.
 3. For complex operations, write a Node.js script instead of a one-liner.
-4. If a command fails, check: (a) Are you using cmd syntax in PowerShell? (b)
-   Are special characters escaped? (c) Is the path using correct separators?
-5. Prefer `Get-Content` and `Select-String` over `type` and `findstr`.
-6. Use `path.join` in Node.js scripts — never hardcode path separators.
-7. The `&&` operator works in cmd subshells but NOT in standalone PowerShell;
-   use `;` for sequential execution or `-and` for conditional.
-8. PowerShell accepts BOTH `/` and `\` as path separators — use whichever is
-   more readable for the context.
+4. `&&` for sequential chaining, `||` for fallback, `&` for background.
+5. Use `%errorlevel%` to check exit codes (0 = success).
+6. PATH separator is `;` (semicolon) in cmd.exe.
+7. For PowerShell-only environments, the equivalents are in the "Wrong" column.
+8. Node.js `require('child_process').execSync()` works regardless of shell.
 
 
 ===============================================================================
@@ -509,8 +577,8 @@ messages, or no user feedback.
 - Provide a Retry action (calls the failed operation again).
 
 9.3 Logging & Monitoring
-- All frontend errors must be logged to a monitoring service (Sentry, DataDog,
-  or custom POST /api/log-error endpoint).
+- All frontend errors must be logged to a monitoring service configured in the
+  project (Sentry, DataDog, or equivalent).
 - Include userId, url, error message, and stack trace (sanitised).
 
 9.4 Graceful Degradation
@@ -885,7 +953,7 @@ All costs converted to KES                  | Throughout     | Kenya Shilling de
 Added Principal 13: File Clutter Prevention  | Section 14     | No orphan files; one location rule
 Added Principal 14: Project Isolation        | Section 14 (new)| Multi-project support via projects.json
 ===============================================================================
-END OF AGENCY-RULES v5.0
+END OF AGENCY-RULES v5.1
 ===============================================================================
 
 Companion documents (created):

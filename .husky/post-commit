@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+const { execSync } = require("child_process");
+try { execSync("node .agency/scripts/auto-docs.js --sync", { stdio: "inherit" }); } catch (e) { }
+try { execSync("node .agency/scripts/cost-report.js --output .agency/reports/cost-running.md", { stdio: "inherit" }); } catch (e) { }
+try { execSync("git push origin master ", { stdio: "inherit" }); } catch (e) { }
