@@ -1,8 +1,8 @@
 {
-    "name": "jenga-agency",
+    "name": "zoocode-agency",
     "version": "1.0.0",
     "private": true,
-    "description": "Jenga Agency — multi-agent orchestration system",
+    "description": "ZooCode Agency — multi-agent orchestration framework",
     "scripts": {
         "agency": "node .agency/agency.js",
         "agency:init": "node .agency/scripts/init-project.js",

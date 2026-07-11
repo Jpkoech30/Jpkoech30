@@ -6,7 +6,7 @@
 [![Agents](https://img.shields.io/badge/Agents-31-00B894)](.roomodes)
 [![Quality Gates](https://img.shields.io/badge/Quality%20Gates-15-E17055)](.agency/AGENCY-RULES.md)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-0078D4)](.husky/post-commit)
-[![GitHub Stars](https://img.shields.io/github/stars/Jpkoech30/jenga-agency?style=social)](https://github.com/Jpkoech30/jenga-agency)
+[![GitHub Stars](https://img.shields.io/github/stars/Jpkoech30/zoocode-agency?style=social)](https://github.com/Jpkoech30/zoocode-agency)
 
 > **A production-ready multi-agent orchestration system for [ZooCode](https://zoo.dev).**
 > Automate code generation, enforce quality gates, track decisions with semantic memory, and coordinate 31 specialized AI agents — all from your terminal.
@@ -18,8 +18,8 @@
 ### Windows (cmd.exe)
 ```cmd
 :: 1. Clone
-git clone https://github.com/Jpkoech30/jenga-agency.git
-cd jenga-agency
+git clone https://github.com/Jpkoech30/zoocode-agency.git
+cd zoocode-agency
 
 :: 2. Install
 npm install
@@ -34,8 +34,8 @@ node .agency\scripts\init-project.js --name my-new-project
 ### macOS / Linux
 ```bash
 # 1. Clone
-git clone https://github.com/Jpkoech30/jenga-agency.git
-cd jenga-agency
+git clone https://github.com/Jpkoech30/zoocode-agency.git
+cd zoocode-agency
 
 # 2. Install
 npm install
@@ -47,7 +47,7 @@ node .agency/scripts/init-project.js --name my-new-project
 # Load .roomodes in ZooCode and begin!
 ```
 
-**[📥 Download ZIP](https://github.com/Jpkoech30/jenga-agency/archive/refs/heads/master.zip)** — No git required. Note: ZIP users skip git features (auto-changelog, PR creation, retro reports).
+**[📥 Download ZIP](https://github.com/Jpkoech30/zoocode-agency/archive/refs/heads/master.zip)** — No git required. Note: ZIP users skip git features (auto-changelog, PR creation, retro reports).
 
 ---
 
@@ -121,7 +121,7 @@ ZooCode Agency is a **multi-agent orchestration framework** that transforms how 
 ### New Project
 
 ```bash
-git clone https://github.com/Jpkoech30/jenga-agency.git my-project
+git clone https://github.com/Jpkoech30/zoocode-agency.git my-project
 cd my-project
 npm install
 node .agency/scripts/init-project.js --name my-project
@@ -133,10 +133,10 @@ node .agency/scripts/init-project.js --name my-project
 **Windows (cmd.exe):**
 ```cmd
 :: Copy agency files to your existing project
-xcopy /E /I jenga-agency\.agency your-project\.agency
-copy jenga-agency\.roomodes your-project\.roomodes
-xcopy /E /I jenga-agency\.husky your-project\.husky
-copy jenga-agency\package.json your-project\
+xcopy /E /I zoocode-agency\.agency your-project\.agency
+copy zoocode-agency\.roomodes your-project\.roomodes
+xcopy /E /I zoocode-agency\.husky your-project\.husky
+copy zoocode-agency\package.json your-project\
 cd your-project
 npm install
 node .agency\scripts\init-project.js
@@ -145,7 +145,7 @@ node .agency\scripts\preflight-gate.js pass --agent lead-architect --task "setup
 
 **macOS / Linux:**
 ```bash
-cp -r ./jenga-agency/.agency ./jenga-agency/.roomodes ./jenga-agency/.husky ./jenga-agency/package.json ./your-project/
+cp -r ./zoocode-agency/.agency ./zoocode-agency/.roomodes ./zoocode-agency/.husky ./zoocode-agency/package.json ./your-project/
 cd your-project
 npm install
 node .agency/scripts/init-project.js
@@ -307,6 +307,6 @@ MIT — See [LICENSE](LICENSE) file.
 ## ⭐ Support
 
 - ⭐ Star this repo if you find it useful
-- 🐛 [Report issues](https://github.com/Jpkoech30/jenga-agency/issues)
-- 💬 [Start a discussion](https://github.com/Jpkoech30/jenga-agency/discussions)
-- 🔄 [Fork and adapt](https://github.com/Jpkoech30/jenga-agency/fork) for your own agency
+- 🐛 [Report issues](https://github.com/Jpkoech30/zoocode-agency/issues)
+- 💬 [Start a discussion](https://github.com/Jpkoech30/zoocode-agency/discussions)
+- 🔄 [Fork and adapt](https://github.com/Jpkoech30/zoocode-agency/fork) for your own agency
