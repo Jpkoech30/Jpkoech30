@@ -227,10 +227,37 @@ modes.
 PRINCIPAL 8: GIT HANDSHAKE — Commit + Document Each Stage
 ---------------------------------------------------------
 
-After completing your task:
+### Lead Architect Post-Handoff Procedure (MANDATORY)
 
-0. **Store key decisions to semantic memory** BEFORE committing:
-   `node .agency/scripts/memory.js store --content "<what was done and why>" --tags "<comma-separated tags>" --task "<task-id>" --agent "<agent-slug>"`
+After EVERY subtask returns (via new_task), the Lead Architect MUST execute this checklist BEFORE starting the next task:
+
+```
+□ 1. REVIEW subtask result — verify output matches expectations
+□ 2. STORE MEMORY for the subtask's work:
+     node .agency/scripts/memory.js store --content "<summary>" --tags "<tags>" --task "<task-id>" --agent "<agent-slug>"
+□ 3. COMMIT the work with full HANDOFF metadata:
+     git add -A
+     git commit -m "feat(<task>): <summary>
+
+     HANDOFF:<agent-slug>
+     ARTIFACTS:<files>
+     CONTRACT:<contract@version>
+     STATUS:DONE
+     MEMORY:stored
+     SCOPE:<project|global>
+     PROJECT:<project-id>"
+□ 4. PUSH to GitHub:
+     git push origin master
+□ 5. UPDATE ORCHESTRATION.md with task status
+□ 6. RUN PTG check on the committed work:
+     node .agency/scripts/post-task-gate.js complete --task <task> --agent <agent>
+```
+
+The subtask agent's result is an OUTPUT — the Lead Architect is responsible for INTEGRATING it into the agency's git history, memory, and tracking.
+
+### Standard Agent Procedure
+
+After completing your task:
 
 1. Stage and commit using conventional commit format:
 
