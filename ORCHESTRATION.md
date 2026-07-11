@@ -465,3 +465,62 @@ Two critical issues were identified during agency setup review:
 - [`../simba-code-source/src/dist/extension.js`](../simba-code-source/src/dist/extension.js) — Built successfully (30.9MB) using Roo Code's own monorepo build system (turborepo + pnpm + esbuild)
 **Verification:** dist/extension.js contains `PFG_BLOCKED` (line 659898), `checkPFG` (line 659756), `runPTG` (line 664429), ClineProvider integration
 **Memory:** `1e21b12e-88d8-4fef-aa90-f69f6528f297`
+
+---
+
+### Sprint 20 — Enforcement Framework v2: Unified State Machine (Est. 4 days)
+> **Status:** `PLANNED` | **Lead:** 🧠 Lead Architect | **Created:** 2026-07-11
+> **Priority:** 🔴 CRITICAL — Fixes 12 failure points across PFG, PTG, Memory, and Agent Routing
+> **Plan:** [`.agency/plans/enforcement-v2-redesign.md`](.agency/plans/enforcement-v2-redesign.md)
+> **Contracts:** [`agency-enforcer@1.0.0`](.agency/contracts/agency-enforcer.json) (NEW), [`agency-handoff@1.0.0`](.agency/contracts/agency-handoff.json) (NEW), [`agency-memory@2.0.0`](.agency/contracts/agency-memory.json) (UPDATED)
+> **Deprecates:** `agency-preflight-gate@1.0.0`, `agency-post-task-gate@1.0.0`
+>
+> **Problem:** 4 separate enforcement systems with no shared state. Sentinel has no TTL (F1), no hard enforcement (F2), PTG checks JSON not SQLite (F5), handoff.js never wired to PTG (F7), CWD guard fragile (F12).
+>
+> **Solution:** Single `enforcer.js` with 4-phase state machine (PRE → POST → COMMIT → HANDOFF) in SQLite, TTL-based sessions, and handoff.js integration.
+
+| # | Task | Type | Agent | Est. | Status | Depends On | Contract |
+|---|------|------|-------|------|--------|------------|----------|
+| **20.1** | Create `enforcer.js` — 4-phase state machine with SQLite storage, TTL, CI/hotfix modes | `script` | 🔧 JengaBooks Code | 2d | `PLANNED` | — | `agency-enforcer@1.0.0` |
+| **20.2** | Create enforcer.db schema (enforcement_state table) + auto-init | `schema` | 🔧 JengaBooks Code | 0.25d | `PLANNED` | 20.1 | `agency-enforcer@1.0.0` |
+| **20.3** | Wire `enforcer.js post` to call `memory.js check` (SQLite) instead of reading JSON | `integration` | 🔧 JengaBooks Code | 0.5d | `PLANNED` | 20.1, 20.9 | `agency-enforcer@1.0.0` |
+| **20.4** | Modify `handoff.js` — delegate to `enforcer.js handoff` before allowing handoff | `integration` | 🔧 JengaBooks Code | 0.5d | `PLANNED` | 20.1 | `agency-handoff@1.0.0` |
+| **20.5** | Deprecate `preflight-gate.js` + `post-task-gate.js` — add DEPRECATED banner + delegate to enforcer.js | `script` | 🔧 JengaBooks Code | 0.25d | `PLANNED` | 20.1 | `agency-enforcer@1.0.0` |
+| **20.6** | Update `.roomodes` — change customInstructions to reference `enforcer.js pre` instead of `preflight-gate.js` | `config` | 🔧 JengaBooks Code | 0.5d | `PLANNED` | 20.1 | `agency-enforcer@1.0.0` |
+| **20.7** | Delete `.agency/.preflight-passed` sentinel + add `.agency/enforcer/` to `.gitignore` | `cleanup` | 🔧 JengaBooks Code | 0.1d | `PLANNED` | 20.1 | — |
+| **20.8** | Update `AGENCY-RULES.md` — replace PFG/PTG references with enforcer.js | `docs` | 🧠 Lead Architect | 0.25d | `PLANNED` | 20.1-20.7 | `agency-enforcer@1.0.0` |
+| **20.9** | Implement `memory.js` v2 — SQLite-only, FTS5, vec0, metadata tracking, compaction | `script` | 🔧 JengaBooks Code | 2d | `PLANNED` | — | `agency-memory@2.0.0` |
+| **20.10** | Install `@xenova/transformers` — Transformers.js for semantic embeddings (384-dim) | `deps` | 🔧 JengaBooks Code | 0.25d | `PLANNED` | 20.9 | `agency-memory@2.0.0` |
+| **20.11** | Add `export`/`import` commands to memory.js — JSON backup-only | `enhance` | 🔧 JengaBooks Code | 0.5d | `PLANNED` | 20.9 | `agency-memory@2.0.0` |
+| **20.12** | 🧪 Validate all 12 failure points fixed — end-to-end | `qa` | 🧪 QA Automator | 1d | `PLANNED` | 20.1-20.11 | all |
+
+### Sprint 20 Task Details
+
+| # | Edge Cases |
+|---|------------|
+| **20.1** | Agent crash mid-phase → TTL auto-resets; Parallel agents → separate rows by agent_slug; CI mode → --ci flag skips PRE; Hotfix → --hotfix bypasses all |
+| **20.9** | Transformers.js OOM → fallback to TF-IDF 384-dim; FTS5 syntax error → sanitize query; vec0 unavailable → in-memory cosine similarity |
+| **20.4** | First handoff (no prior history) → skip enforcer check; Already-blocked → don't re-check |
+| **20.6** | Preserve ALL existing customInstructions content after line 1; 31 agents to update |
+
+### Handoff Chain
+
+| Handoff | From | To | Artifacts |
+|---------|------|----|-----------|
+| **H20.0** | 🧠 Lead Architect | 🔧 JengaBooks Code | [`.agency/plans/enforcement-v2-redesign.md`](.agency/plans/enforcement-v2-redesign.md), [`.agency/contracts/agency-enforcer.json`](.agency/contracts/agency-enforcer.json), [`.agency/contracts/agency-handoff.json`](.agency/contracts/agency-handoff.json), [`.agency/contracts/agency-memory.json`](.agency/contracts/agency-memory.json) |
+| **H20.1** | 🔧 JengaBooks Code | 🧪 QA Automator | All Sprint 20 artifacts for validation |
+| **H20.2** | 🧪 QA Automator | 🧠 Lead Architect | Validation report — all 12 failure points verified fixed |
+
+### Quality Gates
+
+| Gate | Trigger | Pass Criteria |
+|------|---------|---------------|
+| **EF-G1** | 20.1 complete | `enforcer.js pre --agent X --task Y` creates row in enforcement_state with expires_at = now + 3600 |
+| **EF-G2** | 20.1 complete | After TTL expiry → `enforcer.js check` auto-resets phase to PENDING |
+| **EF-G3** | 20.1 complete | `enforcer.js post --ci` skips non-blocking checks |
+| **EF-G4** | 20.1 complete | `enforcer.js pre --hotfix --reason X` marks phase SKIPPED |
+| **EF-G5** | 20.4 complete | `handoff.js` calls `enforcer.js handoff` and blocks on failure |
+| **EF-G6** | 20.9 complete | `memory.js store` creates row + FTS + vec entry; `recall` returns hybrid scored results |
+| **EF-G7** | 20.9 complete | `memory.js export` dumps SQLite to JSON; `import` loads JSON into empty DB |
+| **EF-G8** | 20.5 complete | Old `preflight-gate.js pass` outputs "DEPRECATED — delegating to enforcer.js" |
+| **EF-G9** | 20.12 complete | All 12 failure points (F1-F12) verified fixed in audit log |
