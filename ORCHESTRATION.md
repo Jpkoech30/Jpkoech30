@@ -452,3 +452,16 @@ Two critical issues were identified during agency setup review:
 - [`ORCHESTRATION.md`](ORCHESTRATION.md) — Marked as template with header notice
 **Note:** Non-.md files still contain jengabooks references requiring manual cleanup: `.roomodes` (agent name "jengabooks-code"), `.agency/contracts/` (JSON contracts), `package.json` (name "jenga-agency")
 **Memory:** `6e27c2e9-5c3f-48e0-b4f1-9dbbcfb5a2c1`
+
+### Handoff (2026-07-11 21:13:00)
+**From:** backend-service → **To:** backend-service
+**Task:** proper-roo-code-fork
+**Status:** DONE
+**Scope:** simba-code
+**Artifacts:**
+- [`../simba-code-source/src/extension.ts`](../simba-code-source/src/extension.ts) — Restored Roo Code's original activation flow (ClineProvider, registerCommands, API, handleUri, registerCodeActions, registerTerminalActions) with PFG/PTG/QG/Memory/Telemetry commands added
+- [`../simba-code-source/src/core/tools/BaseTool.ts`](../simba-code-source/src/core/tools/BaseTool.ts) — PFG hook at line 160-167 (checkPFG before tool execution)
+- [`../simba-code-source/src/core/tools/AttemptCompletionTool.ts`](../simba-code-source/src/core/tools/AttemptCompletionTool.ts) — PTG hook at line 135-144 (runPTG on task completion)
+- [`../simba-code-source/src/dist/extension.js`](../simba-code-source/src/dist/extension.js) — Built successfully (30.9MB) using Roo Code's own monorepo build system (turborepo + pnpm + esbuild)
+**Verification:** dist/extension.js contains `PFG_BLOCKED` (line 659898), `checkPFG` (line 659756), `runPTG` (line 664429), ClineProvider integration
+**Memory:** `1e21b12e-88d8-4fef-aa90-f69f6528f297`

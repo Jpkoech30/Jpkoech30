@@ -42,7 +42,7 @@ const COMMANDS = [
 
     // ── DevOps ─────────────────────────────────────────────────────────────────
     ['version-check', 'version-check.js', 'Verify Node.js version meets requirements'],
-    ['cleanup', 'cleanup.js', 'Delete obsolete files per AGENCY-RULES §15'],
+    ['cleanup', 'cleanup.js', 'Delete obsolete files per AGENCY-RULES §16'],
     ['cleanup-test-db', 'cleanup-test-db.js', 'Truncate all test database tables'],
     ['clean-temp', 'clean-temp.js', 'Scan for orphan temp files'],
     ['secret-scan', 'secret-scan.js', 'Pre-commit secret scanner — blocks API keys, passwords, tokens'],
@@ -57,6 +57,7 @@ const COMMANDS = [
     ['dispatch', 'dispatcher.js', 'Parallel task dispatcher — spawns independent tasks concurrently'],
     ['docs', 'auto-docs.js', 'Self-updating documentation — sync scripts + changelog'],
     ['memory', 'memory.js', 'Semantic memory — store, recall, stats, purge'],
+    ['close-tabs', 'close-tabs.js', 'Close all VS Code editor tabs via workbench.action.closeAllEditors'],
 
     // ── Gates (Sprint 11-16) ─────────────────────────────────────────────────────
     ['preflight-gate', 'preflight-gate.js', 'Pre-Flight Gate — pass/check/reset/status'],
@@ -118,27 +119,27 @@ function showHelp(exitCode = 0) {
     }
     console.log('');
     console.log('  ── DevOps ─────────────────────────────────────');
-    for (const [cmd, , desc] of COMMANDS.slice(10, 26)) {
+    for (const [cmd, , desc] of COMMANDS.slice(10, 27)) {
         console.log(`    ${cmd.padEnd(18)} ${desc}`);
     }
     console.log('');
     console.log('  ── Gates (Sprint 11-16) ───────────────────────');
-    for (const [cmd, , desc] of COMMANDS.slice(26, 30)) {
+    for (const [cmd, , desc] of COMMANDS.slice(27, 31)) {
         console.log(`    ${cmd.padEnd(18)} ${desc}`);
     }
     console.log('');
     console.log('  ── Automation (Sprint 17-18) ──────────────────');
-    for (const [cmd, , desc] of COMMANDS.slice(30, 33)) {
+    for (const [cmd, , desc] of COMMANDS.slice(31, 34)) {
         console.log(`    ${cmd.padEnd(18)} ${desc}`);
     }
     console.log('');
     console.log('  ── Maintenance ─────────────────────────────────');
-    for (const [cmd, , desc] of COMMANDS.slice(33, 37)) {
+    for (const [cmd, , desc] of COMMANDS.slice(34, 38)) {
         console.log(`    ${cmd.padEnd(18)} ${desc}`);
     }
     console.log('');
     console.log('  ── PowerShell (via powershell -File) ──────────');
-    for (const [cmd, , desc] of COMMANDS.slice(37)) {
+    for (const [cmd, , desc] of COMMANDS.slice(38)) {
         console.log(`    ${cmd.padEnd(18)} ${desc}`);
     }
     console.log('');
