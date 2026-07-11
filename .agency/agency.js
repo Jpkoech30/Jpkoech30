@@ -58,6 +58,23 @@ const COMMANDS = [
     ['docs', 'auto-docs.js', 'Self-updating documentation — sync scripts + changelog'],
     ['memory', 'memory.js', 'Semantic memory — store, recall, stats, purge'],
 
+    // ── Gates (Sprint 11-16) ─────────────────────────────────────────────────────
+    ['preflight-gate', 'preflight-gate.js', 'Pre-Flight Gate — pass/check/reset/status'],
+    ['post-task-gate', 'post-task-gate.js', 'Post-Task Gate — 6 checkpoint validation'],
+    ['quality-gate', 'quality-gate.js', 'Quality Gate — 10 output quality checks'],
+    ['compliance-check', 'compliance-check.js', 'Compliance — 7 automated rule checks'],
+
+    // ── Automation (Sprint 17-18) ────────────────────────────────────────────────
+    ['auto-assign', 'auto-assign.js', 'Auto-assign tasks to agents via fileRegex'],
+    ['contract-gen', 'contract-gen.js', 'Generate draft contracts from controller code'],
+    ['retro-report', 'retro-report.js', 'Generate sprint retrospective report'],
+
+    // ── Maintenance ──────────────────────────────────────────────────────────────
+    ['inject-grounding', 'inject-grounding.js', 'Inject GROUNDING section into all agents'],
+    ['update-roomodes', 'update-roomodes.js', 'Update fileRegex patterns in .roomodes'],
+    ['fix-codeagent-regex', 'fix-codeagent-regex.js', 'Fix code-agent regex to allow .roomodes edits'],
+    ['inject-pfg-oath', 'inject-pfg-oath.js', 'Inject PFG oath into all 31 agents'],
+
     // ── PowerShell scripts (invoked via powershell -File) ──────────────────────
     ['release', 'release-s14.5.ps1', '[PS] Run release script for sprint s14.5'],
     ['init-ps', 'init-project.ps1', '[PS] Bootstrap project via PowerShell'],
@@ -101,12 +118,27 @@ function showHelp(exitCode = 0) {
     }
     console.log('');
     console.log('  ── DevOps ─────────────────────────────────────');
-    for (const [cmd, , desc] of COMMANDS.slice(10, 25)) {
+    for (const [cmd, , desc] of COMMANDS.slice(10, 26)) {
+        console.log(`    ${cmd.padEnd(18)} ${desc}`);
+    }
+    console.log('');
+    console.log('  ── Gates (Sprint 11-16) ───────────────────────');
+    for (const [cmd, , desc] of COMMANDS.slice(26, 30)) {
+        console.log(`    ${cmd.padEnd(18)} ${desc}`);
+    }
+    console.log('');
+    console.log('  ── Automation (Sprint 17-18) ──────────────────');
+    for (const [cmd, , desc] of COMMANDS.slice(30, 33)) {
+        console.log(`    ${cmd.padEnd(18)} ${desc}`);
+    }
+    console.log('');
+    console.log('  ── Maintenance ─────────────────────────────────');
+    for (const [cmd, , desc] of COMMANDS.slice(33, 37)) {
         console.log(`    ${cmd.padEnd(18)} ${desc}`);
     }
     console.log('');
     console.log('  ── PowerShell (via powershell -File) ──────────');
-    for (const [cmd, , desc] of COMMANDS.slice(25)) {
+    for (const [cmd, , desc] of COMMANDS.slice(37)) {
         console.log(`    ${cmd.padEnd(18)} ${desc}`);
     }
     console.log('');
