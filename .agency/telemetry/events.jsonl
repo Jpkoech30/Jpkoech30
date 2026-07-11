@@ -8,3 +8,12 @@
 {"timestamp":"2026-07-10T20:53:09.366Z","task":"MP-1.13-E2E","agent":"qa-automator","inputTokens":100,"outputTokens":50,"costKES":0.004,"cacheHitTokens":0}
 {"timestamp":"2026-07-10T20:53:43.511Z","task":"MP-1.13-E2E","agent":"qa-automator","inputTokens":100,"outputTokens":50,"costKES":0.004,"cacheHitTokens":0}
 {"timestamp":"2026-07-10T20:54:48.730Z","task":"MP-1.13-E2E","agent":"qa-automator","inputTokens":100,"outputTokens":50,"costKES":0.004,"cacheHitTokens":0}
+{"timestamp":"2026-07-10T23:11:24.688Z","event":"preflight-gate:pass","agent":"verify-test","task":"G5 recheck","status":"PASSED"}
+{"timestamp":"2026-07-10T23:11:57.955Z","event":"preflight-gate:pass","agent":"qa-automator","task":"Re-run PFG-G1 through PFG-G6 quality gate suite","status":"PASSED"}
+{"timestamp":"2026-07-10T23:27:52.343Z","event":"preflight-gate:pass","agent":"qa-automator","task":"Sprint 12.4 Dedup Verification - verify ORCHESTRATION.md split compliance, check no content duplication, no cross-contamination, cross-reference exists, generate report","status":"PASSED"}
+{"timestamp":"2026-07-10T23:50:58.315Z","event":"preflight-gate:pass","agent":"qa-automator","task":"Validate three patches: MEMORY field, per-project memory storage, recall relevance threshold (Sprint 13.4)","status":"PASSED"}
+{"timestamp":"2026-07-10T23:58:31.638Z","event":"preflight-gate:pass","agent":"jengabooks-code","task":"sprint14-ptg","status":"PASSED"}
+{"timestamp":"2026-07-11T00:00:17.079Z","event":"preflight-gate:pass","agent":"test","task":"auto-reset test","status":"PASSED"}
+{"timestamp":"2026-07-11T00:02:36.990Z","event":"preflight-gate:pass","agent":"qa-automator","task":"Validate PTG-G1 through PTG-G6 post-task gates","status":"PASSED"}
+{"timestamp":"2026-07-11T00:03:34.375Z","event":"preflight-gate:pass","agent":"sentinel-test","task":"ptg-g4","status":"PASSED"}
+{"timestamp":"2026-07-11T00:07:37.418Z","event":"preflight-gate:pass","agent":"jengabooks-code","task":"fix-handoff-js","status":"PASSED"}

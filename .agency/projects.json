@@ -3,8 +3,9 @@
         {
             "id": "jengabooks",
             "name": "JengaBooks",
-            "description": "Kenyan accounting SaaS — NestJS + Postgres + React/Expo. Managed by Jenga Agency.",
+            "description": "Kenyan accounting SaaS — NestJS + Postgres + React/Expo",
             "rootPath": "projects/jengabooks/",
+            "repoUrl": "https://github.com/Jpkoech30/jengabooks.git",
             "enabled": true,
             "defaultBranch": "main",
             "techStack": {

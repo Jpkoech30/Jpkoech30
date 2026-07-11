@@ -67,14 +67,14 @@ function checkCwdGuard() {
         process.exit(1);
     }
 
-    const project = projectsConfig.projects.find(p => p.name === activeProject);
+    const project = projectsConfig.projects.find(p => p.name === activeProject || p.id === activeProject);
     if (!project) {
         console.error(`FAIL: Active project "${activeProject}" not found in projects.json`);
         process.exit(1);
     }
 
     // Resolve the project's absolute path
-    const projectAbsPath = path.resolve(ROOT, project.path);
+    const projectAbsPath = path.resolve(ROOT, project.rootPath);
 
     // Normalize both paths for comparison
     const normalizedCwd = path.normalize(cwd);
@@ -96,7 +96,7 @@ function checkCwdGuard() {
 
 function parseArgs() {
     const args = process.argv.slice(2);
-    const opts = { from: null, to: null, task: null, status: 'IN_PROGRESS', artifacts: 'pending', model: null };
+    const opts = { from: null, to: null, task: null, status: 'IN_PROGRESS', artifacts: 'pending', model: null, contract: null };
 
     for (let i = 0; i < args.length; i++) {
         if (args[i] === '--from' && i + 1 < args.length) opts.from = args[++i];
@@ -105,6 +105,7 @@ function parseArgs() {
         if (args[i] === '--status' && i + 1 < args.length) opts.status = args[++i].toUpperCase();
         if (args[i] === '--artifacts' && i + 1 < args.length) opts.artifacts = args[++i];
         if (args[i] === '--model' && i + 1 < args.length) opts.model = args[++i].toLowerCase();
+        if (args[i] === '--contract' && i + 1 < args.length) opts.contract = args[++i];
     }
 
     return opts;
@@ -152,13 +153,14 @@ function isValidAgent(slug, validSlugs) {
 /**
  * Generate the formatted commit body.
  */
-function generateCommitBody(from, to, task, status, artifacts, model) {
+function generateCommitBody(from, to, task, status, artifacts, model, contract) {
     const lines = [
         '',
         `HANDOFF:${to}`,
-        `ARTIFACTS:${artifacts}`,
-        `CONTRACT:pending`,
+        `ARTIFACTS:${artifacts || 'none'}`,
+        `CONTRACT:${contract || 'pending'}`,
         `STATUS:${status}`,
+        `MEMORY:stored`,
         '',
     ];
 
@@ -177,6 +179,30 @@ function generateCommitBody(from, to, task, status, artifacts, model) {
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
+
+const PTG_SCRIPT = path.join(__dirname, 'post-task-gate.js');
+
+/**
+ * Run the Post-Task Gate check before allowing handoff.
+ * Blocking — exits 1 if PTG fails.
+ */
+function runPostTaskGate(from, task, to, artifacts, status) {
+    console.log('');
+    console.log('  ── Post-Task Gate check ──');
+
+    try {
+        execSync(
+            `node "${PTG_SCRIPT}" complete --task "${task}" --agent "${from}" --handoff "${to}" --artifacts "${artifacts}" --contract pending --status "${status}" --memory pending`,
+            { cwd: ROOT, stdio: 'inherit', timeout: 30000 }
+        );
+        console.log('  ✅ PTG passed — proceeding with handoff');
+    } catch (ptgError) {
+        console.error('');
+        console.error('  ❌ HANDOFF BLOCKED: Post-Task Gate failed');
+        console.error('  Fix the failing checkpoints above, then re-run handoff.js');
+        process.exit(1);
+    }
+}
 
 function main() {
     // CWD guard — verify we are in the right project root
@@ -228,6 +254,29 @@ function main() {
         process.exit(1);
     }
 
+    // ── Post-Task Gate: Blocking check before proceeding ────────────
+    runPostTaskGate(opts.from, opts.task, opts.to, opts.artifacts, opts.status);
+
+    // ── Git Commit: Stage and commit all changes ───────────────────
+    try {
+        const subject = `feat(${opts.task}): handoff from ${opts.from} to ${opts.to}`;
+        const body = generateCommitBody(opts.from, opts.to, opts.task, opts.status, opts.artifacts, opts.model, opts.contract);
+        const fullMessage = subject + '\n\n' + body;
+
+        // Write commit message to temp file (avoids shell escaping issues)
+        const msgFile = path.join(ROOT, '.handoff-msg.txt');
+        fs.writeFileSync(msgFile, fullMessage, 'utf-8');
+
+        execSync('git add -A', { cwd: ROOT, stdio: 'inherit', timeout: 30000 });
+        execSync(`git commit -F "${msgFile}"`, { cwd: ROOT, stdio: 'inherit', timeout: 30000 });
+        fs.unlinkSync(msgFile);
+
+        console.log('  ✅ Changes committed successfully');
+    } catch (gitError) {
+        console.error('  ⚠ Git commit failed (non-blocking):', gitError.message);
+        // Non-blocking — handoff proceeds even if commit fails
+    }
+
     // ── Telemetry: handoff start ─────────────────────────────────────
     try {
         execSync(
@@ -239,7 +288,7 @@ function main() {
     }
 
     // Generate commit body
-    const body = generateCommitBody(opts.from, opts.to, opts.task, opts.status, opts.artifacts, opts.model);
+    const body = generateCommitBody(opts.from, opts.to, opts.task, opts.status, opts.artifacts, opts.model, opts.contract);
 
     console.log(body);
 

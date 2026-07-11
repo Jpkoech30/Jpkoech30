@@ -225,6 +225,51 @@ function parseCliArgs() {
 }
 
 /**
+ * Validate PREFLIGHT optional field (advisory warning, non-blocking).
+ * Accepts: PREFLIGHT:PASSED or PREFLIGHT:NOT_REQUIRED
+ *
+ * @param {string} body The commit body.
+ */
+function validatePreflightField(body) {
+    const preflightMatch = body.match(/^PREFLIGHT:\s*(\S+)/m);
+    if (!preflightMatch) {
+        // PREFLIGHT is optional — no warning if absent
+        return;
+    }
+
+    const value = preflightMatch[1].trim();
+    const validValues = ['PASSED', 'NOT_REQUIRED'];
+    if (validValues.includes(value)) {
+        console.log(`  ✓ PREFLIGHT field valid: "${value}"`);
+    } else {
+        console.warn(`  ⚠ WARNING: PREFLIGHT has unrecognized value "${value}". Expected PASSED or NOT_REQUIRED.`);
+    }
+}
+
+/**
+ * Validate MEMORY optional field (advisory warning, non-blocking).
+ * Accepts: MEMORY:stored or MEMORY:not-required
+ *
+ * @param {string} body The commit body.
+ */
+function validateMemoryField(body) {
+    const memoryMatch = body.match(/^MEMORY:\s*(\S+)/m);
+    if (!memoryMatch) {
+        // MEMORY is optional — warn if absent (same as PREFLIGHT pattern)
+        console.warn('  ⚠ WARNING: Missing MEMORY field. Consider adding MEMORY:stored or MEMORY:not-required.');
+        return;
+    }
+
+    const value = memoryMatch[1].trim();
+    const validValues = ['stored', 'not-required'];
+    if (validValues.includes(value)) {
+        console.log(`  ✓ MEMORY field valid: "${value}"`);
+    } else {
+        console.warn(`  ⚠ WARNING: MEMORY has unrecognized value "${value}". Expected stored or not-required.`);
+    }
+}
+
+/**
  * Main entry point.
  */
 function main() {
@@ -259,6 +304,12 @@ function main() {
     }
 
     console.log('  ✓ HANDOFF metadata fields present (HANDOFF, STATUS)');
+
+    // Validate PREFLIGHT field (advisory, non-blocking)
+    validatePreflightField(body);
+
+    // Validate MEMORY field (advisory, non-blocking)
+    validateMemoryField(body);
 
     // Validate PROJECT field
     const projectResult = validateProjectField(body, cliOpts.project, cliOpts.allowGlobal);

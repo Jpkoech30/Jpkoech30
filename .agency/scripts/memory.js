@@ -35,6 +35,7 @@ let SCHEMA_PATH = path.join(MEMORY_DIR, 'schema.sql');
 
 /**
  * Update paths to point at a project-scoped memory directory.
+ * Ensures the directory exists and copies schema.sql from global memory if needed.
  * @param {string} projectId
  */
 function resolveProjectPaths(projectId) {
@@ -42,6 +43,18 @@ function resolveProjectPaths(projectId) {
     DB_PATH = path.join(MEMORY_DIR, 'store.db');
     JSON_PATH = path.join(MEMORY_DIR, 'store.json');
     SCHEMA_PATH = path.join(MEMORY_DIR, 'schema.sql');
+
+    // Ensure the project memory directory exists
+    if (!fs.existsSync(MEMORY_DIR)) {
+        fs.mkdirSync(MEMORY_DIR, { recursive: true });
+    }
+
+    // Copy schema.sql from global memory if it doesn't exist in project scope
+    const globalSchema = path.resolve(__dirname, '../memory/schema.sql');
+    if (!fs.existsSync(SCHEMA_PATH) && fs.existsSync(globalSchema)) {
+        fs.copyFileSync(globalSchema, SCHEMA_PATH);
+        console.log(`  ℹ Copied schema.sql to project memory: ${SCHEMA_PATH}`);
+    }
 }
 
 // ── Constants ───────────────────────────────────────────────────────────────────
@@ -49,6 +62,7 @@ function resolveProjectPaths(projectId) {
 const DIM = 768;          // Embedding dimension (per contract agency-memory@1.0.0)
 const DEFAULT_LIMIT = 3;
 const MAX_LIMIT = 10;
+const MIN_SCORE = 0.01;   // Minimum relevance score threshold (filter out 0% results)
 
 // ── Optional dependency loading ─────────────────────────────────────────────────
 
@@ -336,9 +350,10 @@ function recallMemoriesSQLite(query, tagFilter, limit) {
         return { ...row, score };
     });
 
-    // Sort by score descending, limit results
+    // Sort by score descending, filter below threshold, limit results
     withScores.sort((a, b) => b.score - a.score);
-    const results = withScores.slice(0, limit);
+    const scoredFiltered = withScores.filter((r) => r.score >= MIN_SCORE);
+    const results = scoredFiltered.slice(0, limit);
 
     // Strip embedding from output
     return results.map(({ embedding, ...rest }) => rest);
@@ -485,9 +500,10 @@ function recallMemoriesJSON(query, tagFilter, limit) {
         score: cosineSimilarity(queryVec, m.embedding),
     }));
 
-    // Sort and limit
+    // Sort, filter below threshold, limit
     withScores.sort((a, b) => b.score - a.score);
-    return withScores.slice(0, limit).map(({ embedding, ...rest }) => rest);
+    const filtered = withScores.filter((r) => r.score >= MIN_SCORE);
+    return filtered.slice(0, limit).map(({ embedding, ...rest }) => rest);
 }
 
 function statsJSON() {

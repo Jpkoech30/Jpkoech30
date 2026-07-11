@@ -2,3 +2,6 @@
 
 # Managed projects (each in their own repo)
 projects/*
+
+# Pre-Flight Gate sentinel file
+.agency/.preflight-passed

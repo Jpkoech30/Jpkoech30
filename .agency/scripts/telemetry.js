@@ -203,7 +203,7 @@ function colorize(text, color) {
  * @param {object} opts
  */
 function cmdLog(opts) {
-    const validEvents = ['agent_invocation', 'cost_event', 'gate_failure'];
+    const validEvents = ['agent_invocation', 'cost_event', 'gate_failure', 'preflight-gate:pass'];
     if (!validEvents.includes(opts.event)) {
         console.error(`FAIL: Invalid event type "${opts.event}". Must be one of: ${validEvents.join(', ')}`);
         process.exit(1);
@@ -326,6 +326,29 @@ function cmdLog(opts) {
 
         appendEvent(eventObj);
         console.log(`PASS: gate_failure logged for ${opts.gate} — ${failCount} failure(s)`);
+        process.exit(0);
+    }
+
+    if (eventType === 'preflight-gate:pass') {
+        const missing = [];
+        if (!opts.agent) missing.push('--agent');
+        if (!opts.task) missing.push('--task');
+        if (!opts.status) missing.push('--status');
+        if (missing.length > 0) {
+            console.error(`FAIL: preflight-gate:pass requires: ${missing.join(', ')}`);
+            process.exit(1);
+        }
+
+        const eventObj = {
+            timestamp: new Date().toISOString(),
+            event: 'preflight-gate:pass',
+            agent: opts.agent,
+            task: opts.task,
+            status: opts.status,
+        };
+
+        appendEvent(eventObj);
+        console.log(`PASS: preflight-gate:pass logged for ${opts.agent} / ${opts.task}`);
         process.exit(0);
     }
 }

@@ -161,6 +161,9 @@ PRINCIPAL 8: GIT HANDSHAKE — Commit + Document Each Stage
 
 After completing your task:
 
+0. **Store key decisions to semantic memory** BEFORE committing:
+   `node .agency/scripts/memory.js store --content "<what was done and why>" --tags "<comma-separated tags>" --task "<task-id>" --agent "<agent-slug>"`
+
 1. Stage and commit using conventional commit format:
 
    <type>(<scope>): <human-readable summary of what and why> (>=10 words)
@@ -169,6 +172,7 @@ After completing your task:
    ARTIFACTS:<comma-separated-file-list>
    CONTRACT:<contract-id@version>
    STATUS:<PENDING|IN_PROGRESS|REVIEW|DONE|BLOCKED|HOTFIX>
+   MEMORY:<stored|not-required>   # MANDATORY — confirms memory was stored
    BACKEND-DEPENDENCY:<optional>
    COST-ESTIMATE:<optional>   # e.g., "~2.5k tokens (~KES 0.07)"
 
@@ -330,6 +334,7 @@ HANDOFF                | Yes      | HANDOFF:backend-service
 ARTIFACTS              | Yes      | ARTIFACTS:apps/api/src/.../service.ts
 CONTRACT               | Yes      | CONTRACT:mobile-billing@1.0.0
 STATUS                 | Yes      | STATUS:DONE
+MEMORY                 | Yes      | MEMORY:stored (run `node .agency/scripts/memory.js store --content "..." --tags "..." --task "..." --agent "<slug>"`)
 BACKEND-DEPENDENCY     | If using Mock | BACKEND-DEPENDENCY:GET /users/me not yet live
 COST-ESTIMATE          | Recommended | COST-ESTIMATE:~2.5k tokens (~KES 0.07)
 
