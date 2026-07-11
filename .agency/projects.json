@@ -25,11 +25,11 @@
             "isAgency": false
         },
         {
-            "id": "zoocode-fork",
-            "name": "ZooCode Fork",
-            "description": "Fork of ZooCode VS Code extension — our own agentic runtime with native PFG/PTG/QG enforcement built into the engine",
-            "rootPath": "projects/zoocode-fork/",
-            "repoUrl": "",
+            "id": "simba-code",
+            "name": "Simba Code",
+            "description": "The King of the Coding Jungle — VS Code extension with native PFG/PTG/QG enforcement, 31 agents, semantic memory, quality gates",
+            "rootPath": "projects/simba-code/",
+            "repoUrl": "https://github.com/Jpkoech30/simba-code.git",
             "enabled": true,
             "defaultBranch": "main",
             "techStack": {
