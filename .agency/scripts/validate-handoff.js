@@ -16,7 +16,7 @@
  */
 
 const VALID_STATUSES = ['PENDING', 'IN_PROGRESS', 'REVIEW', 'DONE', 'BLOCKED', 'HOTFIX'];
-const REQUIRED_FIELDS = ['HANDOFF', 'ARTIFACTS', 'CONTRACT', 'STATUS'];
+const REQUIRED_FIELDS = ['HANDOFF', 'ARTIFACTS', 'CONTRACT', 'STATUS', 'MEMORY'];
 
 /**
  * Parse CLI arguments for --message <value>.
@@ -112,6 +112,28 @@ function validateStatus(body) {
 }
 
 /**
+ * Validate MEMORY optional field (advisory warning, non-blocking).
+ * Accepts: MEMORY:stored or MEMORY:not-required
+ *
+ * @param {string} body The commit body.
+ */
+function validateMemoryField(body) {
+    const memoryMatch = body.match(/^MEMORY:\s*(\S+)/m);
+    if (!memoryMatch) {
+        console.warn('  ⚠ WARNING: Missing MEMORY field. Consider adding MEMORY:stored or MEMORY:not-required.');
+        return;
+    }
+
+    const value = memoryMatch[1].trim();
+    const validValues = ['stored', 'not-required'];
+    if (validValues.includes(value)) {
+        console.log(`  ✓ MEMORY field valid: "${value}"`);
+    } else {
+        console.warn(`  ⚠ WARNING: MEMORY has unrecognized value "${value}". Expected stored or not-required.`);
+    }
+}
+
+/**
  * Main entry point.
  */
 function main() {
@@ -155,6 +177,10 @@ function main() {
     }
 
     console.log(`  ✓ STATUS is valid`);
+
+    // Validate MEMORY field (advisory, non-blocking)
+    validateMemoryField(body);
+
     console.log('PASS: HANDOFF metadata is valid.');
     process.exit(0);
 }

@@ -24,7 +24,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const BASE_DIR = process.cwd();
+const BASE_DIR = path.resolve(__dirname, '../..');
 
 const OPERATIONS = {
     delete: [

@@ -29,9 +29,43 @@ const { execSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '../..');
 const SCRIPTS_DIR = path.resolve(__dirname);
-const AGENCY_RULES_PATH = path.join(ROOT, '.agency', 'AGENCY-RULES.md');
+const AGENCY_DIR = path.join(ROOT, '.agency');
+const AGENCY_RULES_PATH = path.join(AGENCY_DIR, 'AGENCY-RULES.md');
 const CHANGELOG_PATH = path.join(ROOT, 'CHANGELOG.md');
 const PACKAGE_JSON_PATH = path.join(ROOT, 'package.json');
+const ACTIVE_PROJECT_PATH = path.join(AGENCY_DIR, '.active-project');
+
+/**
+ * Get the active project ID from .agency/.active-project, if any.
+ * @returns {string|null}
+ */
+function getActiveProject() {
+    try {
+        if (fs.existsSync(ACTIVE_PROJECT_PATH)) {
+            return fs.readFileSync(ACTIVE_PROJECT_PATH, 'utf-8').trim() || null;
+        }
+    } catch (_) {
+        // ignore
+    }
+    return null;
+}
+
+/**
+ * Get the project-specific ORCHESTRATION.md path.
+ * For jengabooks, this is .agency/projects/jengabooks/ORCHESTRATION.md
+ * instead of root ORCHESTRATION.md.
+ * @returns {string}
+ */
+function getOrchestrationPath() {
+    const project = getActiveProject();
+    if (project) {
+        const projectOrch = path.join(AGENCY_DIR, 'projects', project, 'ORCHESTRATION.md');
+        if (fs.existsSync(projectOrch)) {
+            return projectOrch;
+        }
+    }
+    return path.join(ROOT, 'ORCHESTRATION.md');
+}
 
 // Changelog section mapping from conventional commit types
 const CHANGELOG_SECTIONS = {

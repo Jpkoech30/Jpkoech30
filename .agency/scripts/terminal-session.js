@@ -39,8 +39,8 @@ const { execSync: _rawExecSync } = require('child_process');
  * @returns {string} stdout from the command.
  */
 function execSync(cmd, opts) {
-    var defaultOpts = { timeout: 120000, stdio: 'pipe' };
-    var mergedOpts = Object.assign({}, defaultOpts, opts || {});
+    const defaultOpts = { timeout: 120000, stdio: 'pipe' };
+    const mergedOpts = Object.assign({}, defaultOpts, opts || {});
     try {
         return _rawExecSync(cmd, mergedOpts);
     } catch (e) {
@@ -104,8 +104,8 @@ function isBlacklisted(cmd) {
  * @returns {{ agent: string, task: string|null, save: boolean, json: boolean, command: string|null, commandArgs: string[] }}
  */
 function parseArgs() {
-    var args = process.argv.slice(2);
-    var opts = {
+    const args = process.argv.slice(2);
+    const opts = {
         agent: 'default',
         task: null,
         save: false,
@@ -115,8 +115,8 @@ function parseArgs() {
     };
 
     // Phase 1: Find the @command and its positional args first
-    var commandIndex = -1;
-    for (var i = 0; i < args.length; i++) {
+    let commandIndex = -1;
+    for (let i = 0; i < args.length; i++) {
         if (args[i].startsWith('@')) {
             opts.command = args[i];
             commandIndex = i;
@@ -126,8 +126,8 @@ function parseArgs() {
 
     // Phase 2: Collect command args (everything between @command and next --flag)
     if (commandIndex >= 0) {
-        var cmdArgs = [];
-        var j = commandIndex + 1;
+        const cmdArgs = [];
+        let j = commandIndex + 1;
         while (j < args.length && !args[j].startsWith('--')) {
             cmdArgs.push(args[j]);
             j++;
@@ -136,7 +136,7 @@ function parseArgs() {
     }
 
     // Phase 3: Parse all --flags from the full arg list
-    for (var k = 0; k < args.length; k++) {
+    for (let k = 0; k < args.length; k++) {
         if (args[k] === '--agent' && k + 1 < args.length) {
             opts.agent = args[++k];
         } else if (args[k] === '--task' && k + 1 < args.length) {
@@ -159,7 +159,7 @@ function parseArgs() {
  * @returns {string} Absolute path to session JSON file.
  */
 function getSessionPath(agent) {
-    var safeName = agent.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const safeName = agent.replace(/[^a-zA-Z0-9_-]/g, '_');
     return path.join(SESSIONS_DIR, safeName + '.json');
 }
 
@@ -169,10 +169,10 @@ function getSessionPath(agent) {
  * @returns {{ agent: string, commands: Array, cost: { input: number, output: number, cache: number } }}
  */
 function loadSession(agent) {
-    var sessionPath = getSessionPath(agent);
+    const sessionPath = getSessionPath(agent);
     if (fs.existsSync(sessionPath)) {
         try {
-            var data = JSON.parse(fs.readFileSync(sessionPath, 'utf-8'));
+            const data = JSON.parse(fs.readFileSync(sessionPath, 'utf-8'));
             // Ensure cost object exists
             if (!data.cost) {
                 data.cost = { input: 0, output: 0, cache: 0 };
@@ -191,7 +191,7 @@ function loadSession(agent) {
  * @param {{ agent: string, commands: Array, cost: { input: number, output: number, cache: number } }} session
  */
 function saveSession(session) {
-    var sessionPath = getSessionPath(session.agent);
+    const sessionPath = getSessionPath(session.agent);
     fs.writeFileSync(sessionPath, JSON.stringify(session, null, 2), 'utf-8');
 }
 
@@ -203,7 +203,7 @@ function saveSession(session) {
  * @param {{ input: number, output: number, cache: number }} cost - Estimated token cost.
  */
 function addToHistory(agent, command, args, cost) {
-    var session = loadSession(agent);
+    const session = loadSession(agent);
     session.commands.push({
         command: command,
         args: args || '',
@@ -235,9 +235,9 @@ function estimateTokens(text) {
  * @returns {{ input: number, output: number, cache: number }}
  */
 function estimateCommandCost(command, args) {
-    var inputTokens = estimateTokens(command + ' ' + (args || []).join(' '));
-    var outputTokens = 500;  // default output estimate
-    var cacheTokens = Math.floor(inputTokens * 0.3);  // ~30% cache hit rate
+    const inputTokens = estimateTokens(command + ' ' + (args || []).join(' '));
+    const outputTokens = 500;  // default output estimate
+    const cacheTokens = Math.floor(inputTokens * 0.3);  // ~30% cache hit rate
     return { input: inputTokens, output: outputTokens, cache: cacheTokens };
 }
 
@@ -247,8 +247,8 @@ function estimateCommandCost(command, args) {
  * @returns {string}
  */
 function formatCost(cost) {
-    var totalTokens = (cost.input || 0) + (cost.output || 0);
-    var costKES = ((cost.input * 19) + (cost.output * 38)) / 1000000;
+    const totalTokens = (cost.input || 0) + (cost.output || 0);
+    const costKES = ((cost.input * 19) + (cost.output * 38)) / 1000000;
     return '~' + totalTokens.toLocaleString() + ' tokens (~KES ' + costKES.toFixed(2) + ')';
 }
 
@@ -261,7 +261,7 @@ function formatCost(cost) {
  * @returns {string}
  */
 function formatOutput(title, body) {
-    var divider = ''.padStart(60, '─');
+    const divider = ''.padStart(60, '─');
     return title + '\n' + divider + '\n' + body;
 }
 
@@ -290,11 +290,11 @@ function buildJsonOutput(command, data, ctx) {
  * @returns {string} File path of saved output.
  */
 function saveOutput(content, agent, command) {
-    var timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    var safeAgent = agent.replace(/[^a-zA-Z0-9_-]/g, '_');
-    var safeCmd = command.replace('@', '').replace(/[^a-zA-Z0-9_-]/g, '_');
-    var filename = safeAgent + '_' + safeCmd + '_' + timestamp + '.txt';
-    var filePath = path.join(OUTPUTS_DIR, filename);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const safeAgent = agent.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const safeCmd = command.replace('@', '').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = safeAgent + '_' + safeCmd + '_' + timestamp + '.txt';
+    const filePath = path.join(OUTPUTS_DIR, filename);
     fs.writeFileSync(filePath, content, 'utf-8');
     return filePath;
 }
@@ -312,12 +312,12 @@ function cmdSearch(pattern) {
     }
 
     try {
-        var isWin = process.platform === 'win32';
-        var result;
+        const isWin = process.platform === 'win32';
+        let result;
 
         if (isWin) {
             // Use PowerShell Select-String for cross-platform pattern search
-            var psCmd = 'powershell -NoProfile -Command "Get-ChildItem -Recurse -Include *.ts,*.tsx,*.js,*.jsx,*.css,*.json,*.md | Select-String -Pattern \'' +
+            const psCmd = 'powershell -NoProfile -Command "Get-ChildItem -Recurse -Include *.ts,*.tsx,*.js,*.jsx,*.css,*.json,*.md | Select-String -Pattern \'' +
                 pattern.replace(/'/g, "''") +
                 '\' | Select-Object -First 100 | Format-Table -AutoSize -Wrap"';
             result = execSync(psCmd, { cwd: ROOT, encoding: 'utf-8', timeout: 30000 });
@@ -332,8 +332,8 @@ function cmdSearch(pattern) {
             return 'No matches found for: "' + pattern + '"';
         }
 
-        var lines = result.trim().split('\n').filter(function (l) { return l.trim(); });
-        var summary = 'Found ' + lines.length + ' match(es) for "' + pattern + '"\n';
+        const lines = result.trim().split('\n').filter(function (l) { return l.trim(); });
+        const summary = 'Found ' + lines.length + ' match(es) for "' + pattern + '"\n';
         return summary + lines.slice(0, 50).join('\n') +
             (lines.length > 50 ? '\n... and ' + (lines.length - 50) + ' more' : '');
     } catch (e) {
@@ -355,11 +355,11 @@ function cmdFind(filename) {
     }
 
     try {
-        var isWin = process.platform === 'win32';
-        var result;
+        const isWin = process.platform === 'win32';
+        let result;
 
         if (isWin) {
-            var psCmd = 'powershell -NoProfile -Command "Get-ChildItem -Recurse -Filter \'' +
+            const psCmd = 'powershell -NoProfile -Command "Get-ChildItem -Recurse -Filter \'' +
                 filename.replace(/'/g, "''") +
                 '\' | Select-Object FullName, Length | Format-Table -AutoSize -Wrap"';
             result = execSync(psCmd, { cwd: ROOT, encoding: 'utf-8', timeout: 15000 });
@@ -394,30 +394,30 @@ function cmdExtract(filePath, rangeStr) {
         return 'Error: @extract requires a file path (e.g., @extract src/main.ts 1:50)';
     }
 
-    var absolutePath = path.resolve(ROOT, filePath);
+    const absolutePath = path.resolve(ROOT, filePath);
     if (!fs.existsSync(absolutePath)) {
         return 'Error: File not found: ' + filePath;
     }
 
     try {
         // Context Chunk Guard: warn and truncate for files > 50KB (~12,500 tokens)
-        var stats = fs.statSync(absolutePath);
+        const stats = fs.statSync(absolutePath);
         if (stats.size > 50000) {
             console.warn('⚠️ [WARN] File exceeds 50KB. Extracting first 4000 chars only.');
-            var partial = fs.readFileSync(absolutePath, 'utf-8').slice(0, 4000);
-            var header = '📄 ' + filePath + ' (TRUNCATED — file is >50KB)';
+            const partial = fs.readFileSync(absolutePath, 'utf-8').slice(0, 4000);
+            const header = '📄 ' + filePath + ' (TRUNCATED — file is >50KB)';
             return formatOutput(header, partial + '\n... [TRUNCATED - use @extract with smaller range]');
         }
 
-        var content = fs.readFileSync(absolutePath, 'utf-8');
-        var lines = content.split('\n');
-        var totalLines = lines.length;
+        const content = fs.readFileSync(absolutePath, 'utf-8');
+        const lines = content.split('\n');
+        const totalLines = lines.length;
 
-        var start = 1;
-        var end = totalLines;
+        let start = 1;
+        let end = totalLines;
 
         if (rangeStr) {
-            var parts = rangeStr.split(':');
+            const parts = rangeStr.split(':');
             start = parseInt(parts[0], 10) || 1;
             end = parseInt(parts[1], 10) || totalLines;
         }
@@ -426,8 +426,8 @@ function cmdExtract(filePath, rangeStr) {
         start = Math.max(1, Math.min(start, totalLines));
         end = Math.max(start, Math.min(end, totalLines));
 
-        var selected = lines.slice(start - 1, end);
-        var header = '📄 ' + filePath + ':' + start + '-' + end + ' (total: ' + totalLines + ' lines)';
+        const selected = lines.slice(start - 1, end);
+        const header = '📄 ' + filePath + ':' + start + '-' + end + ' (total: ' + totalLines + ' lines)';
 
         return formatOutput(header, selected.join('\n'));
     } catch (e) {
@@ -442,20 +442,20 @@ function cmdExtract(filePath, rangeStr) {
  * @returns {string}
  */
 function cmdHistory(targetAgent, currentAgent) {
-    var agent = targetAgent || currentAgent || 'default';
-    var session = loadSession(agent);
-    var history = session.commands;
+    const agent = targetAgent || currentAgent || 'default';
+    const session = loadSession(agent);
+    const history = session.commands;
 
     if (history.length === 0) {
         return 'No commands in history for agent \'' + agent + '\'.';
     }
 
-    var lines = history.map(function (entry, i) {
-        var idx = String(i + 1).padStart(3, ' ');
-        var time = new Date(entry.timestamp).toLocaleString();
-        var cmd = entry.command || '';
-        var args = entry.args || '';
-        var costStr = entry.cost ? ' [' + formatCost(entry.cost) + ']' : '';
+    const lines = history.map(function (entry, i) {
+        const idx = String(i + 1).padStart(3, ' ');
+        const time = new Date(entry.timestamp).toLocaleString();
+        const cmd = entry.command || '';
+        const args = entry.args || '';
+        const costStr = entry.cost ? ' [' + formatCost(entry.cost) + ']' : '';
         return '  ' + idx + '. [' + time + '] ' + cmd + ' ' + args + costStr;
     });
 
@@ -471,19 +471,19 @@ function cmdHistory(targetAgent, currentAgent) {
  * @returns {string}
  */
 function cmdCost(taskId) {
-    var files = [];
+    let files = [];
     if (fs.existsSync(SESSIONS_DIR)) {
         files = fs.readdirSync(SESSIONS_DIR).filter(function (f) {
             return f.endsWith('.json');
         });
     }
 
-    var totalCost = { input: 0, output: 0, cache: 0 };
-    var sessionDetails = [];
+    const totalCost = { input: 0, output: 0, cache: 0 };
+    const sessionDetails = [];
 
     files.forEach(function (f) {
         try {
-            var session = JSON.parse(fs.readFileSync(path.join(SESSIONS_DIR, f), 'utf-8'));
+            const session = JSON.parse(fs.readFileSync(path.join(SESSIONS_DIR, f), 'utf-8'));
             totalCost.input += session.cost.input || 0;
             totalCost.output += session.cost.output || 0;
             totalCost.cache += session.cost.cache || 0;
@@ -493,19 +493,19 @@ function cmdCost(taskId) {
         }
     });
 
-    var totalTokens = totalCost.input + totalCost.output;
-    var costKES = ((totalCost.input * 19) + (totalCost.output * 38)) / 1000000;
-    var cacheKES = (totalCost.cache * 19) / 1000000;
+    const totalTokens = totalCost.input + totalCost.output;
+    const costKES = ((totalCost.input * 19) + (totalCost.output * 38)) / 1000000;
+    const cacheKES = (totalCost.cache * 19) / 1000000;
 
-    var output = '💰 Cost Report';
+    let output = '💰 Cost Report';
     if (taskId) {
         output += ' (Task: ' + taskId + ')';
     }
     output += '\n' + ''.padStart(60, '─');
 
     sessionDetails.forEach(function (s) {
-        var sTokens = s.cost.input + s.cost.output;
-        var sKES = ((s.cost.input * 19) + (s.cost.output * 38)) / 1000000;
+        const sTokens = s.cost.input + s.cost.output;
+        const sKES = ((s.cost.input * 19) + (s.cost.output * 38)) / 1000000;
         output += '\n  ' + s.agent + ': ~' + sTokens.toLocaleString() + ' tokens (~KES ' + sKES.toFixed(2) + ')';
     });
 
@@ -521,7 +521,7 @@ function cmdCost(taskId) {
  * @returns {string}
  */
 function cmdStats(targetAgent) {
-    var files = [];
+    let files = [];
     if (fs.existsSync(SESSIONS_DIR)) {
         files = fs.readdirSync(SESSIONS_DIR).filter(function (f) {
             return f.endsWith('.json');
@@ -530,7 +530,7 @@ function cmdStats(targetAgent) {
 
     // Filter if specific agent requested
     if (targetAgent) {
-        var safeName = targetAgent.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const safeName = targetAgent.replace(/[^a-zA-Z0-9_-]/g, '_');
         files = files.filter(function (f) {
             return f === safeName + '.json';
         });
@@ -540,7 +540,7 @@ function cmdStats(targetAgent) {
         return 'No session data found' + (targetAgent ? ' for agent \'' + targetAgent + '\'' : '') + '.';
     }
 
-    var output = '📊 Agent Statistics';
+    let output = '📊 Agent Statistics';
     if (targetAgent) {
         output += ' for \'' + targetAgent + '\'';
     }
@@ -548,10 +548,10 @@ function cmdStats(targetAgent) {
 
     files.forEach(function (f) {
         try {
-            var session = JSON.parse(fs.readFileSync(path.join(SESSIONS_DIR, f), 'utf-8'));
-            var cmdCount = session.commands.length;
-            var totalTokens = (session.cost.input || 0) + (session.cost.output || 0);
-            var costKES = ((session.cost.input * 19) + (session.cost.output * 38)) / 1000000;
+            const session = JSON.parse(fs.readFileSync(path.join(SESSIONS_DIR, f), 'utf-8'));
+            const cmdCount = session.commands.length;
+            const totalTokens = (session.cost.input || 0) + (session.cost.output || 0);
+            const costKES = ((session.cost.input * 19) + (session.cost.output * 38)) / 1000000;
 
             output += '\n\n  Agent: ' + session.agent;
             output += '\n  Commands Executed: ' + cmdCount;
@@ -559,17 +559,17 @@ function cmdStats(targetAgent) {
             output += '\n  Total Cost: ~KES ' + costKES.toFixed(2);
 
             if (cmdCount > 0) {
-                var lastCmd = session.commands[cmdCount - 1];
+                const lastCmd = session.commands[cmdCount - 1];
                 output += '\n  Last Command: ' + (lastCmd.command || '') + ' ' + (lastCmd.args || '');
             }
 
             // Command type breakdown
-            var typeCount = {};
+            const typeCount = {};
             session.commands.forEach(function (c) {
-                var cmdName = c.command || 'unknown';
+                const cmdName = c.command || 'unknown';
                 typeCount[cmdName] = (typeCount[cmdName] || 0) + 1;
             });
-            var types = Object.keys(typeCount).sort();
+            const types = Object.keys(typeCount).sort();
             if (types.length > 0) {
                 output += '\n  Breakdown:';
                 types.forEach(function (t) {
@@ -587,7 +587,8 @@ function cmdStats(targetAgent) {
 /**
  * @switch <name> — Switch to a registered project.
  * Calls projects-manager.js switch <name> internally.
- * @param {string} name - Project name to switch to.
+ * Also matches by project id.
+ * @param {string} name - Project name or id to switch to.
  * @returns {string}
  */
 function cmdSwitch(name) {
@@ -595,30 +596,33 @@ function cmdSwitch(name) {
         return 'Error: @switch requires a project name (e.g., @switch jengabooks)';
     }
 
-    var scriptPath = path.resolve(ROOT, '.agency', 'scripts', 'projects-manager.js');
+    const scriptPath = path.resolve(ROOT, '.agency', 'scripts', 'projects-manager.js');
     if (!fs.existsSync(scriptPath)) {
         return 'Error: projects-manager.js not found. Run Task 9.1 first.';
     }
 
     try {
-        var result = execSync(
+        const result = execSync(
             'node "' + scriptPath + '" switch "' + name + '"',
             { cwd: ROOT, encoding: 'utf-8', timeout: 15000 }
         );
 
-        var lines = result.trim().split('\n');
-        var divider = ''.padStart(60, '─');
-        var output = '── @switch ' + name + ' ' + divider.slice(10 + name.length);
+        const lines = result.trim().split('\n');
+        const divider = ''.padStart(60, '─');
+        let output = '── @switch ' + name + ' ' + divider.slice(10 + name.length);
         output += '\n' + lines.join('\n');
 
         // Auto-open VS Code
         try {
-            var registryPath = path.resolve(ROOT, '.agency', 'projects.json');
+            const registryPath = path.resolve(ROOT, '.agency', 'projects.json');
             if (fs.existsSync(registryPath)) {
-                var regData = JSON.parse(fs.readFileSync(registryPath, 'utf-8'));
-                var project = (regData.projects || []).find(function (p) { return p.name === name; });
+                const regData = JSON.parse(fs.readFileSync(registryPath, 'utf-8'));
+                // Match by name OR id
+                const project = (regData.projects || []).find(function (p) {
+                    return p.name === name || p.id === name;
+                });
                 if (project) {
-                    var absPath = path.resolve(ROOT, project.path);
+                    const absPath = path.resolve(ROOT, project.path);
                     execSync('code "' + absPath + '"', { stdio: 'ignore', timeout: 10000 });
                     output += '\n' + '📂 Opened in new VS Code window';
                 }
@@ -629,8 +633,8 @@ function cmdSwitch(name) {
 
         return output;
     } catch (e) {
-        var stderr = e.stderr ? e.stderr.toString().trim() : '';
-        var stdout = e.stdout ? e.stdout.toString().trim() : '';
+        const stderr = e.stderr ? e.stderr.toString().trim() : '';
+        const stdout = e.stdout ? e.stdout.toString().trim() : '';
         return 'Error switching to project "' + name + '":\n' + (stderr || stdout || e.message);
     }
 }
@@ -701,8 +705,8 @@ function jsonResult(command, result, ctx) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 function main() {
-    var opts = parseArgs();
-    var ctx = { agent: opts.agent, task: opts.task };
+    const opts = parseArgs();
+    const ctx = { agent: opts.agent, task: opts.task };
 
     // No @command given — show help
     if (!opts.command) {
@@ -710,14 +714,14 @@ function main() {
         process.exit(0);
     }
 
-    var command = opts.command.toLowerCase();
-    var args = opts.commandArgs;
-    var result = '';
+    const command = opts.command.toLowerCase();
+    const args = opts.commandArgs;
+    let result = '';
 
     // Safety check for dangerous input in search/find args
-    var fullArgs = args.join(' ');
+    const fullArgs = args.join(' ');
     if (isBlacklisted(command + ' ' + fullArgs) || isBlacklisted(fullArgs)) {
-        var errMsg = '⛔ Safety block: The requested operation matches the blacklist and was rejected.';
+        const errMsg = '⛔ Safety block: The requested operation matches the blacklist and was rejected.';
         console.error(errMsg);
         process.exit(1);
     }
@@ -764,13 +768,13 @@ function main() {
 
     // Estimate cost and record in history (skip for @cost, @stats, @help to avoid recursion)
     if (command !== '@cost' && command !== '@stats' && command !== '@help') {
-        var cost = estimateCommandCost(command, args);
+        const cost = estimateCommandCost(command, args);
         addToHistory(opts.agent, opts.command, fullArgs, cost);
     }
 
     // Output
     if (opts.json) {
-        var jsonOut = jsonResult(opts.command, result, ctx);
+        const jsonOut = jsonResult(opts.command, result, ctx);
         console.log(JSON.stringify(jsonOut, null, 2));
     } else {
         console.log(result);
@@ -778,7 +782,7 @@ function main() {
 
     // Save output if requested
     if (opts.save) {
-        var savedPath = saveOutput(result, opts.agent, opts.command);
+        const savedPath = saveOutput(result, opts.agent, opts.command);
         console.error('Output saved to: ' + savedPath);
     }
 

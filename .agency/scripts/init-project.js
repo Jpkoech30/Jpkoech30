@@ -633,24 +633,25 @@ function main() {
         'file'
     );
 
-    // 3. Create ORCHESTRATION.md
+    // 3. Create .active-project (right after .roomodes)
+    const projectId = path.basename(ROOT_DIR);
+    writeFile(
+        path.join(AGENCY_DIR, '.active-project'),
+        projectId + '\n',
+        'file'
+    );
+
+    // 4. Create ORCHESTRATION.md
     writeFile(
         path.join(ROOT_DIR, 'ORCHESTRATION.md'),
         ORCHESTRATION_TEMPLATE,
         'file'
     );
 
-    // 4. Create .env.template
+    // 5. Create .env.template
     writeFile(
         path.join(ROOT_DIR, '.env.template'),
         ENV_TEMPLATE,
-        'file'
-    );
-
-    // 5. Create .active-project
-    writeFile(
-        path.join(AGENCY_DIR, '.active-project'),
-        'jengabooks\n',
         'file'
     );
 

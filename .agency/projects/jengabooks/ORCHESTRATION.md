@@ -158,6 +158,19 @@ All sprints enforce our 12 core design principles from Feature Spec v3.0 (§3). 
 | **4.9** | Batch Operations (bulk approve, bulk send) | `feature` | `📱 Mobile State` | ✅ Done | [`use-batch.ts`](../../projects/jengabooks/apps/mobile/src/hooks/use-batch.ts), [`batch-toolbar.tsx`](../../projects/jengabooks/apps/mobile/src/lib/batch-toolbar.tsx) |
 | **4.10** | Advanced Multi-Currency Reporting | `feature` | `📱 Mobile State` | ✅ Done | [`currency-store.ts`](../../projects/jengabooks/apps/mobile/src/stores/currency-store.ts) v2.0 |
 
+### Sprint 15 — Agency Script Fixes (AUDIT) ✅ DONE (7/7)
+**Theme:** Fix 7 agency scripts found deficient in audit
+
+| # | Task | Agent | Status | Files |
+|---|------|-------|--------|-------|
+| **15.P0** | validate-handoff.js — add MEMORY field | `🔧 JengaBooks Code` | ✅ Done | [`validate-handoff.js`](../../.agency/scripts/validate-handoff.js) |
+| **15.P1** | chaos-monkey.js — add main() entry point | `🔧 JengaBooks Code` | ✅ Done | [`chaos-monkey.js`](../../.agency/scripts/chaos-monkey.js) |
+| **15.P2** | update-roomodes.js — add main() wrapper | `🔧 JengaBooks Code` | ✅ Done | [`update-roomodes.js`](../../.agency/scripts/update-roomodes.js) |
+| **15.P3** | init-project.js — fix .active-project creation order | `🔧 JengaBooks Code` | ✅ Done | [`init-project.js`](../../.agency/scripts/init-project.js) |
+| **15.P4a** | auto-docs.js — project-aware path resolution | `🔧 JengaBooks Code` | ✅ Done | [`auto-docs.js`](../../.agency/scripts/auto-docs.js) |
+| **15.P4b** | cleanup.js — fix BASE_DIR to use __dirname | `🔧 JengaBooks Code` | ✅ Done | [`cleanup.js`](../../.agency/scripts/cleanup.js) |
+| **15.P4c** | terminal-session.js — var→const/let + cmdSwitch p.id match | `🔧 JengaBooks Code` | ✅ Done | [`terminal-session.js`](../../.agency/scripts/terminal-session.js) |
+
 ---
 
 ## 🏗️ Architecture Decisions
