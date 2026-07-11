@@ -1,9 +1,9 @@
-feat(scope-test): handoff from lead-architect to qa-automator
+feat(scope-test-project): handoff from lead-architect to qa-automator
 
 HANDOFF:qa-automator
-CONTEXT:Handoff from lead-architect to qa-automator for task scope-test
+CONTEXT:Handoff from lead-architect to qa-automator for task scope-test-project
 ARTIFACTS:pending
 CONTRACT:pending
 STATUS:DONE
 MEMORY:stored
-SCOPE:global
+SCOPE:project
