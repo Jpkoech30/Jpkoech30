@@ -969,3 +969,36 @@ Companion documents (created):
 - [`.agency/reports/`](.agency/reports/) — Reports (violations-report.md) ✓
 
 ===============================================================================
+
+
+## Scripts Reference
+
+| Script | Description | Usage | Example |
+|--------|-------------|-------|---------|
+| `auto-docs.js` | Self-updating documentation — parses JSDoc, package scripts, and Git log to sync AGENCY-RULES.md and CHANGELOG.md | `--sync Run full documentation sync (scripts reference + changelog)` `--dry-run Show what would change without modifying files` `--scripts-only Only update the Scripts Reference table` `--changelog-only Only generate changelog from Git history` | `node .agency/scripts/auto-docs.js --sync` |
+| `dispatcher.js` | Parallel task dispatcher — spawns independent tasks concurrently based on Depends On graph in ORCHESTRATION.md | `--parallel <n> Maximum number of concurrent agent processes (required for dispatch, max 5)` `--sprint <id> Only consider tasks in this sprint (optional)` `--dry-run Show what would be dispatched without executing` `--status Show currently running dispatched tasks` `--kill <taskId> Kill a specific dispatched task` | `node .agency/scripts/dispatcher.js --parallel 3` |
+
+
+## npm Scripts
+
+| Script | Command |
+|--------|---------|
+| `npm run agency` | `node .agency/agency.js` |
+| `npm run agency:clean` | `node .agency/scripts/clean-temp.js` |
+| `npm run agency:init` | `node .agency/scripts/init-project.js` |
+| `npm run agency:report` | `node .agency/scripts/cost-report.js` |
+| `npm run agent:cost` | `node .agency/scripts/cost-track.js` |
+| `npm run agent:handoff` | `node .agency/scripts/handoff.js` |
+| `npm run agent:status` | `node .agency/scripts/status.js` |
+| `npm run clean:temp` | `node .agency/scripts/clean-temp.js` |
+| `npm run docs:sync` | `node .agency/scripts/auto-docs.js --sync` |
+| `npm run prepare` | `husky` |
+| `npm run project:list` | `node .agency/scripts/projects-manager.js list` |
+| `npm run project:register` | `node .agency/scripts/projects-manager.js register` |
+| `npm run project:switch` | `node .agency/scripts/projects-manager.js switch` |
+| `npm run telegram:test` | `node .agency/scripts/notify-telegram.js --message '✅ Syst...` |
+| `npm run terminal` | `node .agency/scripts/terminal-session.js` |
+| `npm run terminal:cost` | `node .agency/scripts/terminal-session.js @cost` |
+| `npm run terminal:stats` | `node .agency/scripts/terminal-session.js @stats` |
+
+

@@ -1,5 +1,52 @@
 # Changelog
 
+## v1.0.3 (2026-07-11)
+
+### ✨ Features
+- handoff from lead-architect to qa-automator
+- handoff from lead-architect to qa-automator
+- handoff from code-agent to qa-automator
+- handoff from lead-architect to qa-automator
+- initial commit — bootstrap project
+- add E2E test for multi-project handoff validation (MP-1.13)
+- S10.7 Chaos Monkey validation - semantic memory system
+- wire auto-docs sync into release-manager workflow
+- hook telemetry pipeline into agency scripts (Sprint 7.5-7.8)
+- implement Sprint 7 — secret-scan.js + telemetry.js
+- Phase B + Phase A — agent boundary refactor and CLI wrapper
+- auto-open VS Code on project switch
+- add projects-manager.js with register/switch/list/remove and @switch command for terminal-session.js
+- rename jengabooks-code to code-agent, JengaBooks to ZooCode Agency
+- add notify-telegram and client-bot scripts
+- Sprint C low-priority scripts (cost-report, cost-track, handoff, status)
+- add init-project.js bootstrap script and agency:init npm script
+- add Node.js validation scripts for commit, handoff, and cleanup
+
+### 🐛 Bug Fixes
+- apply critical Patch-1 (project switch) + Patch-2 (fileRegex overlap) — Sprint MP complete
+- implement P1 edge case mitigations — context chunk guard, CWD sync, CI timeout, node version guard
+- rename stale JengaBooks references to ZooCode Agency names
+
+### 📝 Documentation
+- open-source release prep — README, SETUP, QUICKSTART, CONTRIBUTING, jengabooks cleanup
+- update FLOW-DOC.md with memory recall integration
+- document both .roomodes formats (ZooCode + Roo Code)
+
+### 🧪 Testing
+- validate all Sprint 9 deliverables — all 6/6 tests pass
+- add chaos monkey test suite for P0 guard validation
+
+### 🔄 Other Changes
+- chore: exclude managed projects from factory repo -- each project is its own repo
+- HANDOFF: lead-architect
+- HANDOFF: lead-architect
+- Sprint 10 P0 Edge Case Mitigations
+- Sprint 8.1+8.2: terminal-session.js + npm scripts
+- Sprint 5.1+5.2: CI/CD workflow + Husky setup
+- chore(agency): add clean-temp.js orphan file cleanup checker
+
+
+
 ## v1.0.3 (2026-07-10)
 
 ### 🚀 CI/CD

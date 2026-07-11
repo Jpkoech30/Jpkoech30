@@ -5,6 +5,7 @@
 [![ZooCode](https://img.shields.io/badge/ZooCode-Compatible-6C5CE7)](https://zoo.dev)
 [![Agents](https://img.shields.io/badge/Agents-31-00B894)](.roomodes)
 [![Quality Gates](https://img.shields.io/badge/Quality%20Gates-15-E17055)](.agency/AGENCY-RULES.md)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-0078D4)](.husky/post-commit)
 [![GitHub Stars](https://img.shields.io/github/stars/Jpkoech30/jenga-agency?style=social)](https://github.com/Jpkoech30/jenga-agency)
 
 > **A production-ready multi-agent orchestration system for [ZooCode](https://zoo.dev).**
@@ -12,8 +13,25 @@
 
 ---
 
-## 🔥 Quick Setup (30 seconds)
+## 🔥 Quick Setup (2 minutes)
 
+### Windows (cmd.exe)
+```cmd
+:: 1. Clone
+git clone https://github.com/Jpkoech30/jenga-agency.git
+cd jenga-agency
+
+:: 2. Install
+npm install
+
+:: 3. Init your project
+node .agency\scripts\init-project.js --name my-new-project
+
+:: 4. Start collaborating
+:: Load .roomodes in ZooCode and begin!
+```
+
+### macOS / Linux
 ```bash
 # 1. Clone
 git clone https://github.com/Jpkoech30/jenga-agency.git
@@ -23,13 +41,13 @@ cd jenga-agency
 npm install
 
 # 3. Init your project
-node .agency/scripts/init-project.js --name my-project
+node .agency/scripts/init-project.js --name my-new-project
 
 # 4. Start collaborating
 # Load .roomodes in ZooCode and begin!
 ```
 
-**[📥 Download ZIP](https://github.com/Jpkoech30/jenga-agency/archive/refs/heads/master.zip)** — No git required.
+**[📥 Download ZIP](https://github.com/Jpkoech30/jenga-agency/archive/refs/heads/master.zip)** — No git required. Note: ZIP users skip git features (auto-changelog, PR creation, retro reports).
 
 ---
 
@@ -112,8 +130,21 @@ node .agency/scripts/init-project.js --name my-project
 
 ### Existing ZooCode Project
 
+**Windows (cmd.exe):**
+```cmd
+:: Copy agency files to your existing project
+xcopy /E /I jenga-agency\.agency your-project\.agency
+copy jenga-agency\.roomodes your-project\.roomodes
+xcopy /E /I jenga-agency\.husky your-project\.husky
+copy jenga-agency\package.json your-project\
+cd your-project
+npm install
+node .agency\scripts\init-project.js
+node .agency\scripts\preflight-gate.js pass --agent lead-architect --task "setup-complete"
+```
+
+**macOS / Linux:**
 ```bash
-# Copy agency files to your existing project
 cp -r ./jenga-agency/.agency ./jenga-agency/.roomodes ./jenga-agency/.husky ./jenga-agency/package.json ./your-project/
 cd your-project
 npm install
@@ -123,15 +154,28 @@ node .agency/scripts/preflight-gate.js pass --agent lead-architect --task "setup
 
 ### Verify It Works
 
+Run these commands from your project root:
+
 ```bash
+# 1. Check pre-flight gate is ready (pass it first)
+node .agency/scripts/preflight-gate.js pass --agent lead-architect --task "verify-setup"
+# → ✓ Pre-flight passed
+
+# 2. Check gate status
 node .agency/scripts/preflight-gate.js status
-# → "No pre-flight sentinel found" (normal — means gate is ready)
+# → Shows your agent, timestamp, task
 
-node .agency/scripts/memory.js stats
-# → Shows available memory entries
+# 3. Store a test memory
+node .agency/scripts/memory.js store --content "Setup verified" --tags "setup" --task "verify" --agent "lead-architect"
+# → PASS: Memory stored
 
+# 4. Recall it
+node .agency/scripts/memory.js recall --query "setup" --limit 3
+# → Returns your test memory entry
+
+# 5. Run quality gate (will warn about diff size on first run — that's expected)
 node .agency/scripts/quality-gate.js check --project .
-# → Runs all 10 quality checks on your project
+# → Runs all 10 quality checks
 ```
 
 ---
@@ -158,7 +202,7 @@ node .agency/scripts/quality-gate.js check --project .
 | **📱 Mobile (4)** | `mobile-lead`, `mobile-ui`, `mobile-screen`, `mobile-state` | React Native, offline-first, WatermelonDB |
 | **🚀 DevOps (4)** | `devops-lead`, `devops-infra`, `devops-cicd`, `devops-db` | Docker, CI/CD, databases |
 | **🔒 Quality (5)** | `compliance-guardian`, `security-auditor`, `performance-auditor`, `accessibility-auditor`, `qa-automator` | Rules, security, performance, a11y, testing |
-| **📦 Support (4)** | `documentarian`, `design-keeper`, `release-manager`, `jengabooks-code` | Docs, design system, releases, general code |
+| **📦 Support (4)** | `documentarian`, `design-keeper`, `release-manager`, `code-agent` | Docs, design system, releases, general code |
 | **⚙️ Specialists (5)** | `backend-logic`, `backend-database`, `frontend-web`, `frontend-mobile`, `devops` | Domain-specific implementations |
 
 ---
