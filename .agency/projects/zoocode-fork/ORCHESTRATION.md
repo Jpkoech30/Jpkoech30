@@ -18,11 +18,11 @@
 
 | # | Task | Type | Agent | Est. | Status |
 |---|------|------|-------|------|--------|
-| **F1.1** | Decompile `dist/extension.js` — extract agent loop, tool system, MCP client | `research` | 🔧 Backend Service | 2d | `PENDING` |
-| **F1.2** | Set up esbuild + VSIX build pipeline | `devops` | 🚀 DevOps | 1d | `PENDING` |
-| **F1.3** | Set up dev environment (hot-reload, debug mode) | `devops` | 🚀 DevOps | 1d | `PENDING` |
-| **F1.4** | Create `zoocode-fork` organization on GitHub | `setup` | 🧠 Lead Architect | 0.5d | `PENDING` |
-| **F1.5** | Port `.roomodes` 31 agents into extension code | `feature` | 🔧 Backend Service | 1d | `PENDING` |
+| **F1.1** | Decompile `dist/extension.js` — extract agent loop, tool system, MCP client | `research` | 🔧 Backend Service | 2d | `DONE` |
+| **F1.2** | Set up esbuild + VSIX build pipeline | `devops` | 🚀 DevOps | 1d | `DONE` |
+| **F1.3** | Set up dev environment (hot-reload, debug mode) | `devops` | 🚀 DevOps | 1d | `DONE` |
+| **F1.4** | Create `zoocode-fork` organization on GitHub | `setup` | 🧠 Lead Architect | 0.5d | `DONE` |
+| **F1.5** | Port `.roomodes` 31 agents into extension code | `feature` | 🔧 Backend Service | 1d | `DONE` |
 
 ### Sprint F2 — Native PFG (Est. 1 week)
 **Theme:** Build Pre-Flight Gate into the agent loop — oath required before any tool
@@ -58,4 +58,4 @@
 
 | Contract ID | Version | Path | Status |
 |-------------|---------|------|--------|
-| `zoocode-fork-architecture` | 1.0.0 | `contracts/zoocode-fork-architecture.json` | `DRAFT` |
+| `zoocode-fork-architecture` | 1.0.0 | `contracts/zoocode-fork-architecture.json` | `DONE` |
