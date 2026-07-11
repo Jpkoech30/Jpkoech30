@@ -121,6 +121,88 @@
 
 ---
 
+## 🔧 Sprint F4 — Delivery Summary
+
+### Files Created/Modified
+
+| File | Action | Description |
+|------|--------|-------------|
+| [`src/memory.ts`](projects/zoocode-fork/src/memory.ts) | **Created** | Core Memory module — `storeMemory(content, tags, task, agent)` persists to `.agency/memory/store.json`, `recallMemory(query, limit, minScore)` with keyword scoring, `memoryStats()` aggregates by agent |
+| [`src/telemetry.ts`](projects/zoocode-fork/src/telemetry.ts) | **Created** | Core Telemetry module — `logEvent(eventType, agent, task, status, tokens?)` appends to `.agency/telemetry/events.jsonl` with KES cost calc (KES 19/1M tokens), `getRecentEvents(limit)` returns latest |
+| [`src/memory-ui.ts`](projects/zoocode-fork/src/memory-ui.ts) | **Created** | `MemoryViewProvider` — VS Code WebviewView provider with search input, displays ranked results with match % and agent |
+| [`src/extension.ts`](projects/zoocode-fork/src/extension.ts) | **Modified** | Added imports from `memory`, `telemetry`, `memory-ui`; registered 4 memory commands (store, recall, stats) + 2 telemetry commands (log, recent) + MemoryViewProvider webview + auto-recall on activation |
+
+### Commands Registered
+
+| Command ID | Description |
+|------------|-------------|
+| `zoocode-fork.memory.store` | Store a memory entry (content, tags, task, agent) — returns entry with ID |
+| `zoocode-fork.memory.recall` | Recall memories matching query — returns scored entries |
+| `zoocode-fork.memory.stats` | Get memory statistics — total count + breakdown by agent |
+| `zoocode-fork.telemetry.log` | Log a telemetry event — appends to JSONL with optional token count |
+| `zoocode-fork.telemetry.recent` | Get recent events — last 10 by default |
+
+### Memory Architecture
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    MEMORY MODULE (memory.ts)                   │
+│                                                              │
+│  storeMemory() → write JSON to .agency/memory/store.json     │
+│  recallMemory() → keyword score → rank → return top N       │
+│  memoryStats()  → aggregate counts by agent                  │
+│                                                              │
+│  Storage: .agency/memory/store.json (flat key-value map)     │
+│  Search: Simple keyword overlap scoring (upgradable to cos)  │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Telemetry Architecture
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                  TELEMETRY MODULE (telemetry.ts)               │
+│                                                              │
+│  logEvent() → append JSON line to .agency/telemetry/events   │
+│  getRecentEvents() → read last N lines from JSONL file       │
+│                                                              │
+│  Storage: .agency/telemetry/events.jsonl (JSONL append-log)  │
+│  Cost: KES 19 per 1M tokens (DeepSeek Flash pricing)        │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Memory UI Architecture
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│              MEMORY VIEW PROVIDER (memory-ui.ts)              │
+│                                                              │
+│  WebviewView (Side Panel) → search input + results list      │
+│  IPC: onDidReceiveMessage(search) → recallMemory() →         │
+│       postMessage(results) → render ranked entries           │
+│                                                              │
+│  Display: score %, agent badge, content preview (80 chars)  │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Build Verification
+- `npm run build` → **PASS** (esbuild)
+- Bundle: 45,458 bytes
+- Memory refs in bundle: 10 (storeMemory, recallMemory, memoryStats, MemoryViewProvider)
+- Telemetry refs in bundle: 4 (logEvent, getRecentEvents, TelemetryEvent)
+- All functions present in compiled output
+
+### Sprint F4 Roadmap Update
+
+| # | Task | Type | Agent | Status |
+|---|------|------|-------|--------|
+| **F4.1** | Build JSON memory into extension (auto-recall at start, auto-store at end) | `feature` | 🔧 Backend Service | `DONE` |
+| **F4.2** | Build telemetry (token tracking, cost calc, JSONL event log) | `feature` | 🔧 Backend Service | `DONE` |
+| **F4.3** | Wire memory + telemetry into extension.ts with VS Code commands | `feature` | 🔧 Backend Service | `DONE` |
+| **F4.4** | Add Memory Browser Webview UI (search + results panel) | `ui` | 🌐 Frontend Web | `DONE` |
+
+---
+
 ## 🔧 Sprint F2 — Delivery Summary
 
 ### Files Created/Modified
