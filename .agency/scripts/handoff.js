@@ -96,7 +96,7 @@ function checkCwdGuard() {
 
 function parseArgs() {
     const args = process.argv.slice(2);
-    const opts = { from: null, to: null, task: null, status: 'IN_PROGRESS', artifacts: 'pending', model: null, contract: null };
+    const opts = { from: null, to: null, task: null, status: 'IN_PROGRESS', artifacts: 'pending', model: null, contract: null, scope: 'project' };
 
     for (let i = 0; i < args.length; i++) {
         if (args[i] === '--from' && i + 1 < args.length) opts.from = args[++i];
@@ -106,6 +106,7 @@ function parseArgs() {
         if (args[i] === '--artifacts' && i + 1 < args.length) opts.artifacts = args[++i];
         if (args[i] === '--model' && i + 1 < args.length) opts.model = args[++i].toLowerCase();
         if (args[i] === '--contract' && i + 1 < args.length) opts.contract = args[++i];
+        if (args[i] === '--scope' && i + 1 < args.length) opts.scope = args[++i].toLowerCase();
     }
 
     return opts;
@@ -153,7 +154,7 @@ function isValidAgent(slug, validSlugs) {
 /**
  * Generate the formatted commit body.
  */
-function generateCommitBody(from, to, task, status, artifacts, model, contract) {
+function generateCommitBody(from, to, task, status, artifacts, model, contract, scope) {
     const lines = [
         '',
         `HANDOFF:${to}`,
@@ -161,8 +162,9 @@ function generateCommitBody(from, to, task, status, artifacts, model, contract) 
         `CONTRACT:${contract || 'pending'}`,
         `STATUS:${status}`,
         `MEMORY:stored`,
+        scope ? `SCOPE:${scope}` : null,
         '',
-    ];
+    ].filter(Boolean);
 
     // Add optional context line
     if (from && to) {
@@ -176,6 +178,31 @@ function generateCommitBody(from, to, task, status, artifacts, model, contract) 
     }
 
     return lines.join('\n');
+}
+
+// ── ORCHESTRATION.md Path Resolution ──────────────────────────
+
+/**
+ * Resolve the ORCHESTRATION.md path based on scope.
+ * @param {string} scope - 'project' or 'global'
+ * @returns {string}
+ */
+function getOrchestrationPath(scope) {
+    if (scope === 'global') {
+        return path.join(ROOT, 'ORCHESTRATION.md');
+    }
+
+    // Per-project scope: resolve based on activeProject
+    const activeProject = fs.readFileSync(ACTIVE_PROJECT_PATH, 'utf-8').trim();
+    const projectsConfig = JSON.parse(fs.readFileSync(PROJECTS_JSON_PATH, 'utf-8'));
+    const project = projectsConfig.projects.find(p => p.name === activeProject || p.id === activeProject);
+
+    if (!project) {
+        console.error(`FAIL: Active project "${activeProject}" not found in projects.json`);
+        process.exit(1);
+    }
+
+    return path.join(ROOT, '.agency', 'projects', project.id, 'ORCHESTRATION.md');
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
@@ -254,13 +281,19 @@ function main() {
         process.exit(1);
     }
 
+    // Validate scope
+    if (opts.scope !== 'project' && opts.scope !== 'global') {
+        console.error(`FAIL: Invalid --scope value "${opts.scope}". Must be "project" or "global".`);
+        process.exit(1);
+    }
+
     // ── Post-Task Gate: Blocking check before proceeding ────────────
     runPostTaskGate(opts.from, opts.task, opts.to, opts.artifacts, opts.status);
 
     // ── Git Commit: Stage and commit all changes ───────────────────
     try {
         const subject = `feat(${opts.task}): handoff from ${opts.from} to ${opts.to}`;
-        const body = generateCommitBody(opts.from, opts.to, opts.task, opts.status, opts.artifacts, opts.model, opts.contract);
+        const body = generateCommitBody(opts.from, opts.to, opts.task, opts.status, opts.artifacts, opts.model, opts.contract, opts.scope);
         const fullMessage = subject + '\n\n' + body;
 
         // Write commit message to temp file (avoids shell escaping issues)
@@ -277,6 +310,28 @@ function main() {
         // Non-blocking — handoff proceeds even if commit fails
     }
 
+    // ── ORCHESTRATION.md: Append handoff entry ─────────────────────
+    try {
+        const orchestrationPath = getOrchestrationPath(opts.scope);
+        const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
+        const handoffEntry = [
+            '',
+            `### Handoff (${timestamp})`,
+            `**From:** ${opts.from} → **To:** ${opts.to}`,
+            `**Task:** ${opts.task}`,
+            `**Status:** ${opts.status}`,
+            `**Scope:** ${opts.scope}`,
+            `**Artifacts:** ${opts.artifacts || 'none'}`,
+            `**Contract:** ${opts.contract || 'pending'}`,
+            '',
+        ].join('\n');
+
+        fs.appendFileSync(orchestrationPath, handoffEntry, 'utf-8');
+        console.log(`  ✅ Handoff logged to ${orchestrationPath}`);
+    } catch (orchError) {
+        console.error('  ⚠ Failed to write ORCHESTRATION.md (non-blocking):', orchError.message);
+    }
+
     // ── Telemetry: handoff start ─────────────────────────────────────
     try {
         execSync(
@@ -288,7 +343,7 @@ function main() {
     }
 
     // Generate commit body
-    const body = generateCommitBody(opts.from, opts.to, opts.task, opts.status, opts.artifacts, opts.model, opts.contract);
+    const body = generateCommitBody(opts.from, opts.to, opts.task, opts.status, opts.artifacts, opts.model, opts.contract, opts.scope);
 
     console.log(body);
 

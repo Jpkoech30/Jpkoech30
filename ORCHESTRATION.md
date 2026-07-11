@@ -332,3 +332,18 @@ Two critical issues were identified during agency setup review:
 |---------|------|----|-----------|
 | **H14.0** | 🧠 Lead Architect | 🔧 JengaBooks Code | Sprint 14 tasks 14.1-14.2 |
 | **H14.1** | 🔧 JengaBooks Code | 🧪 QA Automator | PTG artifacts for validation |
+
+---
+
+### Sprint 15 — Agency Script Audit Fixes (Est. 1 day)
+> **Status:** ✅ ALL DONE | **Trigger:** 34-script audit found 7 with issues
+
+| # | Task | Priority | Agent | Status |
+|---|------|----------|-------|--------|
+| **15.1** | validate-handoff.js — add MEMORY field to REQUIRED_FIELDS | 🔴 P0 | 🔧 JengaBooks Code | ✅ Done |
+| **15.2** | chaos-monkey.js — add main() entry point | 🟡 P1 | 🔧 JengaBooks Code | ✅ Done |
+| **15.3** | update-roomodes.js — add main() wrapper | 🟡 P2 | 🔧 JengaBooks Code | ✅ Done |
+| **15.4** | init-project.js — fix .active-project creation | 🟡 P3 | 🔧 JengaBooks Code | ✅ Done |
+| **15.5** | auto-docs.js — project-aware path resolution | 🟢 P4 | 🔧 JengaBooks Code | ✅ Done |
+| **15.6** | cleanup.js — fix BASE_DIR to use __dirname | 🟢 P4 | 🔧 JengaBooks Code | ✅ Done |
+| **15.7** | terminal-session.js — var→const/let + cmdSwitch fix | 🟢 P4 | 🔧 JengaBooks Code | ✅ Done |
