@@ -112,7 +112,7 @@ function validateStatus(body) {
 }
 
 /**
- * Validate MEMORY optional field (advisory warning, non-blocking).
+ * Validate MEMORY field (required).
  * Accepts: MEMORY:stored or MEMORY:not-required
  *
  * @param {string} body The commit body.
@@ -120,8 +120,8 @@ function validateStatus(body) {
 function validateMemoryField(body) {
     const memoryMatch = body.match(/^MEMORY:\s*(\S+)/m);
     if (!memoryMatch) {
-        console.warn('  ⚠ WARNING: Missing MEMORY field. Consider adding MEMORY:stored or MEMORY:not-required.');
-        return;
+        console.error('FAIL: Missing MEMORY field. Add MEMORY:stored or MEMORY:not-required.');
+        process.exit(1);
     }
 
     const value = memoryMatch[1].trim();
@@ -178,7 +178,7 @@ function main() {
 
     console.log(`  ✓ STATUS is valid`);
 
-    // Validate MEMORY field (advisory, non-blocking)
+    // Validate MEMORY field (blocking)
     validateMemoryField(body);
 
     console.log('PASS: HANDOFF metadata is valid.');

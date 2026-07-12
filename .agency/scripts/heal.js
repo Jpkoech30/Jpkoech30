@@ -348,7 +348,7 @@ function rollbackEntry(entryId) {
             console.log(`     ⚠️  Cannot restore deleted temp file — check git history`);
             break;
         case "clean_sentinel":
-            console.log(`     ⚠️  Sentinel deletion is non-critical — no rollback needed`);
+            console.log(`     ⚠️  Sentinel already deleted — no rollback needed`);
             break;
         case "sync_config":
             // We can't easily undo a config change, but we log it

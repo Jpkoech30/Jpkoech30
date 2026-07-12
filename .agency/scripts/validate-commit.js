@@ -225,7 +225,7 @@ function parseCliArgs() {
 }
 
 /**
- * Validate PREFLIGHT optional field (advisory warning, non-blocking).
+ * Validate PREFLIGHT field (required).
  * Accepts: PREFLIGHT:PASSED or PREFLIGHT:NOT_REQUIRED
  *
  * @param {string} body The commit body.
@@ -233,8 +233,8 @@ function parseCliArgs() {
 function validatePreflightField(body) {
     const preflightMatch = body.match(/^PREFLIGHT:\s*(\S+)/m);
     if (!preflightMatch) {
-        // PREFLIGHT is optional — no warning if absent
-        return;
+        console.error('FAIL: Missing PREFLIGHT field. Add PREFLIGHT:PASSED or PREFLIGHT:NOT_REQUIRED.');
+        process.exit(1);
     }
 
     const value = preflightMatch[1].trim();
@@ -242,12 +242,13 @@ function validatePreflightField(body) {
     if (validValues.includes(value)) {
         console.log(`  ✓ PREFLIGHT field valid: "${value}"`);
     } else {
-        console.warn(`  ⚠ WARNING: PREFLIGHT has unrecognized value "${value}". Expected PASSED or NOT_REQUIRED.`);
+        console.error(`FAIL: PREFLIGHT has unrecognized value "${value}". Expected PASSED or NOT_REQUIRED.`);
+        process.exit(1);
     }
 }
 
 /**
- * Validate MEMORY optional field (advisory warning, non-blocking).
+ * Validate MEMORY field (required).
  * Accepts: MEMORY:stored or MEMORY:not-required
  *
  * @param {string} body The commit body.
@@ -255,9 +256,8 @@ function validatePreflightField(body) {
 function validateMemoryField(body) {
     const memoryMatch = body.match(/^MEMORY:\s*(\S+)/m);
     if (!memoryMatch) {
-        // MEMORY is optional — warn if absent (same as PREFLIGHT pattern)
-        console.warn('  ⚠ WARNING: Missing MEMORY field. Consider adding MEMORY:stored or MEMORY:not-required.');
-        return;
+        console.error('FAIL: Missing MEMORY field. Add MEMORY:stored or MEMORY:not-required.');
+        process.exit(1);
     }
 
     const value = memoryMatch[1].trim();
@@ -265,7 +265,8 @@ function validateMemoryField(body) {
     if (validValues.includes(value)) {
         console.log(`  ✓ MEMORY field valid: "${value}"`);
     } else {
-        console.warn(`  ⚠ WARNING: MEMORY has unrecognized value "${value}". Expected stored or not-required.`);
+        console.error(`FAIL: MEMORY has unrecognized value "${value}". Expected stored or not-required.`);
+        process.exit(1);
     }
 }
 
@@ -305,10 +306,10 @@ function main() {
 
     console.log('  ✓ HANDOFF metadata fields present (HANDOFF, STATUS)');
 
-    // Validate PREFLIGHT field (advisory, non-blocking)
+    // Validate PREFLIGHT field (blocking)
     validatePreflightField(body);
 
-    // Validate MEMORY field (advisory, non-blocking)
+    // Validate MEMORY field (blocking)
     validateMemoryField(body);
 
     // Validate PROJECT field

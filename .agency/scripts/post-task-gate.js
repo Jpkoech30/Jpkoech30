@@ -53,7 +53,8 @@ function callTelemetry(task, agent, status, details) {
             { cwd: ROOT, stdio: 'ignore', timeout: 10000 }
         );
     } catch {
-        // Telemetry logging is non-blocking
+        console.error('  ❌ Telemetry logging failed (blocking)');
+        process.exit(1);
     }
 }
 
@@ -299,7 +300,7 @@ function checkQualityGate() {
         if (qgOutput.includes('[BLOCK]') || qgErr.status === 1) {
             fail('❌ PTG-C5: Quality Gate FAILED — blocking issues found');
         } else {
-            // Non-blocking error (e.g., script crash)
+            // Quality Gate error (e.g., script crash)
             fail(`❌ PTG-C5: Quality Gate error — ${qgErr.message || 'Unknown error'}`);
         }
     }
@@ -450,7 +451,7 @@ function main() {
     console.log('');
     console.log(`  ── Summary: ${passedCount}/${total} checkpoints passed ──`);
 
-    // Telemetry logging (non-blocking)
+    // Telemetry logging (blocking)
     if (failedCount === 0) {
         console.log('');
         console.log('  🏁 POST-TASK GATE: ALL PASS');

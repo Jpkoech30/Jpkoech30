@@ -2,8 +2,7 @@
  * clean-temp.js — Orphan Temp File Cleanup Checker
  *
  * Scans the project root directory for orphan temporary/scratch files and
- * warns about any leftovers in .agency/temp/. This is an informational check
- * only — exit code is always 0.
+ * warns about any leftovers in .agency/temp/. Exits 1 if issues are found.
  *
  * Orphan patterns checked in root:
  *   - *.tmp, *.temp, *.bak, *.swp
@@ -14,7 +13,7 @@
  * Usage:
  *   node .agency/scripts/clean-temp.js
  *
- * Exit code: 0 always (informational, non-blocking)
+ * Exit code: 0 if clean, 1 if orphans/temp files found
  */
 
 const fs = require('fs');
@@ -98,8 +97,8 @@ function scanRootForOrphans() {
     try {
         entries = fs.readdirSync(ROOT_DIR);
     } catch {
-        console.error(`WARN: Could not read root directory: ${ROOT_DIR}`);
-        return orphans;
+        console.error(`ERROR: Could not read root directory: ${ROOT_DIR}`);
+        process.exit(1);
     }
 
     for (const entry of entries) {
@@ -142,8 +141,8 @@ function scanAgencyTemp() {
     try {
         entries = fs.readdirSync(AGENCY_TEMP_DIR);
     } catch {
-        console.error(`WARN: Could not read .agency/temp/ directory: ${AGENCY_TEMP_DIR}`);
-        return leftovers;
+        console.error(`ERROR: Could not read .agency/temp/ directory: ${AGENCY_TEMP_DIR}`);
+        process.exit(1);
     }
 
     for (const entry of entries) {
@@ -193,12 +192,11 @@ function main() {
     // ---- Summary ----
     if (!hasIssues) {
         console.log('✅ Cleanup check complete — no orphan or temp files found.');
+        process.exit(0);
     } else {
-        console.log('✅ Cleanup check complete — review warnings above as needed.');
+        console.log('❌ Cleanup check complete — orphan or temp files found, see warnings above.');
+        process.exit(1);
     }
-
-    // Always exit 0 — informational only, never blocking
-    process.exit(0);
 }
 
 main();

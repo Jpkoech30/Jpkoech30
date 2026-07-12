@@ -16,7 +16,7 @@
  *   node .agency/scripts/enforcer.js reset --task X                  → Reset to PENDING
  *
  * Flags:
- *   --ci       → Skip non-blocking checks
+ *   --ci       → CI mode (suppress verbose output)
  *   --hotfix   → Skip all phases, mark as HOTFIX
  *   --reason   → Required with --hotfix
  *
@@ -251,7 +251,8 @@ function cmdPre(agent, task, project, hotfix, reason, embed) {
             }
             console.log(`  ✅ Oath verification passed`);
         } catch (err) {
-            console.log(`  ⚠️  Oath embedding failed (non-critical): ${err.message}`);
+            console.error(`  ❌ Oath embedding failed (blocking): ${err.message}`);
+            process.exit(1);
         }
     }
 
@@ -570,7 +571,8 @@ function cmdHandoff(from, to, task, project) {
         }
         console.log(`  ✅ Git commit verified: ${logCheck}`);
     } catch {
-        console.log('  ⚠️  Git check unavailable (non-blocking)');
+        console.error('  ❌ Git check unavailable — cannot verify commit exists for this task');
+        process.exit(1);
     }
 
     // Check phase progression: POST must be PASSED or SKIPPED
@@ -670,7 +672,7 @@ function showUsage() {
     node enforcer.js reset   --task X --force                 Reset to PENDING
 
   Flags:
-    --ci          Skip non-blocking checks (CI mode)
+    --ci          CI mode (suppress verbose output)
     --hotfix      Skip all phases, mark as HOTFIX
     --reason      Required with --hotfix
     --project     Project scope (default: global)

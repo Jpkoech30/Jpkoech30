@@ -130,14 +130,15 @@ function printAlerts(failures) {
     for (const task of failures) {
         console.log(generateAlert(task));
 
-        // Send HITL notification via Telegram (non-blocking)
+        // Send HITL notification via Telegram
         try {
             execSync(
                 `node ${NOTIFY_SCRIPT} --task ${task.id} --agent ${task.agent} --gate ${task.gate} --failCount ${task.failCount} --description "Gate ${task.gate} failed ${task.failCount} times for task ${task.id}"`,
                 { stdio: 'ignore', timeout: 15000 }
             );
         } catch (_) {
-            // HITL notification failures must not block escalation
+            console.error(`  ❌ HITL notification failed (blocking): could not alert for task ${task.id}`);
+            process.exit(1);
         }
     }
 }

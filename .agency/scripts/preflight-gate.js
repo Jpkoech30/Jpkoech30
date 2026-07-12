@@ -57,7 +57,8 @@ function callTelemetry(agent, task, status) {
             { cwd: ROOT, stdio: 'ignore', timeout: 10000 }
         );
     } catch {
-        // Telemetry logging is non-blocking
+        console.error('  ❌ Telemetry logging failed (blocking)');
+        process.exit(1);
     }
 }
 
@@ -91,7 +92,7 @@ function cmdPass(agent, task) {
     writeSentinel(sentinel);
     console.log(`✓ Pre-flight passed for agent "${agent}"`);
 
-    // Non-blocking telemetry call
+    // Telemetry call (blocking)
     callTelemetry(agent, task, 'PASSED');
 
     process.exit(0);

@@ -364,7 +364,9 @@ function main() {
             });
             console.log(`  ✅ Telemetry logged`);
         } catch (e) {
-            console.error(`  ⚠ Telemetry logging failed (non-critical): ${e.message}`);
+            console.error(`  ❌ Telemetry logging failed (blocking): ${e.message}`);
+            console.error('  The handoff CANNOT proceed without telemetry logging.');
+            process.exit(1);
         }
     }
 
@@ -431,7 +433,9 @@ function main() {
         fs.appendFileSync(orchestrationPath, handoffEntry, 'utf-8');
         console.log(`  ✅ Handoff logged to ${orchestrationPath}`);
     } catch (orchError) {
-        console.error('  ⚠ Failed to write ORCHESTRATION.md (non-blocking):', orchError.message);
+        console.error('  ❌ Failed to write ORCHESTRATION.md (blocking):', orchError.message);
+        console.error('  The handoff CANNOT proceed without updating ORCHESTRATION.md.');
+        process.exit(1);
     }
 
     // ── Telemetry: handoff start ─────────────────────────────────────

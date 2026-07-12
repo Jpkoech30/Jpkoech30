@@ -288,7 +288,8 @@ async function storeMemory(content, tags, taskId, agentSlug, sourceFile, project
                     insertVec.run(row.rowid, embeddingBlob);
                 }
             } catch (_) {
-                // vec0 insert failed, non-blocking
+                console.error('  ❌ Vector embedding insert failed (blocking)');
+                process.exit(1);
             }
         }
     });
@@ -950,7 +951,10 @@ async function main() {
                 if (countRow && countRow.cnt >= COMPACTION_THRESHOLD) {
                     needsCompact = true;
                 }
-            } catch (_) { /* non-blocking */ }
+            } catch (_) {
+                console.error('  ❌ Compaction threshold check failed (blocking)');
+                process.exit(1);
+            }
 
             // If compaction threshold exceeded, store PENDING flag for async cron
             const MEMORY_BASE = path.resolve(__dirname, '../memory');
@@ -963,7 +967,10 @@ async function main() {
                         triggered_at: new Date().toISOString(),
                         chunk_count: chunkCount ? chunkCount.cnt : 0
                     }), 'utf-8');
-                } catch (_) { /* non-blocking */ }
+                } catch (_) {
+                    console.error('  ❌ Compaction pending file write failed (blocking)');
+                    process.exit(1);
+                }
 
                 console.log('PASS: Memory stored');
                 console.log(`  ID:          ${id}-PENDING`);
