@@ -397,6 +397,25 @@ function main() {
             const defaultBranch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: ROOT, encoding: 'utf-8' }).toString().trim();
             execSync(`git push origin ${defaultBranch}`, { cwd: ROOT, stdio: 'inherit' });
             console.log(`  ✅ Pushed to origin/${defaultBranch}`);
+
+            // Write session-state.json for recap.js
+            try {
+                const sessionState = {
+                    lastHandoff: new Date().toISOString(),
+                    fromAgent: opts.from,
+                    toAgent: opts.to,
+                    task: opts.task,
+                    status: opts.status,
+                    scope: opts.scope,
+                    project: opts.project || 'zoocode-agency',
+                    commitHash: execSync('git rev-parse --short HEAD', { cwd: ROOT, encoding: 'utf-8' }).toString().trim()
+                };
+                fs.writeFileSync(path.join(ROOT, '.agency', 'session-state.json'), JSON.stringify(sessionState, null, 2), 'utf-8');
+                console.log('  ✅ Session state saved');
+            } catch (ssError) {
+                console.error('  ❌ Failed to write session state (blocking):', ssError.message);
+                process.exit(1);
+            }
         } catch (pushError) {
             console.error('  ❌ Git push FAILED (blocking):', pushError.message);
             console.error('  The handoff CANNOT proceed without a successful push.');

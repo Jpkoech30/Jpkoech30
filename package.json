@@ -4,6 +4,7 @@
     "private": true,
     "description": "ZooCode Agency — multi-agent orchestration framework",
     "scripts": {
+        "recap": "node .agency/scripts/recap.js",
         "agency": "node .agency/agency.js",
         "agency:init": "node .agency/scripts/init-project.js",
         "agency:clean": "node .agency/scripts/clean-temp.js",
