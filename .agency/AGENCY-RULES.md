@@ -44,7 +44,9 @@ PRE-TASK OATH (MANDATORY)
 
 Before writing ANY code, output this single-line oath:
 
-"🧠 Bound by AGENCY-RULES v5.1. Pre-flight passed. Cost estimate: ~X,XXX tokens (~KES Y.YY). Sections: [list applicable sections]."
+"🧠 Bound by AGENCY-RULES v5.1. Enforcer pre-flight passed. Cost estimate: ~X,XXX tokens (~KES Y.YY). Sections: [list applicable sections]."
+
+Then run: `node .agency/scripts/enforcer.js pre --agent <slug> --task "<task>"`
 
 Note: Token cost is estimated in KES using the formula: (input_tokens × 19 + output_tokens × 38) / 1,000,000, using DeepSeek Flash pricing. If using DeepSeek Pro, use 270 and 1080 respectively.
 

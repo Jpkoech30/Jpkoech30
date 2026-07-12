@@ -1,0 +1,61 @@
+{
+  "status": "DEGRADED",
+  "generated_at": "2026-07-12T22:12:39.183Z",
+  "hostname": "JoshuaPchumba",
+  "checks": [
+    {
+      "name": "enforcer_db",
+      "passed": true,
+      "detail": "4096b, valid SQLite"
+    },
+    {
+      "name": "memory_db",
+      "passed": true,
+      "detail": "valid SQLite, WAL mode"
+    },
+    {
+      "name": "telemetry",
+      "passed": false,
+      "detail": "Last event 25h ago (>24h threshold)"
+    },
+    {
+      "name": "config_valid",
+      "passed": true,
+      "detail": "31 agents in sync"
+    },
+    {
+      "name": "roomodes_valid",
+      "passed": true,
+      "detail": "31 agents, all valid"
+    },
+    {
+      "name": "temp_files",
+      "passed": true,
+      "detail": "No orphan temp files"
+    },
+    {
+      "name": "stale_sentinels",
+      "passed": true,
+      "detail": "No stale sentinels"
+    },
+    {
+      "name": "commit_hook",
+      "passed": true,
+      "detail": "Exists, 1469b"
+    },
+    {
+      "name": "heal_log_size",
+      "passed": true,
+      "detail": "No heal-log"
+    },
+    {
+      "name": "lockfile",
+      "passed": true,
+      "detail": "No lockfile"
+    }
+  ],
+  "summary": {
+    "passed": "9/10",
+    "auto_fixes": 0
+  }
+}

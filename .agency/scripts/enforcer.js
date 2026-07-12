@@ -108,6 +108,8 @@ function parseArgs() {
         ci: false,
         hotfix: false,
         force: false,
+        contract: null,
+        embed: null,
     };
 
     for (let i = 1; i < args.length; i++) {
@@ -123,6 +125,8 @@ function parseArgs() {
             case '--ci': opts.ci = true; break;
             case '--hotfix': opts.hotfix = true; break;
             case '--force': opts.force = true; break;
+            case '--contract': opts.contract = args[++i]; break;
+            case '--embed': opts.embed = args[++i]; break;
         }
     }
 
@@ -157,7 +161,7 @@ function updateRow(taskId, agentSlug, changes) {
 
 // ── Commands ────────────────────────────────────────────────────────────────────
 
-function cmdPre(agent, task, project, hotfix, reason) {
+function cmdPre(agent, task, project, hotfix, reason, embed) {
     if (!agent) { console.error('FAIL: --agent is required'); process.exit(1); }
     if (!task) { console.error('FAIL: --task is required'); process.exit(1); }
 
@@ -206,6 +210,51 @@ function cmdPre(agent, task, project, hotfix, reason) {
     console.log(`✓ PRE phase: enforcement session created for agent "${agent}" task "${task}"`);
     console.log(`  Oath hash: ${oathHash}`);
     console.log(`  Expires:   ${new Date((ts + PRE_TTL) * 1000).toISOString()}`);
+
+    // Semantic oath verification using cosine similarity (Issue #5)
+    if (embed) {
+        try {
+            // Generate simple TF-IDF-like character trigram vectors
+            function trigramVector(text) {
+                const trigrams = {};
+                for (let i = 0; i < text.length - 2; i++) {
+                    const tri = text.substring(i, i + 3).toLowerCase();
+                    trigrams[tri] = (trigrams[tri] || 0) + 1;
+                }
+                return trigrams;
+            }
+
+            function cosineSimilarity(vecA, vecB) {
+                let dot = 0, normA = 0, normB = 0;
+                const allKeys = new Set([...Object.keys(vecA), ...Object.keys(vecB)]);
+                for (const key of allKeys) {
+                    const a = vecA[key] || 0;
+                    const b = vecB[key] || 0;
+                    dot += a * b;
+                    normA += a * a;
+                    normB += b * b;
+                }
+                if (normA === 0 || normB === 0) return 0;
+                return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+            }
+
+            const CANONICAL_OATH = "I see the big picture. Trust the process.";
+            const oathVec = trigramVector(CANONICAL_OATH);
+            const embedVec = trigramVector(embed);
+            const score = cosineSimilarity(oathVec, embedVec);
+
+            console.log(`  🔐 Oath similarity: ${(score * 100).toFixed(1)}%`);
+            if (score < 0.65) {
+                console.log(`  ❌ Oath verification FAILED (below 0.65 threshold)`);
+                console.log(`     The task summary doesn't semantically match the oath.`);
+                process.exit(1);
+            }
+            console.log(`  ✅ Oath verification passed`);
+        } catch (err) {
+            console.log(`  ⚠️  Oath embedding failed (non-critical): ${err.message}`);
+        }
+    }
+
     process.exit(0);
 }
 
@@ -358,6 +407,88 @@ function cmdPost(task, agent, project, ci) {
     }
 }
 
+function cmdMiddle(task, agent, project, ci) {
+    if (!task) { console.error('FAIL: --task is required'); process.exit(1); }
+    if (!agent) { console.error('FAIL: --agent is required'); process.exit(1); }
+
+    initDatabase();
+    console.log('');
+    console.log('  ── MIDDLE Gate: Contract Validation ──');
+
+    // Read contracts directory
+    const contractsDir = path.join(ROOT, '.agency', 'contracts');
+    if (!fs.existsSync(contractsDir)) {
+        console.log('  ⏭️  No contracts directory — skipping validation');
+        process.exit(0);
+    }
+
+    // Check if any contract files reference this agent's domain
+    const contractFiles = fs.readdirSync(contractsDir).filter(f => f.endsWith('.json'));
+    let passed = 0;
+    let failed = 0;
+
+    for (const file of contractFiles) {
+        try {
+            const contract = JSON.parse(fs.readFileSync(path.join(contractsDir, file), 'utf-8'));
+
+            // Basic contract validation:
+            // 1. Must have contractId
+            // 2. Must have version
+            // 3. If has endpoints, each must have method + path
+            // 4. If has types, each must have type name
+
+            if (!contract.contractId) {
+                console.log(`  ❌ ${file}: missing contractId`);
+                failed++;
+                continue;
+            }
+            if (!contract.version) {
+                console.log(`  ❌ ${file}: missing version`);
+                failed++;
+                continue;
+            }
+
+            if (contract.endpoints && Array.isArray(contract.endpoints)) {
+                for (const ep of contract.endpoints) {
+                    if (!ep.method) {
+                        console.log(`  ❌ ${file}/${ep.path || "?"}: missing method`);
+                        failed++;
+                    }
+                    if (!ep.path) {
+                        console.log(`  ❌ ${file}/${ep.method || "?"}: missing path`);
+                        failed++;
+                    }
+                }
+            }
+
+            if (contract.types && Array.isArray(contract.types)) {
+                for (const t of contract.types) {
+                    if (!t.name && !t.typeName) {
+                        console.log(`  ❌ ${file}: type missing name`);
+                        failed++;
+                    }
+                }
+            }
+
+            passed++;
+            console.log(`  ✅ ${file}: ${contract.contractId || "unnamed"} v${contract.version || "?"}`);
+        } catch (err) {
+            console.log(`  ❌ ${file}: parse error — ${err.message}`);
+            failed++;
+        }
+    }
+
+    console.log('');
+    if (failed > 0) {
+        console.log(`  🏁 MIDDLE gate: ${passed} passed, ${failed} FAILED — blocking commit`);
+        process.exit(1);
+    }
+    console.log(`  🏁 MIDDLE gate: ${passed}/${passed + failed} passed`);
+
+    // Update enforcement state
+    updateRow(task, agent, { phase: 'MIDDLE', status: 'PASSED' });
+}
+
 function cmdCommit(task, agent, msg, project) {
     if (!task) { console.error('FAIL: --task is required'); process.exit(1); }
     if (!msg) { console.error('FAIL: --msg is required'); process.exit(1); }
@@ -423,6 +554,23 @@ function cmdHandoff(from, to, task, project) {
         console.log(`  ⚡ HOTFIX handoff (reason: ${row.hotfix_reason})`);
         updateRow(task, from, { phase: 'HANDOFF', status: 'SKIPPED' });
         process.exit(0);
+    }
+
+    // Git commit verification — ensure agent actually committed changes
+    try {
+        const logCheck = execSync(
+            `git log --all --oneline --grep="${task}" --max-count=1 2>&1`,
+            { cwd: ROOT, stdio: 'pipe', timeout: 10000 }
+        ).toString().trim();
+        if (!logCheck) {
+            console.error('  ❌ HANDOFF blocked: No git commit found for this task');
+            console.error('  The agent must commit changes before handoff can proceed.');
+            console.error('  Run: node .agency/scripts/task-closer.js --agent <slug> --task <id>');
+            process.exit(1);
+        }
+        console.log(`  ✅ Git commit verified: ${logCheck}`);
+    } catch {
+        console.log('  ⚠️  Git check unavailable (non-blocking)');
     }
 
     // Check phase progression: POST must be PASSED or SKIPPED
@@ -537,7 +685,7 @@ function showUsage() {
 }
 
 function main() {
-    const { command, agent, task, from, to, msg, project, reason, ci, hotfix, force } = parseArgs();
+    const { command, agent, task, from, to, msg, project, reason, ci, hotfix, force, contract, embed } = parseArgs();
 
     // Bypass mode
     if (process.env.AGENCY_ENFORCER_DISABLED === 'true') {
@@ -552,10 +700,13 @@ function main() {
 
     switch (command) {
         case 'pre':
-            cmdPre(agent, task, project, hotfix, reason);
+            cmdPre(agent, task, project, hotfix, reason, embed);
             break;
         case 'check':
             cmdCheck(agent);
+            break;
+        case 'middle':
+            cmdMiddle(task, agent, project, ci);
             break;
         case 'post':
             cmdPost(task, agent, project, ci);

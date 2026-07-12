@@ -11,7 +11,6 @@
       "backend-api",
       "backend-service",
       "backend-integration",
-      "backend-logic",
       "backend-database",
       "frontend-lead",
       "frontend-ui",
@@ -27,7 +26,6 @@
       "devops-infra",
       "devops-cicd",
       "devops-db",
-      "devops",
       "compliance-guardian",
       "security-auditor",
       "performance-auditor",
@@ -36,7 +34,7 @@
       "documentarian",
       "design-keeper",
       "release-manager",
-      "jengabooks-code"
+      "code-agent"
     ],
     "hierarchy": {
       "orchestrator": "lead-architect",
@@ -50,7 +48,6 @@
         "backend-api",
         "backend-service",
         "backend-integration",
-        "backend-logic",
         "backend-database",
         "frontend-ui",
         "frontend-page",
@@ -62,8 +59,7 @@
         "mobile-state",
         "devops-infra",
         "devops-cicd",
-        "devops-db",
-        "devops"
+        "devops-db"
       ],
       "qualityGates": [
         "compliance-guardian",
@@ -76,16 +72,38 @@
         "documentarian",
         "design-keeper",
         "release-manager",
-        "jengabooks-code"
-      ]
+        "code-agent"
+      ],
+      "triage": {
+        "bypass_keywords": [
+          "hotfix",
+          "patch",
+          "typo",
+          "css",
+          "color",
+          "font",
+          "copy",
+          "text change"
+        ],
+        "max_bypass_word_count": 100,
+        "direct_route": {
+          "frontend-ui": [
+            "frontend-lead"
+          ],
+          "backend-typo": [
+            "code-agent"
+          ]
+        }
+      }
     },
     "handoffProtocol": {
       "requiredCommitBodyFields": [
         "HANDOFF",
         "ARTIFACTS",
         "CONTRACT",
-        "CONTEXT",
-        "STATUS"
+        "MEMORY",
+        "STATUS",
+        "SCOPE"
       ],
       "trackingFile": "ORCHESTRATION.md",
       "statusValues": [
@@ -113,13 +131,22 @@
       "A": {
         "name": "UI-only",
         "pipeline": [
+          "frontend-ui",
+          "frontend-page",
+          "frontend-state",
           "frontend-lead"
         ]
       },
       "B": {
         "name": "API+UI",
         "pipeline": [
+          "backend-api",
+          "backend-service",
+          "backend-integration",
           "backend-lead",
+          "frontend-ui",
+          "frontend-page",
+          "frontend-state",
           "frontend-lead"
         ]
       },
@@ -127,14 +154,65 @@
         "name": "DB+API+UI",
         "pipeline": [
           "backend-database",
+          "backend-api",
+          "backend-service",
+          "backend-integration",
           "backend-lead",
+          "frontend-ui",
+          "frontend-page",
+          "frontend-state",
           "frontend-lead"
         ]
       },
       "D": {
         "name": "Backend-only",
         "pipeline": [
+          "backend-api",
+          "backend-service",
+          "backend-integration",
           "backend-lead"
+        ]
+      },
+      "E": {
+        "name": "Mobile-only",
+        "pipeline": [
+          "mobile-ui",
+          "mobile-screen",
+          "mobile-state",
+          "mobile-lead"
+        ]
+      },
+      "F": {
+        "name": "Full-stack+mobile",
+        "pipeline": [
+          "backend-database",
+          "backend-api",
+          "backend-service",
+          "backend-integration",
+          "backend-lead",
+          "frontend-ui",
+          "frontend-page",
+          "frontend-state",
+          "frontend-lead",
+          "mobile-ui",
+          "mobile-screen",
+          "mobile-state",
+          "mobile-lead"
+        ]
+      },
+      "G": {
+        "name": "Infrastructure",
+        "pipeline": [
+          "devops-infra",
+          "devops-cicd",
+          "devops-db",
+          "devops-lead"
+        ]
+      },
+      "H": {
+        "name": "Hotfix",
+        "pipeline": [
+          "code-agent"
         ]
       }
     },
@@ -170,5 +248,19 @@
   "hitl": {
     "callbackUrl": "http://localhost:3177/webhook/approve",
     "serverPort": 3177
+  },
+  "thresholds": {
+    "history": [
+      {
+        "archived_at": "2026-07-12T22:08:47.746Z"
+      }
+    ],
+    "quality_gate_max_tokens": 10000,
+    "enforcer_pre_ttl": 7200,
+    "memory_ttl_days": 90,
+    "min_recall_score": 0.5,
+    "_last_error_rate": 0,
+    "_generated_at": "2026-07-12T22:08:47.745Z",
+    "_events_analyzed": 47
   }
 }

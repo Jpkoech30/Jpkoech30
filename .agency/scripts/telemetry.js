@@ -540,6 +540,61 @@ function cmdStats(opts) {
     process.exit(0);
 }
 
+/**
+ * `circuit` command — Cost-aware circuit breaker for agent task failures.
+ * Tracks failures per agent and trips breaker after threshold.
+ * @param {object} opts
+ */
+function cmdCircuit(opts) {
+    // Track task failures per agent for circuit breaker
+    const agent = opts.agent;
+    const task = opts.task;
+    const status = opts.status;
+
+    if (!agent) { console.error('FAIL: --agent required'); process.exit(1); }
+
+    const circuitDir = path.join(ROOT, '.agency', 'circuit-breaker');
+    if (!fs.existsSync(circuitDir)) fs.mkdirSync(circuitDir, { recursive: true });
+
+    const breakerPath = path.join(circuitDir, `${agent}.json`);
+    let breaker = { failures: [], state: 'CLOSED', last_success: null };
+
+    try {
+        if (fs.existsSync(breakerPath)) {
+            breaker = JSON.parse(fs.readFileSync(breakerPath, 'utf-8'));
+        }
+    } catch { /* use defaults */ }
+
+    if (status === 'FAILED') {
+        breaker.failures.push({
+            task,
+            timestamp: new Date().toISOString(),
+        });
+        // Keep last 10 failures
+        if (breaker.failures.length > 10) breaker.failures = breaker.failures.slice(-10);
+
+        // Trip breaker if 3+ failures on same task or 5+ total recent
+        const recentFailures = breaker.failures.filter(f => {
+            return (Date.now() - new Date(f.timestamp).getTime()) < 86400000; // 24h
+        });
+
+        if (recentFailures.length >= 5 || (recentFailures.filter(f => f.task === task).length >= 3)) {
+            breaker.state = 'OPEN';
+            console.log(`🔴 Circuit BREAKER OPEN for ${agent}: ${recentFailures.length} failures in 24h`);
+        }
+    } else if (status === 'SUCCESS') {
+        // Reset breaker on success
+        breaker.failures = [];
+        breaker.state = 'CLOSED';
+        breaker.last_success = new Date().toISOString();
+        console.log(`🟢 Circuit breaker RESET for ${agent}`);
+    }
+
+    fs.writeFileSync(breakerPath, JSON.stringify(breaker, null, 2), 'utf-8');
+    console.log(breaker.state === 'OPEN' ? 'BLOCK' : 'PASS');
+    process.exit(0);
+}
+
 // ── CLI Parsing ─────────────────────────────────────────────────────────────
 
 /**
@@ -623,9 +678,12 @@ function main() {
         case 'stats':
             cmdStats(opts);
             break;
+        case 'circuit':
+            cmdCircuit(opts);
+            break;
         default:
             console.error(`FAIL: Unknown command "${command}".`);
-            console.error('Valid commands: log, monitor, stats');
+            console.error('Valid commands: log, monitor, stats, circuit');
             process.exit(1);
     }
 }

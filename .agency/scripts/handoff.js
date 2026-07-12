@@ -96,7 +96,7 @@ function checkCwdGuard() {
 
 function parseArgs() {
     const args = process.argv.slice(2);
-    const opts = { from: null, to: null, task: null, status: 'IN_PROGRESS', artifacts: 'pending', model: null, contract: null, scope: 'project' };
+    const opts = { from: null, to: null, task: null, status: 'IN_PROGRESS', artifacts: 'pending', model: null, contract: null, scope: 'project', wordCount: null };
 
     for (let i = 0; i < args.length; i++) {
         if (args[i] === '--from' && i + 1 < args.length) opts.from = args[++i];
@@ -107,6 +107,7 @@ function parseArgs() {
         if (args[i] === '--model' && i + 1 < args.length) opts.model = args[++i].toLowerCase();
         if (args[i] === '--contract' && i + 1 < args.length) opts.contract = args[++i];
         if (args[i] === '--scope' && i + 1 < args.length) opts.scope = args[++i].toLowerCase();
+        if (args[i] === '--word-count' && i + 1 < args.length) opts.wordCount = parseInt(args[++i], 10);
     }
 
     return opts;
@@ -307,6 +308,66 @@ function main() {
         process.exit(1);
     }
 
+    // ── Issue #6: Lead Architect triage router ─────────────────────
+    const originalTo = opts.to;
+    const config = (() => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, '.agency', 'config.json'), 'utf-8')); } catch { return null; } })();
+    if (config && config.agents && config.agents.hierarchy && config.agents.hierarchy.triage) {
+        const triage = config.agents.hierarchy.triage;
+        const wordCount = opts.wordCount || (opts.task ? opts.task.split(/\s+/).length : 999);
+        const taskLower = (opts.task || "").toLowerCase();
+        const from = opts.from;
+
+        // Check bypass conditions
+        const hasKeyword = triage.bypass_keywords.some(kw => taskLower.includes(kw));
+        const isSmall = wordCount <= triage.max_bypass_word_count;
+
+        if ((hasKeyword || isSmall) && from === "lead-architect") {
+            // Route directly to squad lead instead
+            if (taskLower.includes("ui") || taskLower.includes("component")) {
+                opts.to = "frontend-lead";
+            } else if (taskLower.includes("mobile")) {
+                opts.to = "mobile-lead";
+            } else if (taskLower.includes("devops") || taskLower.includes("docker") || taskLower.includes("deploy")) {
+                opts.to = "devops-lead";
+            } else if (taskLower.includes("db") || taskLower.includes("migrate") || taskLower.includes("sql")) {
+                opts.to = "backend-database";
+            }
+
+            if (opts.to !== originalTo) {
+                console.log(`  🚦 TRIAGE: ${from} → ${opts.to} (bypassed Lead Architect: keyword=${hasKeyword}, small=${isSmall})`);
+            }
+        }
+    }
+
+    // ── BLOCKED Status Escalation ──────────────────────────────────
+    if (opts.status && opts.status === 'BLOCKED') {
+        console.log(`🚨 BLOCKED handoff detected — escalating`);
+
+        // Append to blocked-tasks.md
+        const blockedPath = path.join(ROOT, '.agency', 'reports', 'blocked-tasks.md');
+        try {
+            if (!fs.existsSync(path.dirname(blockedPath))) {
+                fs.mkdirSync(path.dirname(blockedPath), { recursive: true });
+            }
+            const entry = `\n- **${new Date().toISOString()}** | ${opts.from} → ${opts.to} | Task: ${opts.task}`;
+            fs.appendFileSync(blockedPath, entry, 'utf-8');
+            console.log(`  ✅ Logged to ${blockedPath}`);
+        } catch (e) {
+            console.error(`  ⚠ Failed to write blocked-tasks.md: ${e.message}`);
+        }
+
+        // Call telemetry.js with critical-level event
+        // Using agent_invocation event since --gate is restricted to specific gate types
+        try {
+            execSync(`node "${TELEMETRY_SCRIPT}" log --event agent_invocation --agent "${opts.from}" --task "${opts.task}" --status BLOCKED`, {
+                cwd: ROOT, stdio: 'pipe', timeout: 10000
+            });
+            console.log(`  ✅ Telemetry logged`);
+        } catch (e) {
+            console.error(`  ⚠ Telemetry logging failed (non-critical): ${e.message}`);
+        }
+    }
+
     // ── Post-Task Gate: Blocking check before proceeding ────────────
     runPostTaskGate(opts.from, opts.task, opts.to, opts.artifacts, opts.status);
 
@@ -338,8 +399,12 @@ function main() {
             console.error('  ⚠ Git push failed (non-blocking):', pushError.message);
         }
     } catch (gitError) {
-        console.error('  ⚠ Git commit failed (non-blocking):', gitError.message);
-        // Non-blocking — handoff proceeds even if commit fails
+        console.error('  ❌ Git commit FAILED (blocking):', gitError.message);
+        console.error('  The handoff CANNOT proceed without a git commit.');
+        console.error('  Please ensure there are changes to commit, then retry.');
+        // Clean up temp file
+        try { fs.unlinkSync(msgFile); } catch { }
+        process.exit(1);
     }
 
     // ── ORCHESTRATION.md: Append handoff entry ─────────────────────

@@ -943,14 +943,47 @@ async function main() {
 
             const id = await storeMemory(opts.content, opts.tags, opts.task, agentSlug, opts.source || null, opts.project, sourceType);
 
-            console.log('PASS: Memory stored');
-            console.log(`  ID:          ${id}`);
-            console.log(`  Content:     ${opts.content.substring(0, 100)}${opts.content.length > 100 ? '...' : ''}`);
-            console.log(`  Tags:        ${opts.tags}`);
-            console.log(`  Task:        ${opts.task}`);
-            console.log(`  Agent:       ${agentSlug}`);
-            console.log(`  Project:     ${opts.project}`);
-            console.log(`  Source type: ${sourceType}`);
+            // Check chunk count for compaction threshold
+            let needsCompact = false;
+            try {
+                const countRow = db.prepare('SELECT COUNT(*) as cnt FROM memory_chunks WHERE project_name = ?').get(opts.project);
+                if (countRow && countRow.cnt >= COMPACTION_THRESHOLD) {
+                    needsCompact = true;
+                }
+            } catch (_) { /* non-blocking */ }
+
+            // If compaction threshold exceeded, store PENDING flag for async cron
+            const MEMORY_BASE = path.resolve(__dirname, '../memory');
+            if (needsCompact) {
+                const pendingCompactPath = path.join(MEMORY_BASE, `.compact-pending-${opts.project}`);
+                try {
+                    const chunkCount = db.prepare('SELECT COUNT(*) as cnt FROM memory_chunks WHERE project_name = ?').get(opts.project);
+                    fs.writeFileSync(pendingCompactPath, JSON.stringify({
+                        project: opts.project,
+                        triggered_at: new Date().toISOString(),
+                        chunk_count: chunkCount ? chunkCount.cnt : 0
+                    }), 'utf-8');
+                } catch (_) { /* non-blocking */ }
+
+                console.log('PASS: Memory stored');
+                console.log(`  ID:          ${id}-PENDING`);
+                console.log(`  Content:     ${opts.content.substring(0, 100)}${opts.content.length > 100 ? '...' : ''}`);
+                console.log(`  Tags:        ${opts.tags}`);
+                console.log(`  Task:        ${opts.task}`);
+                console.log(`  Agent:       ${agentSlug}`);
+                console.log(`  Project:     ${opts.project}`);
+                console.log(`  Source type: ${sourceType}`);
+                console.log(`  ⚠ Chunk count exceeds ${COMPACTION_THRESHOLD} — compaction deferred to cron`);
+            } else {
+                console.log('PASS: Memory stored');
+                console.log(`  ID:          ${id}`);
+                console.log(`  Content:     ${opts.content.substring(0, 100)}${opts.content.length > 100 ? '...' : ''}`);
+                console.log(`  Tags:        ${opts.tags}`);
+                console.log(`  Task:        ${opts.task}`);
+                console.log(`  Agent:       ${agentSlug}`);
+                console.log(`  Project:     ${opts.project}`);
+                console.log(`  Source type: ${sourceType}`);
+            }
             process.exit(0);
         }
 

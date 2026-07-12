@@ -1,0 +1,95 @@
+name: Self-Improvement Pipeline
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight UTC
+  workflow_dispatch:      # Manual trigger
+
+jobs:
+  improve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install --silent 2>/dev/null || true
+
+      - name: Session Lock Check (Issue #4 — prevent cron vs active task collision)
+        id: session
+        run: |
+          if [ -f .agency/.active-sessions.lock ]; then
+            AGE=$(($(date +%s) - $(stat -c %Y .agency/.active-sessions.lock)))
+            if [ $AGE -lt 7200 ]; then
+              echo "Active session detected (${AGE}s old) — skipping cron to avoid collision"
+              echo "::set-output name=blocked::true"
+              exit 0
+            else
+              echo "Stale active-sessions lock (>2h) — removing"
+              rm -f .agency/.active-sessions.lock
+            fi
+          fi
+          echo "::set-output name=blocked::false"
+
+      - name: Cron Lockfile Check (prevent concurrent cron runs)
+        id: lock
+        if: steps.session.outputs.blocked != 'true'
+        run: |
+          if [ -f .agency/.improve-lock ]; then
+            AGE=$(($(date +%s) - $(stat -c %Y .agency/.improve-lock)))
+            if [ $AGE -gt 7200 ]; then
+              echo "Stale lockfile (>2h) — removing"
+              rm .agency/.improve-lock
+            else
+              echo "Lockfile is fresh ($AGE seconds old) — skipping this cycle"
+              echo "::set-output name=skipped::true"
+              exit 0
+            fi
+          fi
+          date +%s > .agency/.improve-lock
+          echo "::set-output name=skipped::false"
+
+      - name: Phase 1a — Health Check
+        if: steps.lock.outputs.skipped != 'true'
+        run: node .agency/scripts/health.js --fix
+
+      - name: Phase 1b — Pattern Detection
+        if: steps.lock.outputs.skipped != 'true'
+        run: node .agency/scripts/patterns.js
+
+      - name: Phase 2a — Threshold Auto-Tune
+        if: steps.lock.outputs.skipped != 'true'
+        run: node .agency/scripts/auto-tune.js
+
+      - name: Phase 2b — Remediation
+        if: steps.lock.outputs.skipped != 'true'
+        run: node .agency/scripts/heal.js
+
+      - name: Phase 2c — Rule Suggestions
+        if: steps.lock.outputs.skipped != 'true'
+        run: node .agency/scripts/adapt-rules.js
+
+      - name: Phase 2d — Async Memory Compaction (Issue #1)
+        if: steps.lock.outputs.skipped != 'true'
+        run: node .agency/scripts/compact-memory.js
+
+      - name: Phase 3 — Verification Loop
+        if: steps.lock.outputs.skipped != 'true'
+        run: node .agency/scripts/verify-loop.js
+
+      - name: Remove Lockfiles
+        if: steps.lock.outputs.skipped != 'true'
+        run: |
+          rm -f .agency/.improve-lock
+          rm -f .agency/.active-sessions.lock
+
+      - name: Commit Reports
+        if: steps.lock.outputs.skipped != 'true'
+        run: |
+          git config user.name "Agency Bot"
+          git config user.email "bot@zoocode.agency"
+          git add .agency/reports/ .agency/config.json
+          git diff --cached --quiet || git commit -m "chore: self-improvement cycle $(date -u +%Y-%m-%d)"
+          git push

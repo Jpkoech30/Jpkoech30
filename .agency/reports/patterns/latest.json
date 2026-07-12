@@ -1,0 +1,39 @@
+{
+  "status": "COMPLETE",
+  "generated_at": "2026-07-12T22:12:39.334Z",
+  "events_analyzed": 47,
+  "data_gaps": [],
+  "patterns": [
+    {
+      "type": "memory_gap",
+      "metric": "tasks_without_memory",
+      "value": 36,
+      "threshold": 3,
+      "verified": true,
+      "confidence": "HIGH",
+      "suggestion": "36 tasks have no memory record — ensure memory.js store is called after each task",
+      "detail": {
+        "affected_tasks": [
+          "test-7",
+          "test.1",
+          "7.11",
+          "MP-1.13-E2E",
+          "G5 recheck",
+          "Re-run PFG-G1 through PFG-G6 quality gate suite",
+          "Sprint 12.4 Dedup Verification - verify ORCHESTRATION.md split compliance, check no content duplication, no cross-contamination, cross-reference exists, generate report",
+          "Validate three patches: MEMORY field, per-project memory storage, recall relevance threshold (Sprint 13.4)",
+          "sprint14-ptg",
+          "auto-reset test"
+        ]
+      }
+    }
+  ],
+  "summary": {
+    "total_patterns": 1,
+    "by_confidence": {
+      "HIGH": 1,
+      "MEDIUM": 0,
+      "LOW": 0
+    }
+  }
+}
