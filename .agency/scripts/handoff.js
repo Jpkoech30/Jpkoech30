@@ -396,7 +396,12 @@ function main() {
             execSync(`git push origin ${defaultBranch}`, { cwd: ROOT, stdio: 'inherit' });
             console.log(`  ✅ Pushed to origin/${defaultBranch}`);
         } catch (pushError) {
-            console.error('  ⚠ Git push failed (non-blocking):', pushError.message);
+            console.error('  ❌ Git push FAILED (blocking):', pushError.message);
+            console.error('  The handoff CANNOT proceed without a successful push.');
+            console.error('  Check your remote credentials and network, then retry.');
+            // Clean up temp file
+            try { fs.unlinkSync(msgFile); } catch { }
+            process.exit(1);
         }
     } catch (gitError) {
         console.error('  ❌ Git commit FAILED (blocking):', gitError.message);
