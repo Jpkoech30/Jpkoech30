@@ -6,3 +6,4 @@ projects/*
 # Agency enforcement
 .agency/enforcer/
 .agency/.preflight-passed
+.agency/.agent-slug

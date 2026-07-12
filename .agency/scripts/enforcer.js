@@ -256,6 +256,16 @@ function cmdPre(agent, task, project, hotfix, reason, embed) {
         }
     }
 
+    // Write .agent-slug for pre-commit hook enforcement
+    try {
+        const slugPath = path.join(ROOT, '.agency', '.agent-slug');
+        fs.writeFileSync(slugPath, agent, 'utf-8');
+        console.log(`  ✓ .agent-slug written for agent "${agent}"`);
+    } catch (slugErr) {
+        console.error(`  ❌ Failed to write .agent-slug (blocking): ${slugErr.message}`);
+        process.exit(1);
+    }
+
     process.exit(0);
 }
 

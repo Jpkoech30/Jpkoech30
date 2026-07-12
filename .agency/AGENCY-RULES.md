@@ -1025,6 +1025,7 @@ Companion documents (created):
 | `npm run project:list` | `node .agency/scripts/projects-manager.js list` |
 | `npm run project:register` | `node .agency/scripts/projects-manager.js register` |
 | `npm run project:switch` | `node .agency/scripts/projects-manager.js switch` |
+| `npm run recap` | `node .agency/scripts/recap.js` |
 | `npm run telegram:test` | `node .agency/scripts/notify-telegram.js --message '✅ Syst...` |
 | `npm run terminal` | `node .agency/scripts/terminal-session.js` |
 | `npm run terminal:cost` | `node .agency/scripts/terminal-session.js @cost` |

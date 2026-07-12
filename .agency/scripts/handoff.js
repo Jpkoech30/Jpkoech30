@@ -370,6 +370,18 @@ function main() {
         }
     }
 
+    // ── PRE Phase Verification: Ensure oath was recited ────────────
+    try {
+        execSync(`node "${ENFORCER_SCRIPT}" check --agent "${opts.from}"`, {
+            cwd: ROOT, stdio: 'pipe', timeout: 15000
+        });
+        console.log('  ✅ PRE phase verified');
+    } catch {
+        console.error('  ❌ HANDOFF BLOCKED: No PRE phase recorded for this agent.');
+        console.error('  Run: node .agency/scripts/enforcer.js pre --agent <slug> --task <id>');
+        process.exit(1);
+    }
+
     // ── Post-Task Gate: Blocking check before proceeding ────────────
     runPostTaskGate(opts.from, opts.task, opts.to, opts.artifacts, opts.status);
 

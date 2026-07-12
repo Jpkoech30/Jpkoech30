@@ -1,0 +1,26 @@
+#!/usr/bin/env node
+const { execSync } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+
+const ROOT = path.resolve(__dirname, "..");
+const AGENT_SLUG_PATH = path.join(ROOT, ".agency", ".agent-slug");
+
+let agent = null;
+try { agent = fs.readFileSync(AGENT_SLUG_PATH, "utf-8").trim(); } catch {}
+
+if (agent) {
+    try {
+        execSync(`node .agency/scripts/enforcer.js check --agent "${agent}"`, {
+            stdio: "inherit", timeout: 15000, cwd: ROOT
+        });
+        console.log(`  ✅ PRE phase verified for agent "${agent}"`);
+    } catch {
+        console.error(`  ❌ COMMIT BLOCKED: No PRE phase for agent "${agent}".`);
+        console.error(`  Run: node .agency/scripts/enforcer.js pre --agent "${agent}" --task "<task-id>"`);
+        process.exit(1);
+    }
+} else {
+    console.warn("  ⚠ No .agent-slug file found — skipping PRE phase check");
+    console.warn("  Recommendation: Run 'enforcer.js pre' first to enable oath enforcement");
+}
