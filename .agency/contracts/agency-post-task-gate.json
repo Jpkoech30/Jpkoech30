@@ -1,123 +1,21 @@
 {
     "contractId": "agency-post-task-gate",
     "version": "1.0.0",
-    "description": "Post-Task Gate enforcement — ensures every agent completes cleanup, memory storage, handoff metadata, and commit at task end",
-    "status": "DRAFT",
-    "created": "2026-07-11",
+    "description": "⚠️ DEPRECATED — Replaced by agency-enforcer@1.0.0. This contract is kept for backward compatibility until 2026-08-11.",
+    "status": "DEPRECATED",
+    "deprecatedDate": "2026-07-11",
+    "removalDate": "2026-08-11",
+    "replacedBy": {
+        "contractId": "agency-enforcer",
+        "version": "1.0.0",
+        "integration": "Use enforcer.js post/commit/handoff commands instead of post-task-gate.js"
+    },
     "changelog": [
-        "1.0.0 — Initial contract: 4-point post-task checklist + handoff.js integration"
-    ],
-    "problem": {
-        "statement": "Sprint 11 (Pre-Flight Gate) enforces the oath at task START. But there is zero enforcement at task END. JengaBooks Code agent proved this in Sprint 13: skipped memory storage, left temp files, no commit, no telemetry.",
-        "concreteExample": "Sprint 13 subtask: 4 violations detected — no PFG sentinel (start skipped), temp files left, no memory stored, no handoff commit made.",
-        "impact": "Task artifacts go unrecorded, temp files accumulate, memory stays empty, and handoff chains break."
-    },
-    "architecture": {
-        "layers": [
-            {
-                "name": "Layer 1 — Post-Task Gate Script",
-                "type": "technical enforcement",
-                "description": "A Node.js script run at task completion that validates all 4 checkpoints before allowing handoff.",
-                "scriptPath": ".agency/scripts/post-task-gate.js",
-                "checkpoints": [
-                    {
-                        "id": "PTG-C1",
-                        "name": "Memory Stored",
-                        "check": "node .agency/scripts/memory.js check --task <task-id> --agent <slug>",
-                        "pass": "Memory entry exists for this task+agent combination",
-                        "fail": "Agent must run: node .agency/scripts/memory.js store --content \"...\" --tags \"...\" --task \"<id>\" --agent \"<slug>\""
-                    },
-                    {
-                        "id": "PTG-C2",
-                        "name": "Temp Files Cleaned",
-                        "check": "Check for temp artifacts: temp-*, *.bak, debug-*, ROO-*, PLAN-* in root + e2e/",
-                        "pass": "No temp files found",
-                        "fail": "Agent must run: node .agency/scripts/clean-temp.js"
-                    },
-                    {
-                        "id": "PTG-C3",
-                        "name": "Handoff Metadata Valid",
-                        "check": "node .agency/scripts/validate-commit.js --message \"<commit-msg>\"",
-                        "pass": "All required fields present (HANDOFF, ARTIFACTS, CONTRACT, STATUS, MEMORY)",
-                        "fail": "Agent must add missing fields"
-                    },
-                    {
-                        "id": "PTG-C4",
-                        "name": "PFG Sentinel Reset",
-                        "check": "node .agency/scripts/preflight-gate.js reset",
-                        "pass": "Sentinel cleared (ready for next agent)",
-                        "fail": "Force reset"
-                    }
-                ]
-            },
-            {
-                "name": "Layer 2 — handoff.js Integration",
-                "type": "enforcement hook",
-                "description": "Modify handoff.js to call post-task-gate.js check BEFORE executing the handoff. If PTG fails, handoff is BLOCKED.",
-                "integrationPoint": "handoff.js main() function — before writing to ORCHESTRATION.md",
-                "behavior_on_fail": "Print PTG failure report and exit 1. Do NOT update ORCHESTRATION.md."
-            },
-            {
-                "name": "Layer 3 — Telemetry Audit",
-                "type": "detective",
-                "description": "Every PTG pass/fail event is logged to telemetry. Handoff commits now include PTG:PASSED field.",
-                "telemetryEvent": "post-task-gate:check"
-            }
-        ],
-        "workflow": {
-            "agentCompletesTask": "Agent finishes implementation",
-            "runPostTaskGate": "Agent runs: node .agency/scripts/post-task-gate.js complete --task <id> --agent <slug>",
-            "ptgReports": "Script runs C1-C4 checks, reports pass/fail for each",
-            "ifAllPass": "Agent can proceed to handoff.js",
-            "ifAnyFail": "Agent must fix failures, re-run PTG, then proceed",
-            "handoffIntegration": "handoff.js calls post-task-gate.js check before allowing handoff"
-        }
-    },
-    "qualityGates": [
         {
-            "id": "PTG-G1",
-            "name": "Memory Check",
-            "criteria": "After memory.js store → PTG-C1 passes"
-        },
-        {
-            "id": "PTG-G2",
-            "name": "Cleanup Check",
-            "criteria": "After deleting temp files → PTG-C2 passes; with temp files present → PTG-C2 fails"
-        },
-        {
-            "id": "PTG-G3",
-            "name": "Handoff Metadata",
-            "criteria": "Valid commit message → PTG-C3 passes; missing MEMORY field → PTG-C3 fails"
-        },
-        {
-            "id": "PTG-G4",
-            "name": "Sentinel Reset",
-            "criteria": "After preflight-gate.js reset → PTG-C4 passes"
-        },
-        {
-            "id": "PTG-G5",
-            "name": "End-to-End",
-            "criteria": "Full workflow: complete → store → clean → validate → reset → handoff → all pass"
-        },
-        {
-            "id": "PTG-G6",
-            "name": "handoff.js Integration",
-            "criteria": "handoff.js calls post-task-gate.js and blocks on failure"
+            "date": "2026-07-11",
+            "version": "1.0.0",
+            "description": "DEPRECATED — Folded into agency-enforcer@1.0.0. See .agency/plans/enforcement-v2-redesign.md"
         }
     ],
-    "dependencies": {
-        "scripts": [
-            "memory.js",
-            "clean-temp.js",
-            "validate-commit.js",
-            "preflight-gate.js",
-            "handoff.js",
-            "telemetry.js"
-        ],
-        "contracts": [
-            "agency-memory@1.0.0",
-            "agency-preflight-gate@1.0.0",
-            "agency-telemetry@1.0.0"
-        ]
-    }
+    "migrationNote": "All functionality has been folded into .agency/scripts/enforcer.js. The post-task-gate.js script will delegate to enforcer.js until removed."
 }

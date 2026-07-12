@@ -1,167 +1,21 @@
 {
     "contractId": "agency-preflight-gate",
     "version": "1.0.0",
-    "description": "Pre-Flight Gate enforcement system — makes the pre-task oath technically unskippable by any agent",
-    "status": "DRAFT",
-    "created": "2026-07-11",
+    "description": "⚠️ DEPRECATED — Replaced by agency-enforcer@1.0.0. This contract is kept for backward compatibility until 2026-08-11.",
+    "status": "DEPRECATED",
+    "deprecatedDate": "2026-07-11",
+    "removalDate": "2026-08-11",
+    "replacedBy": {
+        "contractId": "agency-enforcer",
+        "version": "1.0.0",
+        "integration": "Use enforcer.js pre/post/handoff commands instead of preflight-gate.js"
+    },
     "changelog": [
-        "1.0.0 — Initial contract: 3-layer enforcement (System Prompt + Gate Script + Telemetry)"
-    ],
-    "problem": {
-        "statement": "The pre-task oath at AGENCY-RULES.md §42 is a voluntary rule. Any agent can skip it by not reading that section or ignoring it. There is no technical enforcement mechanism.",
-        "concreteExample": "In the current session, the Lead Architect (this agent) skipped the oath on the first user message and went straight to tool calls.",
-        "impact": "Without the oath, agents skip context priming, leading to: rule violations, hallucinated endpoints, security anti-patterns, and scope creep."
-    },
-    "architecture": {
-        "layers": [
-            {
-                "name": "Layer 1 — System Prompt Hardening",
-                "type": "preventive",
-                "description": "Embed the oath instruction as the literal FIRST sentence of every agent's customInstructions in .roomodes. This places the requirement directly in the system prompt, which is the highest-priority instruction an LLM receives.",
-                "location": ".roomodes → every mode's customInstructions[0]",
-                "format": "CRITICAL — FIRST ACTION: You MUST recite the pre-task oath from AGENCY-RULES.md v5.0 §PRE-TASK OATH BEFORE executing ANY tool. Output: \"🧠 Bound by AGENCY-RULES v5.0. Pre-flight passed. Cost estimate: ~X,XXX tokens (~KES Y.YY). Sections: [applicable sections].\" Then run: node .agency/scripts/preflight-gate.js pass --agent <slug> --task \"<brief description>\""
-            },
-            {
-                "name": "Layer 2 — Pre-Flight Gate Script",
-                "type": "technical enforcement",
-                "description": "A Node.js script that maintains a sentinel file (.agency/.preflight-passed) and physically blocks downstream operations until the sentinel is set.",
-                "scriptPath": ".agency/scripts/preflight-gate.js",
-                "sentinelPath": ".agency/.preflight-passed",
-                "commands": {
-                    "pass": {
-                        "usage": "node .agency/scripts/preflight-gate.js pass --agent <slug> --task \"<description>\"",
-                        "behavior": "Creates .preflight-passed sentinel, logs oath event to telemetry, exits 0",
-                        "calledBy": "Agent AFTER reciting the oath"
-                    },
-                    "check": {
-                        "usage": "node .agency/scripts/preflight-gate.js check --agent <slug>",
-                        "behavior": "Checks if .preflight-passed exists and contains matching agent slug. Exits 0 if valid, 1 if missing/mismatch.",
-                        "calledBy": "Agent BEFORE first tool use (self-validation)"
-                    },
-                    "reset": {
-                        "usage": "node .agency/scripts/preflight-gate.js reset",
-                        "behavior": "Deletes .preflight-passed sentinel",
-                        "calledBy": "On new task/session start"
-                    },
-                    "status": {
-                        "usage": "node .agency/scripts/preflight-gate.js status",
-                        "behavior": "Prints current sentinel state (exists, agent, timestamp, task)",
-                        "calledBy": "Audit / debugging"
-                    }
-                }
-            },
-            {
-                "name": "Layer 3 — Telemetry + Commit Audit",
-                "type": "detective",
-                "description": "Every oath event is logged to telemetry for audit. The validate-commit.js script checks for oath compliance metadata in commit messages.",
-                "telemetryEvents": [
-                    "preflight-gate:pass — oath recited and sentinel set",
-                    "preflight-gate:fail — oath NOT recited or sentinel mismatch",
-                    "preflight-gate:reset — sentinel cleared"
-                ],
-                "commitValidation": "validate-commit.js checks for PREFLIGHT:PASSED field in commit body. If missing, warns but does not block (advisory)."
-            }
-        ],
-        "diagram": "Mermaid sequence diagram (see plan document)"
-    },
-    "agentInstructions": {
-        "lead-architect": "Append to existing customInstructions as line 1",
-        "code-agent": "Append to existing customInstructions as line 1",
-        "jengabooks-code": "Append to existing customInstructions as line 1",
-        "backend-lead": "Append to existing customInstructions as line 1",
-        "backend-api": "Append to existing customInstructions as line 1",
-        "backend-service": "Append to existing customInstructions as line 1",
-        "backend-integration": "Append to existing customInstructions as line 1",
-        "backend-logic": "Append to existing customInstructions as line 1",
-        "backend-database": "Append to existing customInstructions as line 1",
-        "frontend-lead": "Append to existing customInstructions as line 1",
-        "frontend-ui": "Append to existing customInstructions as line 1",
-        "frontend-page": "Append to existing customInstructions as line 1",
-        "frontend-state": "Append to existing customInstructions as line 1",
-        "frontend-web": "Append to existing customInstructions as line 1",
-        "frontend-mobile": "Append to existing customInstructions as line 1",
-        "mobile-lead": "Append to existing customInstructions as line 1",
-        "mobile-ui": "Append to existing customInstructions as line 1",
-        "mobile-screen": "Append to existing customInstructions as line 1",
-        "mobile-state": "Append to existing customInstructions as line 1",
-        "devops-lead": "Append to existing customInstructions as line 1",
-        "devops-infra": "Append to existing customInstructions as line 1",
-        "devops-cicd": "Append to existing customInstructions as line 1",
-        "devops-db": "Append to existing customInstructions as line 1",
-        "devops": "Append to existing customInstructions as line 1",
-        "compliance-guardian": "Append to existing customInstructions as line 1",
-        "security-auditor": "Append to existing customInstructions as line 1",
-        "performance-auditor": "Append to existing customInstructions as line 1",
-        "accessibility-auditor": "Append to existing customInstructions as line 1",
-        "qa-automator": "Append to existing customInstructions as line 1",
-        "documentarian": "Append to existing customInstructions as line 1",
-        "design-keeper": "Append to existing customInstructions as line 1",
-        "release-manager": "Append to existing customInstructions as line 1"
-    },
-    "sentinelFormat": {
-        "path": ".agency/.preflight-passed",
-        "schema": {
-            "agent": "string — slug of agent that passed the oath",
-            "timestamp": "string — ISO 8601 timestamp",
-            "task": "string — brief task description",
-            "oathHash": "string — sha256 of the recited oath for cross-checking"
-        },
-        "example": {
-            "agent": "lead-architect",
-            "timestamp": "2026-07-11T00:00:00.000Z",
-            "task": "Plan Sprint 11 — Pre-Flight Gate enforcement",
-            "oathHash": "a1b2c3d4e5f6..."
-        }
-    },
-    "qualityGates": [
         {
-            "id": "PFG-G1",
-            "name": "Sentinel Creation",
-            "criteria": "node preflight-gate.js pass → .preflight-passed exists with valid JSON content"
-        },
-        {
-            "id": "PFG-G2",
-            "name": "Sentinel Check (pass)",
-            "criteria": "After pass → node preflight-gate.js check --agent lead-architect → exits 0"
-        },
-        {
-            "id": "PFG-G3",
-            "name": "Sentinel Check (fail — no sentinel)",
-            "criteria": "After reset → node preflight-gate.js check --agent lead-architect → exits 1"
-        },
-        {
-            "id": "PFG-G4",
-            "name": "Sentinel Check (fail — wrong agent)",
-            "criteria": "Create sentinel with agent=lead-architect → node preflight-gate.js check --agent code-agent → exits 1"
-        },
-        {
-            "id": "PFG-G5",
-            "name": "Telemetry Logging",
-            "criteria": "After pass → events.jsonl contains preflight-gate:pass event with matching agent slug"
-        },
-        {
-            "id": "PFG-G6",
-            "name": "Roomodes Injection",
-            "criteria": "Every mode in .roomodes has oath instruction as FIRST line of customInstructions"
+            "date": "2026-07-11",
+            "version": "1.0.0",
+            "description": "DEPRECATED — Folded into agency-enforcer@1.0.0. See .agency/plans/enforcement-v2-redesign.md"
         }
     ],
-    "dependencies": {
-        "scripts": [
-            "telemetry.js — for logging oath events"
-        ],
-        "configs": [
-            ".roomodes — for customInstructions injection"
-        ],
-        "contracts": [
-            "agency-telemetry@1.0.0"
-        ]
-    },
-    "handoffTemplate": {
-        "to": "jengabooks-code",
-        "artifacts": [
-            ".agency/contracts/agency-preflight-gate.json",
-            ".agency/plans/pfg-implementation-plan.md"
-        ],
-        "contract": "agency-preflight-gate@1.0.0"
-    }
+    "migrationNote": "All functionality has been folded into .agency/scripts/enforcer.js. The preflight-gate.js script will delegate to enforcer.js until removed."
 }

@@ -207,7 +207,27 @@ function getOrchestrationPath(scope) {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
+const ENFORCER_SCRIPT = path.join(__dirname, 'enforcer.js');
 const PTG_SCRIPT = path.join(__dirname, 'post-task-gate.js');
+
+/**
+ * Delegate to enforcer.js for handoff phase validation.
+ * Blocking — exits 1 if enforcer handoff fails.
+ */
+function runEnforcerHandoff(from, to, task) {
+    console.log('');
+    console.log('  ── Enforcer Handoff Gate ──');
+    try {
+        execSync(
+            `node "${ENFORCER_SCRIPT}" handoff --from "${from}" --to "${to}" --task "${task}"`,
+            { stdio: 'inherit', timeout: 15000 }
+        );
+        console.log('  ✅ Enforcer handoff gate passed');
+    } catch (e) {
+        console.error('  ❌ HANDOFF BLOCKED: Enforcer gate failed');
+        process.exit(1);
+    }
+}
 
 /**
  * Run the Post-Task Gate check before allowing handoff.
@@ -289,6 +309,9 @@ function main() {
 
     // ── Post-Task Gate: Blocking check before proceeding ────────────
     runPostTaskGate(opts.from, opts.task, opts.to, opts.artifacts, opts.status);
+
+    // ── Enforcer Handoff Gate: Blocking check before proceeding ────
+    runEnforcerHandoff(opts.from, opts.to, opts.task);
 
     // ── Git Commit: Stage and commit all changes ───────────────────
     try {

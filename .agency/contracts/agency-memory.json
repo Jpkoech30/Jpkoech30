@@ -1,17 +1,34 @@
 {
     "contractId": "agency-memory",
-    "version": "1.0.0",
-    "description": "Semantic memory (vector RAG) — stores embedded decisions, code patterns, and architecture rationales for long-term recall",
+    "version": "2.0.0",
+    "description": "Semantic memory v2.0 — hybrid search (BM25 + vector + metadata) using FTS5 + vec0 + Transformers.js embeddings",
+    "changelog": [
+        {
+            "date": "2026-07-11",
+            "version": "2.0.0",
+            "description": "Major rewrite: FTS5 full-text search, vec0 vector index, hybrid scoring formula, Transformers.js embeddings (384-dim), metadata tracking, compaction/TTL, JSON demoted to backup-only"
+        },
+        {
+            "date": "2026-07-10",
+            "version": "1.0.0",
+            "description": "Initial semantic memory contract with TF-IDF embedding + sqlite-vec"
+        }
+    ],
     "storage": {
         "type": "sqlite",
         "path": "./.agency/memory/store.db",
         "vectorExtension": "sqlite-vec",
-        "dimension": 768,
-        "distanceMetric": "cosine"
+        "ftsExtension": "fts5",
+        "dimension": 384,
+        "embeddingModel": "Xenova/all-MiniLM-L6-v2",
+        "embeddingFallback": "tf-idf (avg-pooled 768→384)",
+        "distanceMetric": "cosine",
+        "jsonBackupOnly": true,
+        "jsonPath": "./.agency/memory/store.json"
     },
     "tables": {
-        "memories": {
-            "description": "Core memory store — one row per stored memory",
+        "memory_chunks": {
+            "description": "Core memory store — one row per stored memory chunk",
             "columns": [
                 {
                     "name": "id",
@@ -20,65 +37,154 @@
                     "description": "UUID v4"
                 },
                 {
+                    "name": "project_name",
+                    "type": "TEXT",
+                    "constraint": "NOT NULL",
+                    "description": "Project scope (e.g. 'global', 'jengabooks')"
+                },
+                {
                     "name": "content",
                     "type": "TEXT",
                     "constraint": "NOT NULL",
                     "description": "The raw text content of the memory"
                 },
                 {
-                    "name": "embedding",
-                    "type": "FLOAT[]",
+                    "name": "source_type",
+                    "type": "TEXT",
+                    "constraint": "NOT NULL DEFAULT 'summary'",
+                    "description": "Enum: summary, decision, code-pattern, error, observation, terminal"
+                },
+                {
+                    "name": "created_at",
+                    "type": "INTEGER",
                     "constraint": "NOT NULL",
-                    "description": "768-dimensional vector embedding"
+                    "description": "Unix epoch timestamp (seconds)"
                 },
                 {
-                    "name": "tags",
-                    "type": "TEXT",
-                    "description": "Comma-separated tags (e.g. 'architecture,decision,invoice')"
-                },
-                {
-                    "name": "taskId",
-                    "type": "TEXT",
-                    "description": "Originating task ID from ORCHESTRATION.md"
-                },
-                {
-                    "name": "agentSlug",
-                    "type": "TEXT",
-                    "description": "Agent that created the memory"
-                },
-                {
-                    "name": "createdAt",
-                    "type": "TEXT",
+                    "name": "last_accessed",
+                    "type": "INTEGER",
                     "constraint": "NOT NULL",
-                    "description": "ISO8601 timestamp"
+                    "description": "Unix epoch timestamp (seconds)"
                 },
                 {
-                    "name": "sourceFile",
-                    "type": "TEXT",
-                    "description": "Optional reference to source file"
+                    "name": "access_count",
+                    "type": "INTEGER",
+                    "constraint": "DEFAULT 1",
+                    "description": "Number of times this memory was recalled"
+                },
+                {
+                    "name": "token_count",
+                    "type": "INTEGER",
+                    "constraint": "DEFAULT 0",
+                    "description": "Approximate token count for compaction budgeting"
                 }
             ]
         },
-        "tags_index": {
-            "description": "Index for fast tag-based filtering",
+        "memory_fts": {
+            "description": "FTS5 virtual table — full-text search index, auto-synced via triggers",
+            "type": "VIRTUAL",
+            "using": "fts5",
+            "options": "tokenize='porter unicode61', content='memory_chunks', content_rowid='rowid'",
             "columns": [
                 {
-                    "name": "tag",
+                    "name": "content",
                     "type": "TEXT",
-                    "constraint": "NOT NULL"
+                    "description": "Synced from memory_chunks.content via INSERT/UPDATE/DELETE triggers"
+                }
+            ]
+        },
+        "memory_vec": {
+            "description": "vec0 virtual table — vector similarity search",
+            "type": "VIRTUAL",
+            "using": "vec0",
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "TEXT",
+                    "constraint": "PRIMARY KEY",
+                    "description": "Foreign key to memory_chunks.id"
                 },
                 {
-                    "name": "memoryId",
-                    "type": "TEXT",
-                    "constraint": "NOT NULL REFERENCES memories(id)"
+                    "name": "embedding",
+                    "type": "FLOAT[384]",
+                    "description": "384-dimensional embedding vector"
                 }
             ]
         }
     },
+    "hybridScoring": {
+        "formula": "(0.40 * bm25) + (0.30 * vec) + (0.20 * recency) + (0.10 * frequency)",
+        "components": {
+            "bm25": {
+                "weight": 0.40,
+                "source": "FTS5 bm25() function",
+                "normalization": "min-max scale to [0,1]"
+            },
+            "vec": {
+                "weight": 0.30,
+                "source": "vec_distance_cosine()",
+                "normalization": "1 - (distance / 2) → [0,1]"
+            },
+            "recency": {
+                "weight": 0.20,
+                "source": "1.0 - (days_since_last_access / 90)",
+                "clamp": true
+            },
+            "frequency": {
+                "weight": 0.10,
+                "source": "min(access_count / 10, 1.0)",
+                "clamp": true
+            }
+        },
+        "minScore": 0.05,
+        "defaultLimit": 5,
+        "maxLimit": 20
+    },
+    "compaction": {
+        "rules": [
+            {
+                "sourceType": "terminal",
+                "ttlDays": 30,
+                "compactionTrigger": null,
+                "action": "hard-delete"
+            },
+            {
+                "sourceType": "summary",
+                "ttlDays": null,
+                "compactionTrigger": 1000,
+                "action": "llm-summarize-oldest-200-into-1"
+            },
+            {
+                "sourceType": "code-pattern",
+                "ttlDays": 90,
+                "compactionTrigger": 1000,
+                "action": "llm-summarize-oldest-200-into-1"
+            },
+            {
+                "sourceType": "decision",
+                "ttlDays": null,
+                "compactionTrigger": null,
+                "action": "preserve-forever"
+            },
+            {
+                "sourceType": "error",
+                "ttlDays": 90,
+                "compactionTrigger": 500,
+                "action": "purge-oldest-100"
+            },
+            {
+                "sourceType": "observation",
+                "ttlDays": 90,
+                "compactionTrigger": 500,
+                "action": "purge-oldest-100"
+            }
+        ],
+        "newChunkExemptionHours": 24
+    },
     "commands": {
         "store": {
-            "usage": "node .agency/scripts/memory.js store --content <text> --tags <tags> --task <id> [--agent <slug>] [--source <file>]",
-            "description": "Embed and store a new memory",
+            "usage": "node .agency/scripts/memory.js store --content <text> --tags <tags> --task <id> [--agent <slug>] [--source <file>] [--project <id>] [--source-type <type>]",
+            "description": "Embed (via Transformers.js) and store a new memory chunk",
             "required": [
                 "content",
                 "tags",
@@ -89,43 +195,75 @@
                 "--tags": "Comma-separated tags",
                 "--task": "Task ID this memory originates from",
                 "--agent": "Agent slug (default: lead-architect)",
-                "--source": "Optional source file path"
+                "--source": "Optional source file path",
+                "--project": "Project scope (default: global)",
+                "--source-type": "One of: summary, decision, code-pattern, error, observation, terminal (default: summary)"
             }
         },
         "recall": {
-            "usage": "node .agency/scripts/memory.js recall --query <text> [--tags <filter>] [--limit <n>]",
-            "description": "Retrieve top-N semantically similar memories",
+            "usage": "node .agency/scripts/memory.js recall --query <text> [--tags <filter>] [--limit <n>] [--min-score <float>] [--project <id>] [--source-type <type>]",
+            "description": "Hybrid search: BM25 (40%) + vector (30%) + recency (20%) + frequency (10%)",
             "required": [
                 "query"
             ],
             "options": {
                 "--query": "Search query text",
                 "--tags": "Optional comma-separated tag filter",
-                "--limit": "Number of results (default: 3, max: 10)"
+                "--limit": "Number of results (default: 5, max: 20)",
+                "--min-score": "Minimum hybrid score threshold 0.0-1.0 (default: 0.05)",
+                "--project": "Filter by project scope",
+                "--source-type": "Filter by source type"
             }
         },
         "stats": {
-            "usage": "node .agency/scripts/memory.js stats",
-            "description": "Show memory store statistics (total memories, by tag, by agent)"
+            "usage": "node .agency/scripts/memory.js stats [--project <id>]",
+            "description": "Show memory store statistics (total, by source_type, by project, access metrics)"
         },
         "purge": {
-            "usage": "node .agency/scripts/memory.js purge --older-than <days>",
-            "description": "Remove memories older than specified days",
+            "usage": "node .agency/scripts/memory.js purge --older-than <days> [--project <id>] [--source-type <type>]",
+            "description": "Remove chunks older than specified days, optionally filtered by source_type",
             "options": {
-                "--older-than": "Age in days"
+                "--older-than": "Age in days",
+                "--project": "Filter by project scope",
+                "--source-type": "Filter by source type"
+            }
+        },
+        "compact": {
+            "usage": "node .agency/scripts/memory.js compact [--project <id>] [--dry-run]",
+            "description": "Run compaction/TTL: purge expired chunks, summarize over-threshold source types",
+            "options": {
+                "--project": "Scope compaction to a project",
+                "--dry-run": "Show what would be compacted without modifying"
+            }
+        },
+        "export": {
+            "usage": "node .agency/scripts/memory.js export --project <id> [--output <path>]",
+            "description": "Export SQLite store to JSON backup file",
+            "required": [
+                "project"
+            ],
+            "options": {
+                "--output": "Output path (default: .agency/memory/store.json)",
+                "--project": "Project scope (required)"
+            }
+        },
+        "import": {
+            "usage": "node .agency/scripts/memory.js import --project <id> [--input <path>] [--force]",
+            "description": "Import JSON backup into SQLite (only if DB empty, unless --force)",
+            "required": [
+                "project"
+            ],
+            "options": {
+                "--input": "Input JSON path (default: .agency/memory/store.json)",
+                "--project": "Project scope (required)",
+                "--force": "Import even if SQLite store is non-empty"
             }
         }
     },
     "integrationPoints": [
         "Inject `agency memory recall --query <task>` into lead-architect's customInstructions in .roomodes",
         "Auto-call memory recall at start of every lead-architect task",
-        "Store key architectural decisions after each sprint review"
-    ],
-    "changelog": [
-        {
-            "date": "2026-07-10",
-            "version": "1.0.0",
-            "description": "Initial semantic memory contract"
-        }
+        "Store key architectural decisions after each sprint review",
+        "Post-task-gate (PTG-C1) checks memory was stored after every task"
     ]
 }

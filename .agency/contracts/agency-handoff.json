@@ -1,0 +1,84 @@
+{
+    "contractId": "agency-handoff",
+    "version": "1.0.0",
+    "description": "Handoff protocol — formal contract for agent-to-agent handoff with enforcer validation",
+    "status": "DRAFT",
+    "created": "2026-07-11",
+    "changelog": [
+        {
+            "date": "2026-07-11",
+            "version": "1.0.0",
+            "description": "Initial contract: formalizes HANDOFF metadata fields, enforcer.js integration, and commit message template"
+        }
+    ],
+    "requiredFields": {
+        "HANDOFF": {
+            "description": "Next agent slug (must exist in .roomodes)",
+            "example": "HANDOFF:code-agent"
+        },
+        "ARTIFACTS": {
+            "description": "Comma-separated list of changed files",
+            "example": "ARTIFACTS:.agency/scripts/enforcer.js,.agency/contracts/agency-enforcer.json"
+        },
+        "CONTRACT": {
+            "description": "Contract ID and version",
+            "example": "CONTRACT:agency-enforcer@1.0.0"
+        },
+        "STATUS": {
+            "description": "Task status: PENDING, IN_PROGRESS, REVIEW, DONE, BLOCKED, HOTFIX",
+            "example": "STATUS:DONE"
+        },
+        "MEMORY": {
+            "description": "Confirmation memory was stored",
+            "example": "MEMORY:stored"
+        },
+        "SCOPE": {
+            "description": "project or global",
+            "example": "SCOPE:global"
+        },
+        "PREFLIGHT": {
+            "description": "Pre-flight gate status",
+            "example": "PREFLIGHT:PASSED"
+        }
+    },
+    "optionalFields": {
+        "BACKEND-DEPENDENCY": {
+            "description": "If using mock, note the real endpoint",
+            "example": "BACKEND-DEPENDENCY:GET /users/me not yet live"
+        },
+        "COST-ESTIMATE": {
+            "description": "Token cost estimate",
+            "example": "COST-ESTIMATE:~2.5k tokens (~KES 0.07)"
+        }
+    },
+    "commitTemplate": "<type>(<scope>): <human-readable summary of what and why> (>=10 words)\n\nHANDOFF:<next-agent-slug>\nARTIFACTS:<comma-separated-file-list>\nCONTRACT:<contract-id@version>\nSTATUS:<STATUS>\nMEMORY:<stored|not-required>\nSCOPE:<project|global>\nPREFLIGHT:<PASSED|NOT_REQUIRED>\n[BACKEND-DEPENDENCY:<optional>]\n[COST-ESTIMATE:<optional>]",
+    "enforcerIntegration": {
+        "description": "handoff.js calls enforcer.js handoff phase before allowing handoff",
+        "integrationPoint": "enforcer.js handoff --from <from> --to <to> --task <task>",
+        "blocking": true,
+        "onFailBehavior": "Print block message and exit 1. Do NOT update ORCHESTRATION.md."
+    },
+    "validTransitions": {
+        "PENDING": [
+            "IN_PROGRESS"
+        ],
+        "IN_PROGRESS": [
+            "REVIEW",
+            "DONE",
+            "BLOCKED"
+        ],
+        "REVIEW": [
+            "DONE",
+            "IN_PROGRESS"
+        ],
+        "DONE": [
+            "PENDING"
+        ],
+        "BLOCKED": [
+            "IN_PROGRESS"
+        ],
+        "HOTFIX": [
+            "DONE"
+        ]
+    }
+}

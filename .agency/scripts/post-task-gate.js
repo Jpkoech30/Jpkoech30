@@ -1,27 +1,20 @@
 #!/usr/bin/env node
 
 /**
- * post-task-gate.js — Post-Task Gate (PTG) Enforcement System
+ * ⚠️ DEPRECATED — This script is replaced by enforcer.js
  *
- * Contract: agency-post-task-gate@1.0.0
+ *   Use: node .agency/scripts/enforcer.js post --task <id> --agent <slug>
+ *   See: npm run agency enforcer -- --help
  *
- * Validates 6 checkpoints before handoff is allowed:
- *   C1: Memory stored for this task+agent
- *   C2: Temp files cleaned (root + e2e/)
- *   C3: Handoff metadata valid (HANDOFF, ARTIFACTS, CONTRACT, STATUS, MEMORY)
- *   C4: PFG sentinel reset
- *   C5: Quality Gate (7 checks: hallucination, contract, diff size, tests, plan, TS, deps)
- *   C6: Compliance Check (CC-1 through CC-7)
- *
- * Usage:
- *   node .agency/scripts/post-task-gate.js complete --task <id> --agent <slug>
- *       [--handoff <target>] [--artifacts <files>] [--contract <id>]
- *       [--status <STATUS>] [--memory <field>]
- *
- * Exit codes:
- *   0 — All 5 checkpoints pass
- *   1 — One or more checkpoints fail
+ * This shim delegates to enforcer.js for backward compatibility.
  */
+
+console.log('⚠️ DEPRECATED: This script is replaced by enforcer.js');
+console.log('  Use: node .agency/scripts/enforcer.js post --task <id> --agent <slug> [--ci]');
+console.log('  See: npm run agency enforcer -- --help');
+
+// Delegate to enforcer.js
+require('./enforcer.js');
 
 const fs = require('fs');
 const path = require('path');

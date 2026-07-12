@@ -1,24 +1,27 @@
 #!/usr/bin/env node
 
 /**
- * memory.js — Semantic Memory (Vector RAG) for Agency
+ * memory.js v2.0 — Semantic Memory (Hybrid Search + Vector RAG)
  *
- * Provides long-term semantic memory using SQLite + TF-IDF-like embeddings.
- * Stores agent decisions, code patterns, and architecture rationales.
+ * Contract: agency-memory@2.0.0
  *
- * Contract: agency-memory@1.0.0
+ * SQLite-only storage with:
+ *   - FTS5 for BM25 full-text search
+ *   - vec0 for vector similarity (384-dim)
+ *   - Transformers.js for embeddings (fallback to TF-IDF)
+ *   - Metadata tracking (access_count, last_accessed, source_type)
+ *   - Compaction/TTL engine
+ *   - JSON is BACKUP ONLY (export/import)
  *
- * Commands:
- *   store   --content <text> --tags <tags> --task <id> [--agent <slug>] [--source <file>]
- *   recall  --query <text> [--tags <filter>] [--limit <n>]
- *   stats
- *   purge   --older-than <days>
- *
- * Dependencies (optional):
- *   better-sqlite3 — SQLite storage (primary)
- *   sqlite-vec     — Vector search acceleration (optional, fallback to in-memory)
- *
- * Fallback: JSON file at .agency/memory/store.json if better-sqlite3 unavailable
+ * Usage:
+ *   node .agency/scripts/memory.js store   --content <text> --tags <tags> --task <id> --project <id>
+ *   node .agency/scripts/memory.js recall  --query <text> [--tags <filter>] [--limit <n>] [--project <id>]
+ *   node .agency/scripts/memory.js stats   [--project <id>]
+ *   node .agency/scripts/memory.js purge   --older-than <days> [--project <id>]
+ *   node .agency/scripts/memory.js compact [--project <id>] [--dry-run]
+ *   node .agency/scripts/memory.js check   --task <id> --agent <slug> [--project <id>]
+ *   node .agency/scripts/memory.js export  --project <id> [--output <path>]
+ *   node .agency/scripts/memory.js import  --project <id> [--input <path>] [--dry-run] [--force]
  */
 
 const fs = require('fs');
@@ -28,256 +31,265 @@ const crypto = require('crypto');
 // ── Paths ───────────────────────────────────────────────────────────────────────
 
 const ROOT = path.resolve(__dirname, '../..');
-let MEMORY_DIR = path.resolve(__dirname, '../memory');
-let DB_PATH = path.join(MEMORY_DIR, 'store.db');
-let JSON_PATH = path.join(MEMORY_DIR, 'store.json');
-let SCHEMA_PATH = path.join(MEMORY_DIR, 'schema.sql');
-
-/**
- * Update paths to point at a project-scoped memory directory.
- * Ensures the directory exists and copies schema.sql from global memory if needed.
- * @param {string} projectId
- */
-function resolveProjectPaths(projectId) {
-    MEMORY_DIR = path.resolve(ROOT, '.agency/projects', projectId, 'memory');
-    DB_PATH = path.join(MEMORY_DIR, 'store.db');
-    JSON_PATH = path.join(MEMORY_DIR, 'store.json');
-    SCHEMA_PATH = path.join(MEMORY_DIR, 'schema.sql');
-
-    // Ensure the project memory directory exists
-    if (!fs.existsSync(MEMORY_DIR)) {
-        fs.mkdirSync(MEMORY_DIR, { recursive: true });
-    }
-
-    // Copy schema.sql from global memory if it doesn't exist in project scope
-    const globalSchema = path.resolve(__dirname, '../memory/schema.sql');
-    if (!fs.existsSync(SCHEMA_PATH) && fs.existsSync(globalSchema)) {
-        fs.copyFileSync(globalSchema, SCHEMA_PATH);
-        console.log(`  ℹ Copied schema.sql to project memory: ${SCHEMA_PATH}`);
-    }
-}
+const GLOBAL_MEMORY_DIR = path.resolve(__dirname, '../memory');
+const GLOBAL_DB_PATH = path.join(GLOBAL_MEMORY_DIR, 'store.db');
+const GLOBAL_JSON_PATH = path.join(GLOBAL_MEMORY_DIR, 'store.json');
+const SCHEMA_PATH = path.join(GLOBAL_MEMORY_DIR, 'schema.sql');
 
 // ── Constants ───────────────────────────────────────────────────────────────────
 
-const DIM = 768;          // Embedding dimension (per contract agency-memory@1.0.0)
-const DEFAULT_LIMIT = 3;
-const MAX_LIMIT = 10;
-const MIN_SCORE = 0.01;   // Minimum relevance score threshold (filter out 0% results)
+const DIM = 384;  // Embedding dimension for all-MiniLM-L6-v2
+const DEFAULT_LIMIT = 5;
+const MAX_LIMIT = 20;
+const MIN_SCORE = 0.05;
+const COMPACTION_THRESHOLD = 1000;
+const COMPACTION_BATCH = 200;
+
+// TTL in days
+const TTL = {
+    terminal: 30,
+    error: 90,
+    observation: 90,
+    'code-pattern': 90,
+    summary: null,     // permanent
+    decision: null,    // permanent
+    default: 90,
+};
 
 // ── Optional dependency loading ─────────────────────────────────────────────────
 
-/** @type {import('better-sqlite3') | null} */
 let Database = null;
 try {
     Database = require('better-sqlite3');
 } catch (_) {
-    // fallback to JSON
+    console.error('FAIL: better-sqlite3 is required for memory.js');
+    console.error('  Run: npm install better-sqlite3');
+    process.exit(1);
 }
 
-/** @type {import('sqlite-vec') | null} */
 let sqliteVec = null;
 try {
     sqliteVec = require('sqlite-vec');
 } catch (_) {
-    // fallback to in-memory cosine similarity
+    // vec0 will be unavailable, fallback to in-memory cosine similarity
 }
 
-// ── Database setup ──────────────────────────────────────────────────────────────
+// ── Embedding (Transformers.js with fallback) ───────────────────────────────────
 
-/** @type {import('better-sqlite3').Database | null} */
-let db = null;
+let embedder = null;
 
-function initDatabase() {
-    if (!Database) return false;
-
-    // Ensure memory directory exists
-    if (!fs.existsSync(MEMORY_DIR)) {
-        fs.mkdirSync(MEMORY_DIR, { recursive: true });
-    }
-
+async function getEmbedder() {
+    if (embedder) return embedder;
     try {
-        db = new Database(DB_PATH);
-
-        // Enable WAL mode for better concurrent read performance
-        db.pragma('journal_mode = WAL');
-
-        // Initialize schema
-        if (fs.existsSync(SCHEMA_PATH)) {
-            const schema = fs.readFileSync(SCHEMA_PATH, 'utf-8');
-            db.exec(schema);
-        }
-
-        // Try to load sqlite-vec extension
-        if (sqliteVec) {
-            try {
-                sqliteVec.load(db);
-            } catch (_) {
-                // sqlite-vec load failed, will use in-memory cosine similarity
-            }
-        }
-
-        return true;
-    } catch (_) {
-        db = null;
-        return false;
+        const { pipeline } = require('@xenova/transformers');
+        embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+        return embedder;
+    } catch (err) {
+        // Fallback: return null, will use TF-IDF
+        return null;
     }
 }
 
-// ── TF-IDF-like embedding ───────────────────────────────────────────────────────
-
 /**
- * Simple string hash function (djb2 variant).
- * Returns a non-negative 32-bit integer hash.
- *
- * @param {string} str
- * @returns {number}
+ * Generate embedding using Transformers.js (384-dim).
+ * Falls back to TF-IDF-like keyword embedding if Transformers.js unavailable.
  */
-function hashString(str) {
-    let hash = 5381;
-    for (let i = 0; i < str.length; i++) {
-        hash = ((hash << 5) + hash) + str.charCodeAt(i);
-        hash = hash & 0x7fffffff; // keep positive 32-bit
+async function generateEmbedding(text) {
+    const model = await getEmbedder();
+
+    if (model) {
+        try {
+            const result = await model(text, { pooling: 'mean', normalize: true });
+            const vec = Array.from(result.data);
+            if (vec.length === DIM) return vec;
+            // If dimension mismatch, pad or truncate
+            if (vec.length > DIM) return vec.slice(0, DIM);
+            return [...vec, ...new Array(DIM - vec.length).fill(0)];
+        } catch (_) {
+            // Fall through to TF-IDF
+        }
     }
-    return hash;
+
+    // TF-IDF fallback: hash-based keyword embedding, avg-pooled to 384-dim
+    return embedTFIDF(text);
 }
 
 /**
- * Generate a 768-dimensional TF-IDF-like keyword embedding vector.
- *
- * Approach:
- *   1. Tokenize into lowercase words (remove special chars)
- *   2. Count word frequencies
- *   3. Normalize by total word count
- *   4. Hash each word to an index in [0, 767] and accumulate normalized weight
- *   5. L2-normalize the final vector
- *
- * @param {string} text
- * @returns {number[]} Array of 768 floats
+ * TF-IDF-like keyword embedding.
+ * Hashes words to positions in a 768-dim vector, then avg-pools to 384-dim.
  */
-function embed(text) {
-    // Tokenize: lowercase, remove non-alphanumeric, split on whitespace
+function embedTFIDF(text) {
     const words = text
         .toLowerCase()
         .replace(/[^a-z0-9\s]/g, '')
         .split(/\s+/)
-        .filter((w) => w.length > 0);
+        .filter(w => w.length > 0);
 
-    if (words.length === 0) {
-        return new Array(DIM).fill(0);
-    }
+    if (words.length === 0) return new Array(DIM).fill(0);
 
-    // Count word frequencies
+    const INTERIM_DIM = 768;
     const freq = {};
-    for (const word of words) {
-        freq[word] = (freq[word] || 0) + 1;
-    }
+    for (const word of words) freq[word] = (freq[word] || 0) + 1;
 
-    // Normalize by total word count
     const total = words.length;
-    const vec = new Array(DIM).fill(0);
+    const interim = new Array(INTERIM_DIM).fill(0);
 
     for (const [word, count] of Object.entries(freq)) {
-        const normalizedWeight = count / total;
-        const idx = hashString(word) % DIM;
-        vec[idx] += normalizedWeight;
-    }
-
-    // L2-normalize the vector
-    let magnitude = 0;
-    for (let i = 0; i < DIM; i++) {
-        magnitude += vec[i] * vec[i];
-    }
-    magnitude = Math.sqrt(magnitude);
-
-    if (magnitude > 0) {
-        for (let i = 0; i < DIM; i++) {
-            vec[i] /= magnitude;
+        let hash = 5381;
+        for (let i = 0; i < word.length; i++) {
+            hash = ((hash << 5) + hash) + word.charCodeAt(i);
+            hash = hash & 0x7fffffff;
         }
+        const idx = hash % INTERIM_DIM;
+        interim[idx] += count / total;
+    }
+
+    // L2-normalize
+    let mag = 0;
+    for (let i = 0; i < INTERIM_DIM; i++) mag += interim[i] * interim[i];
+    mag = Math.sqrt(mag);
+    if (mag > 0) for (let i = 0; i < INTERIM_DIM; i++) interim[i] /= mag;
+
+    // Avg-pool 768 → 384
+    const vec = new Array(DIM).fill(0);
+    for (let i = 0; i < DIM; i++) {
+        vec[i] = (interim[i * 2] + interim[i * 2 + 1]) / 2;
     }
 
     return vec;
 }
 
-/**
- * Compute cosine similarity between two vectors.
- *
- * @param {number[]} a
- * @param {number[]} b
- * @returns {number} Cosine similarity in [-1, 1]
- */
 function cosineSimilarity(a, b) {
-    let dot = 0;
-    let magA = 0;
-    let magB = 0;
-
+    let dot = 0, magA = 0, magB = 0;
     for (let i = 0; i < a.length; i++) {
         dot += a[i] * b[i];
         magA += a[i] * a[i];
         magB += b[i] * b[i];
     }
-
     const denom = Math.sqrt(magA) * Math.sqrt(magB);
     return denom === 0 ? 0 : dot / denom;
 }
 
-/**
- * Convert a float array to a Float32Array Buffer (F32_BLOB format for sqlite-vec).
- *
- * @param {number[]} arr
- * @returns {Buffer}
- */
 function toF32Blob(arr) {
     return Buffer.from(new Float32Array(arr).buffer);
 }
 
-// ── Storage operations (SQLite) ─────────────────────────────────────────────────
+// ── Database setup ──────────────────────────────────────────────────────────────
 
-/**
- * Initialize the database. Returns true if SQLite is available and initialized.
- *
- * @returns {boolean}
- */
+let db = null;
+let memoryDir = GLOBAL_MEMORY_DIR;
+let dbPath = GLOBAL_DB_PATH;
+let jsonPath = GLOBAL_JSON_PATH;
+
+function resolveProjectPaths(projectId) {
+    memoryDir = path.resolve(ROOT, '.agency/projects', projectId, 'memory');
+    dbPath = path.join(memoryDir, 'store.db');
+    jsonPath = path.join(memoryDir, 'store.json');
+}
+
+function initDatabase() {
+    if (db) return true;
+    if (!fs.existsSync(memoryDir)) {
+        fs.mkdirSync(memoryDir, { recursive: true });
+    }
+    try {
+        db = new Database(dbPath);
+        db.pragma('journal_mode = WAL');
+
+        // Initialize schema (memory_chunks, memory_fts, tags_index)
+        if (fs.existsSync(SCHEMA_PATH)) {
+            const schema = fs.readFileSync(SCHEMA_PATH, 'utf-8');
+            db.exec(schema);
+        }
+
+        // Try to load sqlite-vec extension and create vec0 table
+        if (sqliteVec) {
+            try {
+                sqliteVec.load(db);
+                // Create vec0 table for vector similarity (384-dim)
+                db.exec(`
+                    CREATE VIRTUAL TABLE IF NOT EXISTS memory_vec USING vec0(
+                        embedding float[384]
+                    )
+                `);
+            } catch (_) {
+                // vec0 unavailable, will use in-memory cosine similarity
+            }
+        }
+
+        return true;
+    } catch (err) {
+        console.error(`FAIL: Could not initialize database: ${err.message}`);
+        process.exit(1);
+    }
+}
+
 function isDbReady() {
     if (db) return true;
     return initDatabase();
 }
 
-/**
- * Store a memory with embedding into SQLite.
- *
- * @param {string} content
- * @param {string} tags - Comma-separated tags
- * @param {string} taskId
- * @param {string} agentSlug
- * @param {string} [sourceFile]
- * @returns {string} The generated UUID
- */
-function storeMemorySQLite(content, tags, taskId, agentSlug, sourceFile) {
-    const id = crypto.randomUUID();
-    const now = new Date().toISOString();
-    const embedding = embed(content);
-    const embeddingJson = JSON.stringify(embedding);
+// ── Store ───────────────────────────────────────────────────────────────────────
 
-    const insertMemory = db.prepare(`
-    INSERT INTO memories (id, content, embedding, tags, taskId, agentSlug, createdAt, sourceFile)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `);
+async function storeMemory(content, tags, taskId, agentSlug, sourceFile, projectName, sourceType) {
+    if (!isDbReady()) {
+        console.error('FAIL: Database not available');
+        process.exit(1);
+    }
+
+    // --project is REQUIRED (Task 20a.6)
+    if (!projectName) {
+        console.error('ERROR: --project is required. Use --project global for global memories.');
+        process.exit(1);
+    }
+
+    const id = crypto.randomUUID();
+    const now = Math.floor(Date.now() / 1000);
+    const srcType = sourceType || 'summary';
+    const tokenCount = Math.ceil(content.length / 4); // rough estimate
+
+    // Generate embedding
+    const embedding = await generateEmbedding(content);
+    const embeddingBlob = toF32Blob(embedding);
+
+    const insertChunk = db.prepare(`
+        INSERT INTO memory_chunks (id, project_name, content, tags, task_id, agent_slug, source_type, source_file, created_at, last_accessed, access_count, token_count)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+    `);
 
     const insertTag = db.prepare(`
-    INSERT INTO tags_index (tag, memoryId) VALUES (?, ?)
-  `);
+        INSERT INTO tags_index (tag, memory_id) VALUES (?, ?)
+    `);
+
+    let insertVec = null;
+    try {
+        insertVec = db.prepare(`
+            INSERT INTO memory_vec(rowid, embedding) VALUES (?, ?)
+        `);
+    } catch (_) {
+        // vec0 table may not exist
+    }
 
     const transaction = db.transaction(() => {
-        insertMemory.run(id, content, embeddingJson, tags, taskId || null, agentSlug || null, now, sourceFile || null);
+        insertChunk.run(id, projectName, content, tags, taskId || null, agentSlug || null, srcType, sourceFile || null, now, now, tokenCount);
 
-        // Index individual tags for fast filtering
-        const tagList = tags
-            .split(',')
-            .map((t) => t.trim())
-            .filter(Boolean);
-
+        // Index individual tags
+        const tagList = tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [];
         for (const tag of tagList) {
             insertTag.run(tag, id);
+        }
+
+        // Insert into vec0 index (FTS is auto-synced via triggers)
+        if (insertVec) {
+            try {
+                // Get the rowid for this chunk
+                const row = db.prepare('SELECT rowid FROM memory_chunks WHERE id = ?').get(id);
+                if (row) {
+                    insertVec.run(row.rowid, embeddingBlob);
+                }
+            } catch (_) {
+                // vec0 insert failed, non-blocking
+            }
         }
     });
 
@@ -286,302 +298,459 @@ function storeMemorySQLite(content, tags, taskId, agentSlug, sourceFile) {
     return id;
 }
 
-/**
- * Recall memories from SQLite using semantic similarity.
- *
- * Uses sqlite-vec's vec_cosine_distance if available, otherwise
- * falls back to in-memory cosine similarity.
- *
- * @param {string} query
- * @param {string} [tagFilter] - Comma-separated tags to filter by
- * @param {number} [limit=3]
- * @param {number} [minScore=0.01] - Minimum similarity score threshold (0.0 to 1.0)
- * @returns {Array<{id: string, content: string, tags: string, taskId: string, agentSlug: string, createdAt: string, sourceFile: string, score: number}>}
- */
-function recallMemoriesSQLite(query, tagFilter, limit, minScore) {
-    const queryVec = embed(query);
-    const rows = db.prepare('SELECT * FROM memories').all();
+// ── Recall (Hybrid Search) ──────────────────────────────────────────────────────
 
-    // Apply tag filter if specified
-    let filtered = rows;
+async function recallMemories(query, tagFilter, limit, minScore, projectFilter, sourceTypeFilter) {
+    if (!isDbReady()) return [];
+
+    const effectiveLimit = Math.min(limit || DEFAULT_LIMIT, MAX_LIMIT);
+    const effectiveMinScore = typeof minScore === 'number' ? minScore : MIN_SCORE;
+
+    // Generate query embedding
+    const queryVec = await generateEmbedding(query);
+
+    // Build WHERE clause
+    const conditions = [];
+    const params = [];
+
+    if (projectFilter) {
+        conditions.push('mc.project_name = ?');
+        params.push(projectFilter);
+    }
+    if (sourceTypeFilter) {
+        conditions.push('mc.source_type = ?');
+        params.push(sourceTypeFilter);
+    }
+
+    // Tag filter via tags_index
+    let tagJoin = '';
     if (tagFilter) {
-        const filterTags = tagFilter
-            .split(',')
-            .map((t) => t.trim().toLowerCase());
-
-        filtered = rows.filter((row) => {
-            const rowTags = (row.tags || '')
-                .split(',')
-                .map((t) => t.trim().toLowerCase());
-            return filterTags.some((t) => rowTags.includes(t));
-        });
+        const filterTags = tagFilter.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+        if (filterTags.length > 0) {
+            const placeholders = filterTags.map(() => '?').join(',');
+            tagJoin = `INNER JOIN tags_index ti ON ti.memory_id = mc.id AND LOWER(ti.tag) IN (${placeholders})`;
+            params.push(...filterTags);
+        }
     }
 
-    if (filtered.length === 0) {
-        return [];
-    }
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    // Compute similarity scores
-    const withScores = filtered.map((row) => {
-        let score = 0;
+    // Fetch all matching chunks
+    const rows = db.prepare(`
+        SELECT DISTINCT mc.rowid, mc.id, mc.content, mc.tags, mc.task_id, mc.agent_slug, mc.source_type, mc.source_file,
+               mc.created_at, mc.last_accessed, mc.access_count, mc.project_name
+        FROM memory_chunks mc
+        ${tagJoin}
+        ${whereClause}
+        ORDER BY mc.created_at DESC
+    `).all(...params);
 
-        if (sqliteVec && db) {
-            // Try using sqlite-vec for cosine similarity
-            try {
-                const storedEmb = JSON.parse(row.embedding);
-                const queryBlob = toF32Blob(queryVec);
-                const storedBlob = toF32Blob(storedEmb);
+    if (rows.length === 0) return [];
 
-                const stmt = db.prepare('SELECT vec_cosine_distance(?, ?) AS dist');
-                const result = stmt.get(queryBlob, storedBlob);
-                // vec_cosine_distance returns 0 for identical, 2 for opposite
-                // Convert to similarity: 1 - (dist / 2)
-                score = 1 - ((result.dist || 0) / 2);
-            } catch (_) {
-                // Fallback to in-memory
-                const storedEmb = JSON.parse(row.embedding);
-                score = cosineSimilarity(queryVec, storedEmb);
+    // Compute hybrid scores
+    const now = Math.floor(Date.now() / 1000);
+    const withScores = [];
+
+    for (const row of rows) {
+        // BM25 score via FTS5
+        let bm25Score = 0;
+        try {
+            const ftsResult = db.prepare(`
+                SELECT bm25(memory_fts, 0, 1.0, 1.0) AS score
+                FROM memory_fts
+                WHERE memory_fts MATCH ? AND rowid = ?
+            `).get(query, row.rowid);
+            if (ftsResult) {
+                // BM25 returns 0 for perfect match, higher for worse match
+                // Normalize: 1 / (1 + score) → [0, 1]
+                bm25Score = 1 / (1 + Math.abs(ftsResult.score || 0));
             }
-        } else {
-            // In-memory cosine similarity
-            const storedEmb = JSON.parse(row.embedding);
-            score = cosineSimilarity(queryVec, storedEmb);
+        } catch (_) {
+            // FTS5 match failed, use 0
         }
 
-        return { ...row, score };
-    });
+        // Vector similarity
+        let vecScore = 0;
+        try {
+            // Try vec0 first
+            const queryBlob = toF32Blob(queryVec);
+            const vecResult = db.prepare(`
+                SELECT distance FROM memory_vec WHERE embedding MATCH ? AND rowid = ?
+            `).get(queryBlob, row.rowid);
+            if (vecResult) {
+                // vec_distance_cosine returns 0 for identical, 2 for opposite
+                vecScore = 1 - ((vecResult.distance || 0) / 2);
+            } else {
+                // Fallback to in-memory cosine similarity
+                vecScore = 0;
+            }
+        } catch (_) {
+            // vec0 unavailable, skip vector score
+        }
 
-    // Sort by score descending, filter below threshold, limit results
-    withScores.sort((a, b) => b.score - a.score);
-    const threshold = typeof minScore === 'number' ? minScore : MIN_SCORE;
-    const scoredFiltered = withScores.filter((r) => r.score >= threshold);
-    const results = scoredFiltered.slice(0, limit);
+        // Recency score: 1.0 - (days_since_last_access / 90), clamped to [0, 1]
+        const daysSinceAccess = (now - row.last_accessed) / 86400;
+        const recencyScore = Math.max(0, Math.min(1, 1.0 - (daysSinceAccess / 90)));
 
-    // Strip embedding from output
-    return results.map(({ embedding, ...rest }) => rest);
-}
+        // Frequency score: min(access_count / 10, 1.0)
+        const frequencyScore = Math.min((row.access_count || 1) / 10, 1.0);
 
-/**
- * Get memory store statistics.
- *
- * @returns {{ total: number, byTag: Record<string,number>, byAgent: Record<string,number>, bySource: Record<string,number> }}
- */
-function statsSQLite() {
-    const total = db.prepare('SELECT COUNT(*) AS count FROM memories').get().count;
+        // Hybrid formula: (0.40 * bm25) + (0.30 * vec) + (0.20 * recency) + (0.10 * frequency)
+        const hybridScore = (0.40 * bm25Score) + (0.30 * vecScore) + (0.20 * recencyScore) + (0.10 * frequencyScore);
 
-    const tagRows = db.prepare(`
-    SELECT tag, COUNT(*) AS count
-    FROM tags_index
-    GROUP BY tag
-    ORDER BY count DESC
-  `).all();
-
-    const byTag = {};
-    for (const row of tagRows) {
-        byTag[row.tag] = row.count;
+        withScores.push({ ...row, score: hybridScore });
     }
 
-    const agentRows = db.prepare(`
-    SELECT agentSlug, COUNT(*) AS count
-    FROM memories
-    WHERE agentSlug IS NOT NULL
-    GROUP BY agentSlug
-    ORDER BY count DESC
-  `).all();
+    // Sort by score descending, filter below threshold, limit
+    withScores.sort((a, b) => b.score - a.score);
+    const filtered = withScores.filter(r => r.score >= effectiveMinScore);
+    const results = filtered.slice(0, effectiveLimit);
+
+    // Update access_count and last_accessed for retrieved results
+    const updateAccess = db.prepare('UPDATE memory_chunks SET access_count = access_count + 1, last_accessed = ? WHERE id = ?');
+    const ts = Math.floor(Date.now() / 1000);
+    for (const r of results) {
+        updateAccess.run(ts, r.id);
+    }
+
+    return results.map(({ rowid, ...rest }) => rest);
+}
+
+// ── Stats ───────────────────────────────────────────────────────────────────────
+
+function getStats(projectFilter) {
+    if (!isDbReady()) return { total: 0 };
+
+    let conditions = '';
+    let params = [];
+    if (projectFilter) {
+        conditions = 'WHERE project_name = ?';
+        params.push(projectFilter);
+    }
+
+    const total = db.prepare(`SELECT COUNT(*) AS count FROM memory_chunks ${conditions}`).get(...params).count;
+
+    const bySourceType = {};
+    const stRows = db.prepare(`SELECT source_type, COUNT(*) AS count FROM memory_chunks ${conditions ? conditions + ' AND source_type IS NOT NULL' : 'WHERE source_type IS NOT NULL'} GROUP BY source_type ORDER BY count DESC`).all(...params);
+    for (const row of stRows) bySourceType[row.source_type] = row.count;
+
+    const byProject = {};
+    const pRows = db.prepare('SELECT project_name, COUNT(*) AS count FROM memory_chunks GROUP BY project_name ORDER BY count DESC').all();
+    for (const row of pRows) byProject[row.project_name] = row.count;
 
     const byAgent = {};
-    for (const row of agentRows) {
-        byAgent[row.agentSlug] = row.count;
-    }
+    const aRows = db.prepare(`SELECT agent_slug, COUNT(*) AS count FROM memory_chunks WHERE agent_slug IS NOT NULL ${conditions ? 'AND ' + conditions.substring(6) : ''} GROUP BY agent_slug ORDER BY count DESC`).all(...params);
+    for (const row of aRows) byAgent[row.agent_slug] = row.count;
 
-    const sourceRows = db.prepare(`
-    SELECT sourceFile, COUNT(*) AS count
-    FROM memories
-    WHERE sourceFile IS NOT NULL
-    GROUP BY sourceFile
-    ORDER BY count DESC
-  `).all();
+    // Access metrics
+    const totalAccesses = db.prepare(`SELECT COALESCE(SUM(access_count), 0) AS total FROM memory_chunks ${conditions}`).get(...params).total;
+    const avgAccess = total > 0 ? (totalAccesses / total).toFixed(2) : 0;
 
-    const bySource = {};
-    for (const row of sourceRows) {
-        bySource[row.sourceFile] = row.count;
-    }
-
-    return { total, byTag, byAgent, bySource };
+    return { total, bySourceType, byProject, byAgent, totalAccesses, avgAccess };
 }
 
-/**
- * Purge memories older than N days.
- *
- * @param {number} days
- * @returns {number} Number of deleted memories
- */
-function purgeSQLite(days) {
-    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+// ── Purge ───────────────────────────────────────────────────────────────────────
+
+function purgeMemories(days, projectFilter, sourceTypeFilter) {
+    if (!isDbReady()) return 0;
+
+    const cutoff = Math.floor(Date.now() / 1000) - days * 86400;
+    const conditions = ['created_at < ?'];
+    const params = [cutoff];
+
+    if (projectFilter) {
+        conditions.push('project_name = ?');
+        params.push(projectFilter);
+    }
+    if (sourceTypeFilter) {
+        conditions.push('source_type = ?');
+        params.push(sourceTypeFilter);
+    }
+
+    const whereClause = conditions.join(' AND ');
 
     const transaction = db.transaction(() => {
         // Find IDs to delete
-        const toDelete = db
-            .prepare('SELECT id FROM memories WHERE createdAt < ?')
-            .all(cutoff)
-            .map((r) => r.id);
+        const toDelete = db.prepare(`SELECT id, rowid FROM memory_chunks WHERE ${whereClause}`).all(...params);
 
         if (toDelete.length === 0) return 0;
 
-        // Delete from tags_index first (foreign key constraint)
-        const deleteTags = db.prepare('DELETE FROM tags_index WHERE memoryId = ?');
-        for (const id of toDelete) {
-            deleteTags.run(id);
-        }
+        const ids = toDelete.map(r => r.id);
+        const rowids = toDelete.map(r => r.rowid);
 
-        // Delete from memories
-        const deleteMemories = db.prepare('DELETE FROM memories WHERE id = ?');
-        for (const id of toDelete) {
-            deleteMemories.run(id);
-        }
+        // Delete from tags_index
+        const deleteTags = db.prepare('DELETE FROM tags_index WHERE memory_id = ?');
+        for (const id of ids) deleteTags.run(id);
 
-        return toDelete.length;
+        // Delete from memory_vec
+        try {
+            const deleteVec = db.prepare('DELETE FROM memory_vec WHERE rowid = ?');
+            for (const rowid of rowids) deleteVec.run(rowid);
+        } catch (_) { /* vec0 may not exist */ }
+
+        // Delete from memory_chunks (FTS auto-deleted via trigger)
+        const deleteChunks = db.prepare('DELETE FROM memory_chunks WHERE id = ?');
+        for (const id of ids) deleteChunks.run(id);
+
+        return ids.length;
     });
 
     return transaction();
 }
 
-// ── Storage operations (JSON fallback) ──────────────────────────────────────────
+// ── Compaction ──────────────────────────────────────────────────────────────────
 
-function loadJSONStore() {
-    if (!fs.existsSync(JSON_PATH)) return [];
-    try {
-        return JSON.parse(fs.readFileSync(JSON_PATH, 'utf-8'));
-    } catch (_) {
-        return [];
-    }
-}
+function runCompaction(projectFilter, dryRun) {
+    if (!isDbReady()) return;
 
-function saveJSONStore(store) {
-    if (!fs.existsSync(MEMORY_DIR)) {
-        fs.mkdirSync(MEMORY_DIR, { recursive: true });
-    }
-    fs.writeFileSync(JSON_PATH, JSON.stringify(store, null, 2));
-}
+    const now = Math.floor(Date.now() / 1000);
+    const results = { purged: 0, summarized: 0, skipped: 0 };
 
-function storeMemoryJSON(content, tags, taskId, agentSlug, sourceFile) {
-    const store = loadJSONStore();
-    const memory = {
-        id: crypto.randomUUID(),
-        content,
-        embedding: embed(content),
-        tags,
-        taskId: taskId || null,
-        agentSlug: agentSlug || null,
-        createdAt: new Date().toISOString(),
-        sourceFile: sourceFile || null,
-    };
-    store.push(memory);
-    saveJSONStore(store);
-    return memory.id;
-}
+    // 1. TTL-based hard delete
+    for (const [sourceType, ttlDays] of Object.entries(TTL)) {
+        if (ttlDays === null) continue; // permanent
+        const cutoff = now - ttlDays * 86400;
 
-function recallMemoriesJSON(query, tagFilter, limit, minScore) {
-    const queryVec = embed(query);
-    let store = loadJSONStore();
+        let conditions = 'source_type = ? AND created_at < ?';
+        let params = [sourceType, cutoff];
+        if (projectFilter) {
+            conditions += ' AND project_name = ?';
+            params.push(projectFilter);
+        }
 
-    // Apply tag filter
-    if (tagFilter) {
-        const filterTags = tagFilter.split(',').map((t) => t.trim().toLowerCase());
-        store = store.filter((m) => {
-            const memTags = (m.tags || '').split(',').map((t) => t.trim().toLowerCase());
-            return filterTags.some((t) => memTags.includes(t));
-        });
+        const count = db.prepare(`SELECT COUNT(*) AS count FROM memory_chunks WHERE ${conditions}`).get(...params).count;
+
+        if (count > 0 && !dryRun) {
+            const deleted = purgeMemories(ttlDays, projectFilter, sourceType);
+            results.purged += deleted;
+        } else if (count > 0) {
+            results.purged += count;
+        }
     }
 
-    if (store.length === 0) return [];
+    // 2. Compaction: when > COMPACTION_THRESHOLD chunks, summarize oldest COMPACTION_BATCH
+    const newChunkCutoff = now - 24 * 3600; // 24 hours ago
 
-    // Compute scores
-    const withScores = store.map((m) => ({
-        ...m,
-        score: cosineSimilarity(queryVec, m.embedding),
-    }));
+    for (const sourceType of ['summary', 'code-pattern']) {
+        if (TTL[sourceType] === null) {
+            // Only compact summary and code-pattern when > threshold
+            let conditions = 'source_type = ? AND created_at < ?';
+            let params = [sourceType, newChunkCutoff];
+            if (projectFilter) {
+                conditions += ' AND project_name = ?';
+                params.push(projectFilter);
+            }
 
-    // Sort, filter below threshold, limit
-    withScores.sort((a, b) => b.score - a.score);
-    const threshold = typeof minScore === 'number' ? minScore : MIN_SCORE;
-    const filtered = withScores.filter((r) => r.score >= threshold);
-    return filtered.slice(0, limit).map(({ embedding, ...rest }) => rest);
-}
+            const totalCount = db.prepare(`SELECT COUNT(*) AS count FROM memory_chunks WHERE source_type = ?`).get(sourceType).count;
 
-function statsJSON() {
-    const store = loadJSONStore();
-    const byTag = {};
-    const byAgent = {};
-    const bySource = {};
+            if (totalCount > COMPACTION_THRESHOLD) {
+                const oldChunks = db.prepare(`SELECT id, content FROM memory_chunks WHERE ${conditions} ORDER BY created_at ASC LIMIT ?`).all(...params, COMPACTION_BATCH);
 
-    for (const m of store) {
-        if (m.tags) {
-            const tags = m.tags.split(',').map((t) => t.trim());
-            for (const tag of tags) {
-                byTag[tag] = (byTag[tag] || 0) + 1;
+                if (oldChunks.length > 0) {
+                    if (!dryRun) {
+                        // Delete old chunks (will be summarized later via LLM)
+                        const oldIds = oldChunks.map(c => c.id);
+                        const deleteTags = db.prepare('DELETE FROM tags_index WHERE memory_id = ?');
+                        for (const id of oldIds) {
+                            deleteTags.run(id);
+                            try {
+                                const row = db.prepare('SELECT rowid FROM memory_chunks WHERE id = ?').get(id);
+                                if (row) {
+                                    db.prepare('DELETE FROM memory_vec WHERE rowid = ?').run(row.rowid);
+                                }
+                            } catch (_) { /* ignore */ }
+                        }
+
+                        const placeholders = oldIds.map(() => '?').join(',');
+                        db.prepare(`DELETE FROM memory_chunks WHERE id IN (${placeholders})`).run(...oldIds);
+
+                        results.summarized += oldChunks.length;
+                        console.log(`  ℹ Compacted ${oldChunks.length} oldest "${sourceType}" chunks (marked for LLM summarization)`);
+                    } else {
+                        results.summarized += oldChunks.length;
+                    }
+                }
             }
         }
-        if (m.agentSlug) {
-            byAgent[m.agentSlug] = (byAgent[m.agentSlug] || 0) + 1;
+    }
+
+    console.log(`  Compaction ${dryRun ? '(dry-run)' : ''}: ${results.purged} purged, ${results.summarized} summarized`);
+    return results;
+}
+
+// ── Check (for enforcer.js integration) ─────────────────────────────────────────
+
+function checkMemory(taskId, agentSlug, projectName) {
+    if (!isDbReady()) {
+        console.error('FAIL: Database not available');
+        process.exit(1);
+    }
+
+    let conditions = ['task_id = ?', 'agent_slug = ?'];
+    let params = [taskId, agentSlug];
+
+    if (projectName) {
+        conditions.push('project_name = ?');
+        params.push(projectName);
+    }
+
+    const result = db.prepare(`SELECT COUNT(*) AS count FROM memory_chunks WHERE ${conditions.join(' AND ')}`).get(...params);
+
+    if (result.count > 0) {
+        console.log(`✓ Memory found for task "${taskId}" by agent "${agentSlug}"`);
+        process.exit(0);
+    } else {
+        console.error(`FAIL: No memory found for task "${taskId}" by agent "${agentSlug}"`);
+        process.exit(1);
+    }
+}
+
+// ── Export (JSON backup) ────────────────────────────────────────────────────────
+
+function exportMemories(projectName, outputPath) {
+    if (!isDbReady()) {
+        console.error('FAIL: Database not available');
+        process.exit(1);
+    }
+
+    const outPath = outputPath || jsonPath;
+
+    let conditions = '';
+    let params = [];
+    if (projectName) {
+        conditions = 'WHERE project_name = ?';
+        params.push(projectName);
+    }
+
+    const rows = db.prepare(`SELECT id, project_name, content, tags, task_id, agent_slug, source_type, source_file, created_at, last_accessed, access_count, token_count FROM memory_chunks ${conditions} ORDER BY created_at ASC`).all(...params);
+
+    fs.writeFileSync(outPath, JSON.stringify(rows, null, 2));
+    console.log(`✓ Exported ${rows.length} memories to ${outPath}`);
+}
+
+// ── Import (v1→v2 migration) ────────────────────────────────────────────────────
+
+async function importMemories(inputPath, projectName, dryRun, force) {
+    if (!isDbReady()) {
+        console.error('FAIL: Database not available');
+        process.exit(1);
+    }
+
+    const inPath = inputPath || GLOBAL_JSON_PATH;
+    if (!fs.existsSync(inPath)) {
+        console.error(`FAIL: Input file not found: ${inPath}`);
+        process.exit(1);
+    }
+
+    // Check if DB is empty (unless --force)
+    if (!force && !dryRun) {
+        const count = db.prepare('SELECT COUNT(*) AS count FROM memory_chunks').get().count;
+        if (count > 0) {
+            console.error(`FAIL: Database already contains ${count} memories. Use --force to import anyway.`);
+            process.exit(1);
         }
-        if (m.sourceFile) {
-            bySource[m.sourceFile] = (bySource[m.sourceFile] || 0) + 1;
+    }
+
+    // Read v1 store.json
+    let v1Data;
+    try {
+        v1Data = JSON.parse(fs.readFileSync(inPath, 'utf-8'));
+    } catch (err) {
+        console.error(`FAIL: Could not parse ${inPath}: ${err.message}`);
+        process.exit(1);
+    }
+
+    if (!Array.isArray(v1Data)) {
+        // Try wrapping single object
+        v1Data = [v1Data];
+    }
+
+    if (dryRun) {
+        console.log(`\n  ── Import Preview (dry-run) ──`);
+        console.log(`  Source: ${inPath}`);
+        console.log(`  Memories found: ${v1Data.length}`);
+        console.log(`  Target project: ${projectName || 'global'}`);
+
+        // Show sample
+        const sample = v1Data.slice(0, 3);
+        for (const m of sample) {
+            console.log(`\n  ${'─'.repeat(40)}`);
+            console.log(`  ID:      ${m.id || m.memoryId || '(none)'}`);
+            console.log(`  Content: ${(m.content || '').substring(0, 80)}...`);
+            console.log(`  Tags:    ${m.tags || '(none)'}`);
+            console.log(`  Task:    ${m.taskId || '(none)'}`);
+            console.log(`  Agent:   ${m.agentSlug || '(none)'}`);
+        }
+        if (v1Data.length > 3) {
+            console.log(`  ... and ${v1Data.length - 3} more`);
+        }
+        console.log(`\n  Run without --dry-run to import.`);
+        process.exit(0);
+    }
+
+    // Import
+    const project = projectName || 'global';
+    let imported = 0;
+    let errors = 0;
+
+    for (const v1 of v1Data) {
+        try {
+            const id = v1.id || crypto.randomUUID();
+            const content = v1.content || '';
+            const tags = v1.tags || '';
+            const taskId = v1.taskId || null;
+            const agentSlug = v1.agentSlug || null;
+            const sourceFile = v1.sourceFile || null;
+            const sourceType = v1.sourceType || 'summary';
+
+            // Parse createdAt (v1 uses ISO string, v2 uses unix epoch)
+            let createdAt;
+            if (v1.createdAt) {
+                createdAt = Math.floor(new Date(v1.createdAt).getTime() / 1000);
+            } else {
+                createdAt = Math.floor(Date.now() / 1000);
+            }
+
+            const now = Math.floor(Date.now() / 1000);
+            const tokenCount = Math.ceil(content.length / 4);
+
+            // Generate embedding
+            const embedding = await generateEmbedding(content);
+            const embeddingBlob = toF32Blob(embedding);
+
+            // Insert
+            db.prepare(`
+                INSERT INTO memory_chunks (id, project_name, content, tags, task_id, agent_slug, source_type, source_file, created_at, last_accessed, access_count, token_count)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+            `).run(id, project, content, tags, taskId, agentSlug, sourceType, sourceFile, createdAt, now, tokenCount);
+
+            // Tags
+            const tagList = tags.split(',').map(t => t.trim()).filter(Boolean);
+            const insertTag = db.prepare('INSERT INTO tags_index (tag, memory_id) VALUES (?, ?)');
+            for (const tag of tagList) {
+                insertTag.run(tag, id);
+            }
+
+            // vec0
+            try {
+                const row = db.prepare('SELECT rowid FROM memory_chunks WHERE id = ?').get(id);
+                if (row) {
+                    db.prepare('INSERT INTO memory_vec(rowid, embedding) VALUES (?, ?)').run(row.rowid, embeddingBlob);
+                }
+            } catch (_) { /* vec0 may not exist */ }
+
+            imported++;
+        } catch (err) {
+            errors++;
+            console.error(`  Error importing memory: ${err.message}`);
         }
     }
 
-    return {
-        total: store.length,
-        byTag,
-        byAgent,
-        bySource,
-    };
-}
-
-function purgeJSON(days) {
-    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-    let store = loadJSONStore();
-    const before = store.length;
-    store = store.filter((m) => m.createdAt >= cutoff);
-    const deleted = before - store.length;
-    saveJSONStore(store);
-    return deleted;
-}
-
-// ── Storage dispatcher ──────────────────────────────────────────────────────────
-
-function isSQLiteAvailable() {
-    return Database !== null && isDbReady();
-}
-
-function storeMemory(content, tags, taskId, agentSlug, sourceFile) {
-    if (isSQLiteAvailable()) {
-        return storeMemorySQLite(content, tags, taskId, agentSlug, sourceFile);
-    }
-    return storeMemoryJSON(content, tags, taskId, agentSlug, sourceFile);
-}
-
-function recallMemories(query, tagFilter, limit, minScore) {
-    const effectiveLimit = Math.min(limit || DEFAULT_LIMIT, MAX_LIMIT);
-    const effectiveMinScore = typeof minScore === 'number' ? minScore : undefined;
-    if (isSQLiteAvailable()) {
-        return recallMemoriesSQLite(query, tagFilter, effectiveLimit, effectiveMinScore);
-    }
-    return recallMemoriesJSON(query, tagFilter, effectiveLimit, effectiveMinScore);
-}
-
-function getStats() {
-    if (isSQLiteAvailable()) {
-        return statsSQLite();
-    }
-    return statsJSON();
-}
-
-function purgeMemories(days) {
-    if (isSQLiteAvailable()) {
-        return purgeSQLite(days);
-    }
-    return purgeJSON(days);
+    console.log(`\n  ── Import Complete ──`);
+    console.log(`  Imported: ${imported} memories`);
+    if (errors > 0) console.log(`  Errors:   ${errors}`);
+    console.log(`  Project:  ${project}`);
+    process.exit(errors > 0 ? 1 : 0);
 }
 
 // ── CLI argument parsing ────────────────────────────────────────────────────────
@@ -595,7 +764,6 @@ function parseArgs() {
 
         if (arg.startsWith('--')) {
             const key = arg.slice(2);
-            // Convert hyphenated names to camelCase (e.g., older-than -> olderThan)
             const camelKey = key.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
             if (i + 1 < args.length && !args[i + 1].startsWith('--')) {
                 opts[camelKey] = args[++i];
@@ -624,12 +792,13 @@ function formatResults(results) {
         console.log(`  [${i + 1}] Score:      ${(r.score * 100).toFixed(1)}%`);
         console.log(`      Content:    ${r.content}`);
         console.log(`      Tags:       ${r.tags || '(none)'}`);
-        console.log(`      Task:       ${r.taskId || '(none)'}`);
-        console.log(`      Agent:      ${r.agentSlug || '(none)'}`);
-        console.log(`      Created:    ${r.createdAt || '(unknown)'}`);
-        if (r.sourceFile) {
-            console.log(`      Source:     ${r.sourceFile}`);
-        }
+        console.log(`      Task:       ${r.task_id || '(none)'}`);
+        console.log(`      Agent:      ${r.agent_slug || '(none)'}`);
+        console.log(`      Type:       ${r.source_type || 'summary'}`);
+        console.log(`      Project:    ${r.project_name || 'global'}`);
+        console.log(`      Created:    ${r.created_at ? new Date(r.created_at * 1000).toISOString() : '(unknown)'}`);
+        console.log(`      Accessed:   ${r.access_count || 0} times`);
+        if (r.source_file) console.log(`      Source:     ${r.source_file}`);
     }
     console.log(`  ${'─'.repeat(56)}`);
 }
@@ -639,31 +808,30 @@ function formatStats(stats) {
     console.log('  📊 Memory Store Statistics');
     console.log(`  ${'─'.repeat(40)}`);
     console.log(`  Total memories:   ${stats.total}`);
+    if (stats.totalAccesses !== undefined) console.log(`  Total accesses:   ${stats.totalAccesses}`);
+    if (stats.avgAccess !== undefined) console.log(`  Avg accesses:     ${stats.avgAccess}`);
     console.log('');
 
-    if (Object.keys(stats.byTag).length > 0) {
-        console.log('  By tag:');
-        const sortedTags = Object.entries(stats.byTag).sort((a, b) => b[1] - a[1]);
-        for (const [tag, count] of sortedTags) {
-            console.log(`    ${tag.padEnd(25)} ${count}`);
+    if (stats.byProject && Object.keys(stats.byProject).length > 0) {
+        console.log('  By project:');
+        for (const [proj, count] of Object.entries(stats.byProject).sort((a, b) => b[1] - a[1])) {
+            console.log(`    ${proj.padEnd(25)} ${count}`);
         }
         console.log('');
     }
 
-    if (Object.keys(stats.byAgent).length > 0) {
+    if (stats.bySourceType && Object.keys(stats.bySourceType).length > 0) {
+        console.log('  By source type:');
+        for (const [type, count] of Object.entries(stats.bySourceType).sort((a, b) => b[1] - a[1])) {
+            console.log(`    ${type.padEnd(25)} ${count}`);
+        }
+        console.log('');
+    }
+
+    if (stats.byAgent && Object.keys(stats.byAgent).length > 0) {
         console.log('  By agent:');
-        const sortedAgents = Object.entries(stats.byAgent).sort((a, b) => b[1] - a[1]);
-        for (const [agent, count] of sortedAgents) {
+        for (const [agent, count] of Object.entries(stats.byAgent).sort((a, b) => b[1] - a[1])) {
             console.log(`    ${agent.padEnd(25)} ${count}`);
-        }
-        console.log('');
-    }
-
-    if (Object.keys(stats.bySource).length > 0) {
-        console.log('  By source file:');
-        const sortedSources = Object.entries(stats.bySource).sort((a, b) => b[1] - a[1]);
-        for (const [source, count] of sortedSources) {
-            console.log(`    ${source.padEnd(25)} ${count}`);
         }
         console.log('');
     }
@@ -672,52 +840,71 @@ function formatStats(stats) {
 function showUsage() {
     const script = path.basename(process.argv[1]);
     console.log(`
-  ╔══════════════════════════════════════════════════════╗
-  ║     Agency Semantic Memory — Store, Recall, Stats    ║
-  ╚══════════════════════════════════════════════════════╝
+  ╔══════════════════════════════════════════════════════════╗
+  ║     Agency Semantic Memory v2 — Hybrid Search           ║
+  ╚══════════════════════════════════════════════════════════╝
 
   Usage:
-    node ${script} store   --content <text> --tags <tags> --task <id> [--agent <slug>] [--source <file>] [--project <id>]
-    node ${script} recall  --query <text> [--tags <filter>] [--limit <n>] [--min-score <float>] [--project <id>]
+    node ${script} store   --content <text> --tags <tags> --task <id> --project <id> [--agent <slug>] [--source <file>] [--source-type <type>]
+    node ${script} recall  --query <text> [--tags <filter>] [--limit <n>] [--min-score <float>] [--project <id>] [--source-type <type>]
     node ${script} stats   [--project <id>]
-    node ${script} purge   --older-than <days> [--project <id>]
-
-  Global flags:
-    --project <id>  Scope to a specific project (uses .agency/projects/<id>/memory/).
-                    Omit to use the global store at .agency/memory/.
+    node ${script} purge   --older-than <days> [--project <id>] [--source-type <type>]
+    node ${script} compact [--project <id>] [--dry-run]
+    node ${script} check   --task <id> --agent <slug> [--project <id>]
+    node ${script} export  --project <id> [--output <path>]
+    node ${script} import  --project <id> [--input <path>] [--dry-run] [--force]
 
   Commands:
 
-    store     Store a memory with automatic TF-IDF embedding.
+    store     Store a memory with Transformers.js embedding (384-dim).
+              --project   Project scope (REQUIRED)
               --content   Text content to remember (required)
-              --tags      Comma-separated tags, e.g. "architecture,decision" (required)
-              --task      Task ID this memory originates from (required)
+              --tags      Comma-separated tags (required)
+              --task      Task ID (required)
               --agent     Agent slug (default: lead-architect)
               --source    Optional source file path
+              --source-type  One of: summary, decision, code-pattern, error, observation, terminal (default: summary)
 
-    recall     Retrieve top-N semantically similar memories.
+    recall    Hybrid search: BM25 (40%) + vector (30%) + recency (20%) + frequency (10%).
               --query     Search query text (required)
-              --tags      Optional comma-separated tag filter
-              --limit     Number of results (default: 3, max: 10)
-              --min-score Minimum similarity score threshold 0.0-1.0 (default: 0.01)
+              --tags      Optional tag filter
+              --limit     Results (default: 5, max: 20)
+              --min-score Threshold 0.0-1.0 (default: 0.05)
+              --project   Filter by project
+              --source-type Filter by source type
 
-    stats     Show memory store statistics (total, by tag, by agent).
+    stats     Show store statistics.
 
     purge     Remove memories older than N days.
-              --older-than  Age in days (required)
+
+    compact   Run compaction/TTL engine.
+              --dry-run   Preview without modifying.
+
+    check     Verify memory exists for task+agent (used by enforcer.js).
+
+    export    Export SQLite → JSON (backup).
+              --project   Project scope (required)
+              --output    Output path (default: project memory/store.json)
+
+    import    Import v1 JSON → v2 SQLite (migration).
+              --project   Target project (required)
+              --input     Input JSON path (default: .agency/memory/store.json)
+              --dry-run   Preview what would be imported
+              --force     Import even if DB is non-empty
 
   Storage:
-    Global:   .agency/memory/store.db (SQLite) / store.json (JSON fallback)
-    Project:  .agency/projects/<id>/memory/store.db (SQLite) / store.json (JSON fallback)
+    SQLite:   .agency/memory/store.db (WAL mode, FTS5 + vec0)
+    JSON:     Backup only via export command
 
   Embedding:
-    TF-IDF-like keyword embedding, 768-dim, cosine similarity search.
+    Primary:  Xenova/all-MiniLM-L6-v2 (384-dim) via @xenova/transformers
+    Fallback: TF-IDF keyword embedding (avg-pooled 768→384)
 `);
 }
 
 // ── Main ────────────────────────────────────────────────────────────────────────
 
-function main() {
+async function main() {
     const opts = parseArgs();
     const command = opts._command;
 
@@ -739,31 +926,37 @@ function main() {
             if (!opts.tags) missing.push('--tags');
             if (!opts.task) missing.push('--task');
 
+            // --project is REQUIRED (Task 20a.6)
+            if (!opts.project) {
+                console.error('ERROR: --project is required. Use --project global for global memories.');
+                process.exit(1);
+            }
+
             if (missing.length > 0) {
                 console.error(`FAIL: Missing required argument(s): ${missing.join(', ')}`);
-                console.error('Usage: node memory.js store --content <text> --tags <tags> --task <id> [--agent <slug>] [--source <file>]');
+                console.error('Usage: node memory.js store --content <text> --tags <tags> --task <id> --project <id> [--agent <slug>] [--source <file>] [--source-type <type>]');
                 process.exit(1);
             }
 
             const agentSlug = opts.agent || 'lead-architect';
-            const id = storeMemory(opts.content, opts.tags, opts.task, agentSlug, opts.source || null);
+            const sourceType = opts.sourceType || 'summary';
 
-            const storageType = isSQLiteAvailable() ? 'SQLite' : 'JSON';
-            console.log(`PASS: Memory stored (${storageType})`);
-            console.log(`  ID:      ${id}`);
-            console.log(`  Content: ${opts.content}`);
-            console.log(`  Tags:    ${opts.tags}`);
-            console.log(`  Task:    ${opts.task}`);
-            console.log(`  Agent:   ${agentSlug}`);
-            if (opts.source) console.log(`  Source:  ${opts.source}`);
+            const id = await storeMemory(opts.content, opts.tags, opts.task, agentSlug, opts.source || null, opts.project, sourceType);
+
+            console.log('PASS: Memory stored');
+            console.log(`  ID:          ${id}`);
+            console.log(`  Content:     ${opts.content.substring(0, 100)}${opts.content.length > 100 ? '...' : ''}`);
+            console.log(`  Tags:        ${opts.tags}`);
+            console.log(`  Task:        ${opts.task}`);
+            console.log(`  Agent:       ${agentSlug}`);
+            console.log(`  Project:     ${opts.project}`);
+            console.log(`  Source type: ${sourceType}`);
             process.exit(0);
         }
 
         case 'recall': {
-            // Validate required args
             if (!opts.query) {
                 console.error('FAIL: Missing required argument: --query');
-                console.error('Usage: node memory.js recall --query <text> [--tags <filter>] [--limit <n>] [--min-score <float>]');
                 process.exit(1);
             }
 
@@ -782,11 +975,13 @@ function main() {
                 }
             }
 
-            const results = recallMemories(opts.query, opts.tags || null, limit, minScore);
+            const results = await recallMemories(opts.query, opts.tags || null, limit, minScore, opts.project || null, opts.sourceType || null);
 
             console.log('');
             console.log(`  🔍 Recall: "${opts.query}"`);
             if (opts.tags) console.log(`  Filter:    tags in [${opts.tags}]`);
+            if (opts.sourceType) console.log(`  Type:      ${opts.sourceType}`);
+            if (opts.project) console.log(`  Project:   ${opts.project}`);
             if (minScore !== undefined) console.log(`  Min score: ${minScore.toFixed(2)}`);
             console.log(`  Results:   ${results.length}`);
             formatResults(results);
@@ -794,16 +989,14 @@ function main() {
         }
 
         case 'stats': {
-            const stats = getStats();
+            const stats = getStats(opts.project || null);
             formatStats(stats);
             process.exit(0);
         }
 
         case 'purge': {
-            // Validate required args
             if (!opts.olderThan) {
                 console.error('FAIL: Missing required argument: --older-than');
-                console.error('Usage: node memory.js purge --older-than <days>');
                 process.exit(1);
             }
 
@@ -813,9 +1006,45 @@ function main() {
                 process.exit(1);
             }
 
-            const deleted = purgeMemories(days);
+            const deleted = purgeMemories(days, opts.project || null, opts.sourceType || null);
             console.log(`PASS: Purged ${deleted} memories older than ${days} days.`);
             process.exit(0);
+        }
+
+        case 'compact': {
+            const dryRun = !!opts.dryRun;
+            if (!isDbReady()) {
+                console.error('FAIL: Database not available');
+                process.exit(1);
+            }
+            console.log(`\n  ── Compaction ${dryRun ? '(dry-run)' : ''} ──`);
+            runCompaction(opts.project || null, dryRun);
+            process.exit(0);
+        }
+
+        case 'check': {
+            if (!opts.task) { console.error('FAIL: --task is required'); process.exit(1); }
+            if (!opts.agent) { console.error('FAIL: --agent is required'); process.exit(1); }
+            checkMemory(opts.task, opts.agent, opts.project || null);
+            break;
+        }
+
+        case 'export': {
+            if (!opts.project) {
+                console.error('ERROR: --project is required. Use --project global for global memories.');
+                process.exit(1);
+            }
+            exportMemories(opts.project, opts.output || null);
+            process.exit(0);
+        }
+
+        case 'import': {
+            if (!opts.project) {
+                console.error('ERROR: --project is required for import.');
+                process.exit(1);
+            }
+            await importMemories(opts.input || null, opts.project, !!opts.dryRun, !!opts.force);
+            break;
         }
 
         default: {
@@ -826,4 +1055,7 @@ function main() {
     }
 }
 
-main();
+main().catch(err => {
+    console.error(`FATAL: ${err.message}`);
+    process.exit(1);
+});

@@ -1,0 +1,209 @@
+{
+    "contractId": "agency-enforcer",
+    "version": "1.0.0",
+    "description": "Unified enforcement engine — replaces preflight-gate + post-task-gate with a single state machine in SQLite",
+    "status": "DRAFT",
+    "created": "2026-07-11",
+    "replaces": [
+        "agency-preflight-gate@1.0.0",
+        "agency-post-task-gate@1.0.0"
+    ],
+    "changelog": [
+        {
+            "date": "2026-07-11",
+            "version": "1.0.0",
+            "description": "Initial contract: 4-phase state machine (PRE → POST → COMMIT → HANDOFF) with TTL-based sentinel, SQLite storage, and handoff.js integration"
+        }
+    ],
+    "problem": {
+        "statement": "4 separate enforcement systems (PFG, PTG, Memory, handoff.js) operate independently with no shared state. Sentinels get stale, checkpoints are skipped, and handoff.js has no integration with PTG.",
+        "identifiedFailures": [
+            "F1: Sentinel has no TTL — stale sentinel from yesterday blocks today",
+            "F2: No hard enforcement — agents can skip oath entirely",
+            "F5: PTG checks JSON store, not SQLite (Memory v1 design)",
+            "F7: handoff.js has no PTG integration — contract says it should but never wired",
+            "F12: handoff.js CWD guard is fragile"
+        ]
+    },
+    "architecture": {
+        "type": "state-machine",
+        "phases": [
+            "PRE",
+            "POST",
+            "COMMIT",
+            "HANDOFF"
+        ],
+        "statuses": [
+            "PENDING",
+            "IN_PROGRESS",
+            "PASSED",
+            "FAILED",
+            "SKIPPED"
+        ],
+        "ttlSeconds": 3600,
+        "storage": {
+            "type": "sqlite",
+            "path": "./.agency/enforcer/store.db",
+            "table": "enforcement_state"
+        },
+        "script": ".agency/scripts/enforcer.js",
+        "dependencies": {
+            "scripts": [
+                "memory.js",
+                "handoff.js"
+            ],
+            "contracts": [
+                "agency-memory@2.0.0"
+            ]
+        }
+    },
+    "stateSchema": {
+        "enforcement_state": {
+            "description": "Single table tracking the lifecycle of every task through enforcement phases",
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "INTEGER",
+                    "constraint": "PRIMARY KEY AUTOINCREMENT"
+                },
+                {
+                    "name": "task_id",
+                    "type": "TEXT",
+                    "constraint": "NOT NULL",
+                    "description": "Task ID from ORCHESTRATION.md (e.g., '19.1')"
+                },
+                {
+                    "name": "agent_slug",
+                    "type": "TEXT",
+                    "constraint": "NOT NULL",
+                    "description": "Agent assigned to this task"
+                },
+                {
+                    "name": "project",
+                    "type": "TEXT",
+                    "constraint": "NOT NULL DEFAULT 'global'",
+                    "description": "Project scope"
+                },
+                {
+                    "name": "phase",
+                    "type": "TEXT",
+                    "constraint": "NOT NULL",
+                    "description": "One of: PRE, POST, COMMIT, HANDOFF"
+                },
+                {
+                    "name": "status",
+                    "type": "TEXT",
+                    "constraint": "NOT NULL DEFAULT 'PENDING'",
+                    "description": "One of: PENDING, IN_PROGRESS, PASSED, FAILED, SKIPPED"
+                },
+                {
+                    "name": "oath_hash",
+                    "type": "TEXT",
+                    "description": "Hash of recited oath for provenance (PRE phase only)"
+                },
+                {
+                    "name": "created_at",
+                    "type": "INTEGER",
+                    "constraint": "NOT NULL DEFAULT (unixepoch())"
+                },
+                {
+                    "name": "expires_at",
+                    "type": "INTEGER",
+                    "constraint": "NOT NULL DEFAULT (unixepoch() + 3600)",
+                    "description": "TTL: auto-resets to PENDING after this timestamp"
+                },
+                {
+                    "name": "completed_at",
+                    "type": "INTEGER"
+                }
+            ]
+        }
+    },
+    "commands": {
+        "pre": {
+            "usage": "node .agency/scripts/enforcer.js pre --agent <slug> --task <id> [--project <id>] [--ttl <seconds>]",
+            "description": "Phase 1: Record oath and create enforcement session",
+            "required": [
+                "agent",
+                "task"
+            ],
+            "behavior": "Creates enforcement_state row with phase=PRE, status=IN_PROGRESS. Deletes old .preflight-passed if exists. Sets expires_at = now + ttl.",
+            "exit0": "Session created and ready for work",
+            "exit1": "Blocked (e.g., another agent has active session for same task)"
+        },
+        "post": {
+            "usage": "node .agency/scripts/enforcer.js post --agent <slug> --task <id> [--project <id>] [--ci]",
+            "description": "Phase 2: Validate task completion — memory stored, temp cleaned, metadata valid",
+            "required": [
+                "agent",
+                "task"
+            ],
+            "checks": [
+                "PRE phase status is PASSED and not expired",
+                "Memory was stored for this task+agent (calls memory.js check)",
+                "No temp files in root or e2e/",
+                "Handoff metadata fields are populated"
+            ],
+            "exit0": "All checks pass",
+            "exit1": "One or more checks fail"
+        },
+        "commit": {
+            "usage": "node .agency/scripts/enforcer.js commit --agent <slug> --task <id> --msg <commit-message> [--project <id>]",
+            "description": "Phase 3: Validate commit message has required HANDOFF metadata",
+            "required": [
+                "agent",
+                "task",
+                "msg"
+            ],
+            "checks": [
+                "POST phase status is PASSED",
+                "Commit message contains HANDOFF, ARTIFACTS, CONTRACT, STATUS, MEMORY, PREFLIGHT, SCOPE fields"
+            ],
+            "exit0": "Ready to commit",
+            "exit1": "Missing required fields"
+        },
+        "handoff": {
+            "usage": "node .agency/scripts/enforcer.js handoff --from <slug> --to <slug> --task <id> [--project <id>]",
+            "description": "Phase 4: Execute handoff — update ORCHESTRATION.md, mark enforcement_state DONE",
+            "required": [
+                "from",
+                "to",
+                "task"
+            ],
+            "checks": [
+                "COMMIT phase status is PASSED",
+                "All prior phases are PASSED in sequence"
+            ],
+            "behavior": "Updates ORCHESTRATION.md task status. Sets enforcement_state phase=HANDOFF, status=PASSED, completed_at=now.",
+            "exit0": "Handoff executed",
+            "exit1": "Blocked — complete prior phases first"
+        },
+        "status": {
+            "usage": "node .agency/scripts/enforcer.js status [--task <id>] [--agent <slug>]",
+            "description": "Show current enforcement state for a task or agent",
+            "behavior": "Queries enforcement_state table and prints formatted table"
+        },
+        "reset": {
+            "usage": "node .agency/scripts/enforcer.js reset --task <id> [--force]",
+            "description": "Reset enforcement state for a task (admin only)",
+            "behavior": "Sets all phases for task to PENDING. Requires --force to confirm."
+        }
+    },
+    "ciMode": {
+        "description": "When --ci flag is passed to 'post' command, skip non-blocking checks (memory storage, temp cleanup) and only validate commit metadata",
+        "behavior": "CI checks: HANDOFF metadata validation only. Does not require memory store or temp cleanup."
+    },
+    "hotfixMode": {
+        "description": "When --hotfix flag is passed, all phases are marked SKIPPED and handoff proceeds without validation",
+        "behavior": "Logs HOTFIX in enforcement_state with reason. Requires explicit --reason flag.",
+        "usage": "node .agency/scripts/enforcer.js pre --agent <slug> --task <id> --hotfix --reason 'production-critical-bug'"
+    },
+    "rollback": {
+        "description": "If enforcer.js breaks, set AGENCY_ENFORCER_DISABLED=true to bypass all enforcement",
+        "behavior": "enforcer.js reads env var and exits 0 for all commands (pass-through mode)",
+        "filesKeptFor30Days": [
+            "preflight-gate.js",
+            "post-task-gate.js"
+        ]
+    }
+}

@@ -1,26 +1,20 @@
 #!/usr/bin/env node
 
 /**
- * preflight-gate.js — Pre-Flight Gate (PFG) Enforcement System
+ * ⚠️ DEPRECATED — This script is replaced by enforcer.js
  *
- * Contract: agency-preflight-gate@1.0.0
+ *   Use: node .agency/scripts/enforcer.js <phase> [args]
+ *   See: npm run agency enforcer -- --help
  *
- * Commands:
- *   pass   — Create .preflight-passed sentinel and log telemetry
- *   check  — Validate sentinel exists and agent slug matches
- *   reset  — Delete sentinel file
- *   status — Print sentinel content or "No sentinel"
- *
- * Usage:
- *   node .agency/scripts/preflight-gate.js pass --agent <slug> --task "<desc>"
- *   node .agency/scripts/preflight-gate.js check --agent <slug>
- *   node .agency/scripts/preflight-gate.js reset
- *   node .agency/scripts/preflight-gate.js status
- *
- * Exit codes:
- *   0 — Success (pass, reset, status, or check passed)
- *   1 — Error or check failed
+ * This shim delegates to enforcer.js for backward compatibility.
  */
+
+console.log('⚠️ DEPRECATED: This script is replaced by enforcer.js');
+console.log('  Use: node .agency/scripts/enforcer.js <phase> [args]');
+console.log('  See: npm run agency enforcer -- --help');
+
+// Delegate to enforcer.js
+require('./enforcer.js');
 
 const fs = require('fs');
 const path = require('path');
