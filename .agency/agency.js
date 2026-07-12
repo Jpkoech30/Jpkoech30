@@ -80,6 +80,10 @@ const COMMANDS = [
     ['release', 'release-s14.5.ps1', '[PS] Run release script for sprint s14.5'],
     ['init-ps', 'init-project.ps1', '[PS] Bootstrap project via PowerShell'],
     ['cleanup-jenga', 'cleanup-jengaprojects.ps1', '[PS] Cleanup jengaprojects workspace'],
+
+    // ── Sprint 20b+20c ─────────────────────────────────────────────────────────
+    ['init-wizard', 'init-wizard.js', 'Interactive project setup wizard (stdin prompts)'],
+    ['metrics', 'metrics.js', 'Agent performance metrics — completion, error, rework, tokens'],
 ];
 
 // ── Help Menu ────────────────────────────────────────────────────────────────

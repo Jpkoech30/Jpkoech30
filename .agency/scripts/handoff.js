@@ -328,6 +328,15 @@ function main() {
         fs.unlinkSync(msgFile);
 
         console.log('  ✅ Changes committed successfully');
+
+        // 20c.3 — Multi-branch push (detect current branch instead of hardcoded master)
+        try {
+            const defaultBranch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: ROOT, encoding: 'utf-8' }).toString().trim();
+            execSync(`git push origin ${defaultBranch}`, { cwd: ROOT, stdio: 'inherit' });
+            console.log(`  ✅ Pushed to origin/${defaultBranch}`);
+        } catch (pushError) {
+            console.error('  ⚠ Git push failed (non-blocking):', pushError.message);
+        }
     } catch (gitError) {
         console.error('  ⚠ Git commit failed (non-blocking):', gitError.message);
         // Non-blocking — handoff proceeds even if commit fails

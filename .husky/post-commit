@@ -1,5 +1,23 @@
 #!/usr/bin/env node
 const { execSync } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+
+// ── Non-blocking validations ───────────────────────────────────────────────
 try { execSync("node .agency/scripts/auto-docs.js --sync", { stdio: "inherit" }); } catch (e) { }
 try { execSync("node .agency/scripts/cost-report.js --output .agency/reports/cost-running.md", { stdio: "inherit" }); } catch (e) { }
-try { execSync("git push origin master ", { stdio: "inherit" }); } catch (e) { }
+
+// 20b.1 — npm test (non-blocking, only if "test" script exists)
+try { execSync("node -e \"const p=require('./package.json');process.exit(p.scripts&&p.scripts.test?0:1)\"", { stdio: "inherit" }); execSync("npm test 2>&1", { stdio: "inherit", timeout: 60000 }); } catch (e) { }
+
+// 20b.2 — npx tsc --noEmit (non-blocking, only if tsconfig.json exists)
+try { if (fs.existsSync(path.join(__dirname, '..', 'tsconfig.json'))) { execSync("npx tsc --noEmit 2>&1", { stdio: "inherit", timeout: 60000 }); } } catch (e) { }
+
+// 20b.4 — npm audit (non-blocking)
+try { execSync("npm audit 2>&1", { stdio: "inherit", timeout: 30000 }); } catch (e) { }
+
+// 20c.3 — Multi-branch push (detect current branch instead of hardcoded master)
+try {
+    const defaultBranch = execSync("git rev-parse --abbrev-ref HEAD", { encoding: "utf-8" }).toString().trim();
+    execSync(`git push origin ${defaultBranch}`, { stdio: "inherit" });
+} catch (e) { }

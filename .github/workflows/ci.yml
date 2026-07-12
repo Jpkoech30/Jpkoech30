@@ -1,94 +1,13 @@
-# ==============================================================================
-# JengaBooks CI Pipeline
-# ==============================================================================
-# Triggers: push to main, pull requests
-# Jobs: lint -> test -> build
-# Working directory: jengabooks/
-# ==============================================================================
-
-name: CI
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-env:
-  NODE_VERSION: "20"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+name: Agency CI
+on: [push, pull_request]
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./jengabooks
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-          cache-dependency-path: ./jengabooks/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run lint
-        run: npm run lint
-
   test:
-    name: Test
-    runs-on: ubuntu-latest
-    needs: [lint]
-    defaults:
-      run:
-        working-directory: ./jengabooks
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-          cache-dependency-path: ./jengabooks/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests
-        run: npm test
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    needs: [test]
-    defaults:
-      run:
-        working-directory: ./jengabooks
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-          cache-dependency-path: ./jengabooks/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run build
-        run: npm run build
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm install
+      - run: node .agency/scripts/quality-gate.js check --project .

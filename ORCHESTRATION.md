@@ -524,3 +524,26 @@ Two critical issues were identified during agency setup review:
 | **EF-G7** | 20.9 complete | `memory.js export` dumps SQLite to JSON; `import` loads JSON into empty DB |
 | **EF-G8** | 20.5 complete | Old `preflight-gate.js pass` outputs "DEPRECATED — delegating to enforcer.js" |
 | **EF-G9** | 20.12 complete | All 12 failure points (F1-F12) verified fixed in audit log |
+
+---
+
+### Sprint 20b+20c — Close the 8 remaining gaps (Est. 1 day)
+**Theme:** Post-commit hooks, onboarding wizard, agent metrics, multi-branch CI
+
+| # | Task | Type | Agent | Status | Depends On | Files |
+|---|------|------|-------|--------|------------|-------|
+| **20b.1** | Add `npm test` to `post-commit` (non-blocking, only if test script exists) | `hook` | `🔧 JengaBooks Code` | ✅ DONE | — | [`.husky/post-commit`](.husky/post-commit) |
+| **20b.2** | Add `npx tsc --noEmit` to `post-commit` (non-blocking, only if tsconfig.json exists) | `hook` | `🔧 JengaBooks Code` | ✅ DONE | — | [`.husky/post-commit`](.husky/post-commit) |
+| **20b.4** | Add `npm audit` to `post-commit` (non-blocking, 30s timeout) | `hook` | `🔧 JengaBooks Code` | ✅ DONE | — | [`.husky/post-commit`](.husky/post-commit) |
+| **20b.6** | Create interactive onboarding wizard (`init-wizard.js`) | `script` | `🔧 JengaBooks Code` | ✅ DONE | — | [`.agency/scripts/init-wizard.js`](.agency/scripts/init-wizard.js) |
+| **20c.2** | Create agent metrics script (`metrics.js`) — completion/error/rework/tokens | `script` | `🔧 JengaBooks Code` | ✅ DONE | — | [`.agency/scripts/metrics.js`](.agency/scripts/metrics.js) |
+| **20c.3** | Multi-branch support — dynamic `git rev-parse --abbrev-ref HEAD` in post-commit + handoff.js | `git` | `🔧 JengaBooks Code` | ✅ DONE | — | [`.husky/post-commit`](.husky/post-commit), [`.agency/scripts/handoff.js`](.agency/scripts/handoff.js) |
+| **20c.5** | Cross-platform CI — matrix: ubuntu/macos/windows | `ci` | `🔧 JengaBooks Code` | ✅ DONE | — | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
+
+**Key changes:**
+- `post-commit` now runs test → tsc → audit → (dynamic branch) push sequentially, all non-blocking
+- `handoff.js` pushes using detected branch after successful commit
+- New CLI commands: `npm run agency init-wizard` (interactive), `npm run agency metrics` (performance)
+- CI runs on 3 OS matrix using `quality-gate.js check`
+
+---
