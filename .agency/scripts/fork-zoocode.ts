@@ -148,3 +148,5 @@ if (pfgMatches >= 10 && ptgMatches >= 1) {
     console.log(`  Got PFG=${pfgMatches}, PTG=${ptgMatches}`);
     process.exit(1);
 }
+
+export {};

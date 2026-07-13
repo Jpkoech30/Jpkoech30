@@ -652,3 +652,5 @@ main().then((code) => {
     fail(`Unexpected error: ${err.message}`);
     process.exit(1);
 });
+
+export {};

@@ -14,3 +14,5 @@ try {
     console.log("Could not close tabs automatically.");
     console.log("Manual: Ctrl+K Ctrl+W to close all editors");
 }
+
+export {};

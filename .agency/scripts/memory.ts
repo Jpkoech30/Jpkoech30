@@ -1100,3 +1100,5 @@ main().catch(err => {
     console.error(`FATAL: ${err.message}`);
     process.exit(1);
 });
+
+export {};

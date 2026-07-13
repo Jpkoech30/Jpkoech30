@@ -927,3 +927,5 @@ function main() {
 }
 
 main();
+
+export {};

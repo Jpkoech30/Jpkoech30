@@ -328,3 +328,5 @@ Options:
 }
 
 main();
+
+export {};

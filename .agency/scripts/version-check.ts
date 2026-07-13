@@ -80,3 +80,5 @@ function main() {
 
 // Auto-execute on load (safe for both direct CLI and require())
 main();
+
+export {};

@@ -412,3 +412,5 @@ function main() {
 }
 
 main();
+
+export {};

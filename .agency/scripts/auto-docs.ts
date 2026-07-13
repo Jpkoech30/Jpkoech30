@@ -605,3 +605,5 @@ function main() {
 }
 
 main();
+
+export {};

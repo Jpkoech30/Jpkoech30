@@ -378,3 +378,5 @@ function main() {
 }
 
 main();
+
+export {};

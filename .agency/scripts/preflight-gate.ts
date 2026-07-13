@@ -66,3 +66,5 @@ function main() {
 }
 
 main();
+
+export {};

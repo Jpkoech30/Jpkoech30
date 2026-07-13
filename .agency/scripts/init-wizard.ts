@@ -20,3 +20,5 @@ async function main() {
     rl.close();
 }
 main();
+
+export {};

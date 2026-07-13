@@ -94,3 +94,5 @@ function main() {
 }
 
 main();
+
+export {};
