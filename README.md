@@ -6,10 +6,32 @@
 [![Agents](https://img.shields.io/badge/Agents-31-00B894)](.roomodes)
 [![Quality Gates](https://img.shields.io/badge/Quality%20Gates-15-E17055)](.agency/AGENCY-RULES.md)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-0078D4)](.husky/post-commit)
+[![Brainstorming Guide](https://img.shields.io/badge/Brainstorm-Guide-FF6B6B)](.agency/notes/agency-brainstorm-guide.md)
 [![GitHub Stars](https://img.shields.io/github/stars/Jpkoech30/zoocode-agency?style=social)](https://github.com/Jpkoech30/zoocode-agency)
 
 > **A production-ready multi-agent orchestration system for [ZooCode](https://zoo.dev).**
 > Automate code generation, enforce quality gates, track decisions with semantic memory, and coordinate 31 specialized AI agents — all from your terminal.
+
+---
+
+## 🧠 Brainstorming Guide
+
+Want to understand **how the agency really works** — the agent hierarchy, HANDOFF protocol, quality gates, pipeline types, enforcement phases, and cost model — all in one place?
+
+👉 **[Open the Brainstorming Guide →](.agency/notes/agency-brainstorm-guide.md)**
+
+This 15-section guide covers everything:
+| Section | What's Inside |
+|---------|---------------|
+| **§1–2** | Big picture + all 31 agents with their fileRegex domains |
+| **§3** | The 14 Foundational Principals (enforceable rules) |
+| **§4** | **HANDOFF protocol** — how agents pass work via commit messages |
+| **§5** | Pipeline types A–H — how tasks get routed to specialists |
+| **§6** | Quality gates — 6-stage post-implementation checks |
+| **§7–8** | Full dev pipeline + enforcer.js 5-phase state machine |
+| **§9–11** | 33 scripts, 37 API contracts, cost model (KES) |
+| **§12–13** | Multi-project awareness + semantic memory RAG |
+| **§14** | **15 brainstorming prompts** — structural, workflow, quality, cost, and architecture questions to explore |
 
 ---
 

@@ -410,7 +410,7 @@ Two critical issues were identified during agency setup review:
 ---
 
 ### Sprint 17 — Automation Sprint (Est. 5.25 days)
-> **Status:** `IN PROGRESS` | **Lead:** 🧠 Lead Architect | **Plan:** [`.agency/plans/automation-sprint-plan.md`](.agency/plans/automation-sprint-plan.md)
+> **Status:** ✅ `ALL DONE — 6/6 tasks complete` | **Lead:** 🧠 Lead Architect | **Plan:** [`.agency/plans/automation-sprint-plan.md`](.agency/plans/automation-sprint-plan.md)
 > **Goal:** Automate top 5 manual processes — remove ~80% of manual work
 
 | # | Task | Type | Agent | Est. | Priority | Status |
@@ -418,9 +418,9 @@ Two critical issues were identified during agency setup review:
 | **17.1** | Add DP3/DP4/DP12 design principle checks to quality-gate.js (QG-C8) | `enhance` | 🔧 JengaBooks Code | 0.5d | 🟡 P1 | ✅ `DONE` |
 | **17.2** | Create `.agency/scripts/compliance-check.js` — 7 automated checks (QG-C9) | `script` | 🔧 JengaBooks Code | 1d | 🔴 P0 | ✅ `DONE` |
 | **17.3** | Wire cost-report.js into post-commit hook | `integration` | 🔧 JengaBooks Code | 0.25d | 🟡 P1 | ✅ `DONE` |
-| **17.4** | Create E2E persona tests (Jane/David/Grace workflows) | `qa` | 🧪 QA Automator | 2d | 🟢 P2 | `PENDING` |
-| **17.5** | Create plan-sprint.js — generate task tables from feature descriptions | `script` | 🔧 JengaBooks Code | 1d | 🟢 P2 | ✅ `DONE` (`.agency/scripts/plan-sprint.js`) |
-| **17.6** | 🧪 Validate all automation | `qa` | 🧪 QA Automator | 0.5d | — | `PENDING` |
+| **17.4** | Create E2E persona tests (Jane/David/Grace workflows) | `qa` | 🧪 QA Automator | 2d | 🟢 P2 | ✅ `DONE` ([`e2e/persona-tests.spec.js`](e2e/persona-tests.spec.js) — 12/12 pass) |
+| **17.5** | Create plan-sprint.js — generate task tables from feature descriptions | `script` | 🔧 JengaBooks Code | 1d | 🟢 P2 | ✅ `DONE` ([`.agency/scripts/plan-sprint.js`](.agency/scripts/plan-sprint.js)) |
+| **17.6** | 🧪 Validate all automation | `qa` | 🧪 QA Automator | 0.5d | — | ✅ `DONE` ([`.agency/reports/sprint17-automation-report.md`](.agency/reports/sprint17-automation-report.md)) |
 
 ### Handoff Chain
 
@@ -429,12 +429,13 @@ Two critical issues were identified during agency setup review:
 | **H17.0** | 🧠 Lead Architect | 🔧 JengaBooks Code | Sprint 17 tasks 17.1-17.3, 17.5 |
 | **H17.1** | 🧠 Lead Architect | 🧪 QA Automator | Sprint 17 task 17.4 |
 | **H17.2** | 🔧 JengaBooks Code | 🧪 QA Automator | Updated scripts for validation |
-| **H17.3** | 🧪 QA Automator | 🧠 Lead Architect | Validation report |
+| **H17.3** | 🧪 QA Automator | 🧠 Lead Architect | [`e2e/persona-tests.spec.js`](e2e/persona-tests.spec.js) + [`sprint17-automation-report.md`](.agency/reports/sprint17-automation-report.md) |
+| **H17.4** | 🧠 Lead Architect | 🧪 QA Automator | Sprint 18.5 — validate final automation |
 
 ---
 
 ### Sprint 18 — Final Automation Push (Est. 5.5 days)
-> **Status:** `CODE DONE — AWAITING QA` | **Lead:** 🧠 Lead Architect | **Plan:** [`.agency/plans/sprint18-automation-2.md`](.agency/plans/sprint18-automation-2.md)
+> **Status:** ✅ `ALL DONE — 5/5 tasks complete` | **Lead:** 🧠 Lead Architect | **Plan:** [`.agency/plans/sprint18-automation-2.md`](.agency/plans/sprint18-automation-2.md)
 
 | # | Task | Type | Agent | Est. | Status |
 |---|------|------|-------|------|--------|
@@ -442,7 +443,7 @@ Two critical issues were identified during agency setup review:
 | **18.2** | Enhance `github.js` — add `pr create` with auto-changelog | `enhance` | 🔧 JengaBooks Code | 1d | ✅ `DONE` |
 | **18.3** | Create `retro-report.js` — sprint retro from telemetry+memory+commits | `script` | 🔧 JengaBooks Code | 1d | ✅ `DONE` |
 | **18.4** | Create `contract-gen.js` — scan code → draft contracts | `script` | 🔧 JengaBooks Code | 1.5d | ✅ `DONE` |
-| **18.5** | 🧪 Validate all automation | `qa` | 🧪 QA Automator | 1d | `PENDING` |
+| **18.5** | 🧪 Validate all automation | `qa` | 🧪 QA Automator | 1d | ✅ `DONE` ([`.agency/reports/sprint18-automation-report.md`](.agency/reports/sprint18-automation-report.md)) |
 
 ### Handoff Chain
 
