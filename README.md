@@ -140,7 +140,7 @@ copy zoocode-agency\package.json your-project\
 cd your-project
 npm install
 node .agency\scripts\init-project.js
-node .agency\scripts\preflight-gate.js pass --agent lead-architect --task "setup-complete"
+node .agency\scripts\enforcer.js pre --agent lead-architect --task "setup-complete"
 ```
 
 **macOS / Linux:**
@@ -149,7 +149,7 @@ cp -r ./zoocode-agency/.agency ./zoocode-agency/.roomodes ./zoocode-agency/.husk
 cd your-project
 npm install
 node .agency/scripts/init-project.js
-node .agency/scripts/preflight-gate.js pass --agent lead-architect --task "setup-complete"
+node .agency/scripts/enforcer.js pre --agent lead-architect --task "setup-complete"
 ```
 
 ### Verify It Works
@@ -157,13 +157,13 @@ node .agency/scripts/preflight-gate.js pass --agent lead-architect --task "setup
 Run these commands from your project root:
 
 ```bash
-# 1. Check pre-flight gate is ready (pass it first)
-node .agency/scripts/preflight-gate.js pass --agent lead-architect --task "verify-setup"
-# → ✓ Pre-flight passed
+# 1. Start a task session (replaces old preflight-gate)
+node .agency/scripts/enforcer.js pre --agent lead-architect --task "verify-setup"
+# → ✓ PRE phase: enforcement session created
 
-# 2. Check gate status
-node .agency/scripts/preflight-gate.js status
-# → Shows your agent, timestamp, task
+# 2. Recover session context after VSCode restart
+npm run recap
+# → Shows agency state, active project, last session, recent commits
 
 # 3. Store a test memory
 node .agency/scripts/memory.js store --content "Setup verified" --tags "setup" --task "verify" --agent "lead-architect"
@@ -251,26 +251,31 @@ node .agency/scripts/quality-gate.js check --project .
 ```
 .agency/                  ← Core agency engine
 ├── contracts/            ← API contracts (OpenAPI-style JSON)
-├── scripts/              ← 34 automation scripts
-│   ├── preflight-gate.js    ← Task start enforcement
-│   ├── post-task-gate.js    ← Task end enforcement (6 checkpoints)
-│   ├── quality-gate.js      ← Output quality checks (10 checks)
-│   ├── memory.js            ← Semantic memory (SQLite + cosine similarity)
-│   ├── telemetry.js         ← Event logging pipeline
-│   ├── handoff.js           ← Git commit + metadata + push
-│   ├── auto-assign.js       ← Agent routing by fileRegex
-│   ├── compliance-check.js  ← 7 automated compliance rules
-│   ├── contract-gen.js      ← Draft contracts from code
-│   ├── retro-report.js      ← Sprint retrospective generator
-│   ├── github.js            ← PR creation with changelog
+├── scripts/              ← 34+ automation scripts
+│   ├── enforcer.js           ← 4-phase enforcement state machine (replaces PFG + PTG)
+│   ├── recap.js              ← Session context recovery (npm run recap)
+│   ├── task-closer.js        ← Lead Architect fallback for text-only agent responses
+│   ├── quality-gate.js       ← Output quality checks (10 checks)
+│   ├── memory.js             ← Semantic memory (SQLite + cosine similarity)
+│   ├── telemetry.js          ← Event logging pipeline
+│   ├── handoff.js            ← Git commit + metadata + push (blocks on failure)
+│   ├── auto-assign.js        ← Agent routing by fileRegex
+│   ├── compliance-check.js   ← 7 automated compliance rules
+│   ├── contract-gen.js       ← Draft contracts from code
+│   ├── retro-report.js       ← Sprint retrospective generator
+│   ├── github.js             ← PR creation with changelog
 │   └── ... (24 more)
-├── plans/               ← Sprint plans
-├── reports/             ← Generated reports
-├── memory/              ← Store (SQLite + JSON)
-├── telemetry/           ← Event logs
-└── projects/            ← Per-project subdirectories
+├── enforcer/             ← Enforcement state (enforcer.db SQLite)
+├── .agent-slug           ← Current agent slug (written by enforcer.js pre)
+├── session-state.json    ← Last handoff snapshot (written by handoff.js)
+├── plans/                ← Sprint plans
+├── reports/              ← Generated reports
+├── memory/               ← Store (SQLite + JSON)
+├── telemetry/            ← Event logs
+└── projects/             ← Per-project subdirectories
 
 .roomodes                 ← ZooCode agent definitions (31 agents)
+.husky/pre-commit         ← Oath enforcement (blocks commit if no PRE phase)
 .husky/post-commit        ← Auto-docs + cost report + git push
 ORCHESTRATION.md          ← Sprint tracking
 AGENCY-RULES.md           ← Complete rules package (v5.1)

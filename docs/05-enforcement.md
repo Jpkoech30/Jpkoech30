@@ -95,6 +95,91 @@ node .agency/scripts/enforcer.js handoff \
 - Removes `.active-sessions.lock`
 - Next agent receives the task
 
+## Pre-Commit Hook — Oath Enforcement
+
+The [`pre-commit`](.husky/pre-commit) hook (Husky v9) blocks `git commit` if the agent hasn't recited the oath first.
+
+### How It Works
+
+```
+agent runs enforcer.js pre
+  ─→ writes .agency/.agent-slug with agent slug
+  ─→ creates enforcement session in enforcer.db
+
+agent runs git commit
+  ─→ pre-commit hook reads .agent-slug
+  ─→ runs enforcer.js check --agent <slug>
+  ─→ blocks (exit 1) if no PRE session found
+  ─→ allows commit if PRE session verified
+```
+
+### The `.agent-slug` File
+
+| Aspect | Detail |
+|--------|--------|
+| **Location** | [`.agency/.agent-slug`](.agency/.agent-slug) |
+| **Created by** | `enforcer.js pre` ([`enforcer.js:260-268`](.agency/scripts/enforcer.js:260)) |
+| **Content** | The current agent's slug (e.g. `documentarian`) |
+| **Purpose** | Allows `pre-commit` hook to know **which agent** is working (not which ran `git`) |
+| **Blocking** | Failure to write → PRE phase fails → `process.exit(1)` |
+
+### The Pre-Commit Hook
+
+Located at [`.husky/pre-commit`](.husky/pre-commit):
+
+```js
+// Pseudocode
+const agent = fs.readFileSync('.agency/.agent-slug', 'utf-8').trim();
+execSync(`node .agency/scripts/enforcer.js check --agent "${agent}"`);
+// → exit 0: PRE verified → commit proceeds
+// → exit 1: PRE missing → commit blocked
+```
+
+**Edge cases:**
+- **No `.agent-slug` file** — Hook warns but does NOT block (allows manual commits)
+- **Stale slug** — `enforcer.js check` respects TTL (1 hour), auto-resets expired sessions
+- **Hook not installed** — `npm run prepare` (Husky install) must be run after clone
+
+## Telemetry Integration
+
+Every enforcement phase logs to telemetry via [`telemetry.js`](.agency/scripts/telemetry.js). Logging is **blocking** — if telemetry fails, the phase fails.
+
+| Phase | Telemetry Event | Code Location |
+|-------|----------------|---------------|
+| **PRE** | `agent_invocation — start` | [`enforcer.js:270-276`](.agency/scripts/enforcer.js:270) |
+| **POST** | `agent_invocation — complete` | [`enforcer.js:422-428`](.agency/scripts/enforcer.js:422) |
+| **COMMIT** | `agent_invocation — commit` | [`enforcer.js:555-561`](.agency/scripts/enforcer.js:555) |
+| **HANDOFF** | `handoff — <from>→<to>` | [`enforcer.js:587-593`](.agency/scripts/enforcer.js:587) |
+
+```bash
+# Manual telemetry test
+node .agency/scripts/telemetry.js log \
+  --event agent_invocation \
+  --agent documentarian \
+  --task "doc-update" \
+  --status IN_PROGRESS \
+  --subEvent start
+```
+
+## Session State
+
+After a successful handoff (commit + push), [`handoff.js`](.agency/scripts/handoff.js) writes a session state snapshot to [`.agency/session-state.json`](.agency/session-state.json):
+
+```json
+{
+  "lastHandoff": "2026-07-13T00:14:00.000Z",
+  "fromAgent": "lead-architect",
+  "toAgent": "documentarian",
+  "task": "Update docs for Sprint 20",
+  "status": "PASSED",
+  "scope": "project",
+  "project": "zoocode-agency",
+  "commitHash": "a1b2c3d"
+}
+```
+
+This file is read by [`recap.js`](.agency/scripts/recap.js) to display "Last Session" context after VSCode restart.
+
 ## Special Modes
 
 ```bash
@@ -125,3 +210,4 @@ The circuit breaker (Issue #9) tracks task failures per agent in `.agency/circui
 
 - [Self-improvement loop →](06-self-improvement.md)
 - [Handoff protocol →](04-handoff.md)
+- [Session recap →](02-workflow.md#session-context-recovery)

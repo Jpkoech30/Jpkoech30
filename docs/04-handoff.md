@@ -60,7 +60,89 @@ node .agency/scripts/handoff.js \
   --status PASSED
 ```
 
+## Task-Closer.js — Lead Architect Fallback
+
+When a subtask agent returns **text** (a summary) instead of running [`handoff.js`](.agency/scripts/handoff.js), the Lead Architect uses [`task-closer.js`](.agency/scripts/task-closer.js) to close the loop on their behalf.
+
+### Usage
+
+```bash
+node .agency/scripts/task-closer.js \
+  --agent <slug> \
+  --task "<task-id>" \
+  --artifacts "<comma-separated-files>" \
+  --status <passed|failed|blocked> \
+  --project <id> \
+  --scope <project|global>
+
+# Dry run — shows what would happen without making changes
+node .agency/scripts/task-closer.js --dry-run
+```
+
+### What It Does
+
+```
+1. Check if git commit already exists for agent/task pair
+   ├─ YES → skip commit, proceed to enforcement
+   └─ NO  → create commit on behalf of agent
+             git add -A
+             git commit -m "feat(<task>): task completed by <agent>"
+             with HANDOFF body fields
+
+2. Run enforcement gates (POST → MIDDLE → COMMIT)
+   enforcer.js post --agent <slug> --task <task> --project <id>
+   enforcer.js middle --agent <slug> --task <task> --project <id>
+   enforcer.js commit --agent <slug> --task <task> --msg "..."
+```
+
+### Why It Exists
+
+- **Prevents orphan tasks** — Agents that "talk" instead of "do" still get their work committed
+- **Enforcement chain preserved** — POST/MIDDLE/COMMIT gates run regardless of delivery method
+- **Idempotent** — Duplicate-safe: if commit already exists, skips and just runs enforcement
+
+## Blocking Git Operations
+
+Since Sprint 20, [`handoff.js`](.agency/scripts/handoff.js) uses **blocking** (not silent/non-blocking) git operations. Both commit and push must succeed for a handoff to complete.
+
+| Operation | Before Sprint 20 | After Sprint 20 | Code Location |
+|-----------|-----------------|-----------------|---------------|
+| **git add + commit** | Non-blocking | ⛔ **Blocking** — exit 1 on failure | [`handoff.js:401-403`](.agency/scripts/handoff.js:401) |
+| **git push** | Non-blocking | ⛔ **Blocking** — exit 1 on failure | [`handoff.js:408-411`](.agency/scripts/handoff.js:408) |
+| **Session state write** | N/A | ⛔ **Blocking** — exit 1 on failure | [`handoff.js:414-429`](.agency/scripts/handoff.js:414) |
+
+### Failure Messages
+
+```bash
+# Commit failure
+❌ Git commit FAILED (blocking):
+   The handoff CANNOT proceed without a git commit.
+
+# Push failure
+❌ Git push FAILED (blocking):
+   The handoff CANNOT proceed without a successful push.
+   Check your remote credentials and network, then retry.
+```
+
+### Session State
+
+After a successful push, [`handoff.js`](.agency/scripts/handoff.js) writes [`.agency/session-state.json`](.agency/session-state.json):
+
+```json
+{
+  "lastHandoff": "2026-07-13T00:14:00.000Z",
+  "fromAgent": "lead-architect",
+  "toAgent": "documentarian",
+  "task": "Update docs for Sprint 20",
+  "status": "PASSED",
+  "commitHash": "a1b2c3d"
+}
+```
+
+This is read by `npm run recap` ([`recap.js`](.agency/scripts/recap.js)) to display "Last Session" context after VSCode restart.
+
 ## Related
 
 - [Enforcement gates →](05-enforcement.md)
 - [Workflow pipelines →](02-workflow.md)
+- [Session recap →](02-workflow.md#session-context-recovery)
