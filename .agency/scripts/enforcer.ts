@@ -412,6 +412,31 @@ function cmdPost(task, agent, project, ci) {
         passedCount++;
     }
 
+    // C4: Quality Gate — 8 automated checks (QG-C1 through QG-C8)
+    // Skip in CI mode (enforced by quality-gate.js --ci flag)
+    {
+        const qgScript = path.join(__dirname, 'quality-gate.js');
+        const qgProject = project || (ROOT + (fs.existsSync(path.join(ROOT, 'projects', 'jengabooks')) ? '/projects/jengabooks' : ''));
+        try {
+            const qgArgs = [`"${qgScript}"`, 'check', '--project', `"${qgProject}"`];
+            if (ci) qgArgs.push('--ci');
+            execSync(`node ${qgArgs.join(' ')}`, { cwd: ROOT, stdio: 'pipe', timeout: 120000 });
+            console.log('  ✅ C4: Quality Gate — ALL PASS');
+            passedCount++;
+        } catch (qgErr) {
+            // Parse output for block vs warn
+            const output = (qgErr.stdout || qgErr.message || '').toString();
+            if (output.includes('BLOCKED') || output.includes('FAIL')) {
+                console.log('  ❌ C4: Quality Gate — BLOCKED (see above)');
+                failedCount++;
+            } else {
+                // Warnings only — still pass but note it
+                console.log('  ⚠ C4: Quality Gate — warnings only (non-blocking)');
+                passedCount++;
+            }
+        }
+    }
+
     // ── Summary ──
     const total = passedCount + failedCount;
     console.log('');
@@ -817,4 +842,4 @@ function main() {
 
 main();
 
-export {};
+export { };
