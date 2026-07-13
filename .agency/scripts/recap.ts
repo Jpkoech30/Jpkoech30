@@ -1,42 +1,61 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 /**
- * recap.js — Session Context Recap
+ * recap.ts — Session Context Recap
  *
- * Shows a "where are we" summary after VSCode restart:
- *   - Agency git state
- *   - Active project git state
- *   - Last handoff/task (from session-state.json)
- *   - Recent commits
- *   - Uncommitted files
- *
- * Usage:
- *   node .agency/scripts/recap.js
- *
- * Exit codes:
- *   0 — Success (always)
+ * Shows a "where are we" summary after VSCode restart.
+ * Usage: node .agency/scripts/recap.js
  */
 
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const ROOT = path.resolve(__dirname, '../..');
-const ACTIVE_PROJECT_PATH = path.join(ROOT, '.agency', '.active-project');
-const PROJECTS_JSON_PATH = path.join(ROOT, '.agency', 'projects.json');
-const SESSION_STATE_PATH = path.join(ROOT, '.agency', 'session-state.json');
+const ROOT: string = path.resolve(__dirname, '../..');
+const ACTIVE_PROJECT_PATH: string = path.join(ROOT, '.agency', '.active-project');
+const PROJECTS_JSON_PATH: string = path.join(ROOT, '.agency', 'projects.json');
+const SESSION_STATE_PATH: string = path.join(ROOT, '.agency', 'session-state.json');
+
+/** Session state shape written by handoff.js */
+interface SessionState {
+    lastHandoff?: string;
+    fromAgent?: string;
+    toAgent?: string;
+    task?: string;
+    status?: string;
+    scope?: string;
+    project?: string;
+    commitHash?: string;
+}
+
+/** Project config from projects.json */
+interface ProjectConfig {
+    id: string;
+    name: string;
+    rootPath?: string;
+    isAgency?: boolean;
+    techStack?: Record<string, string>;
+    [key: string]: any;
+}
+
+/** projects.json structure */
+interface ProjectsJson {
+    projects: ProjectConfig[];
+    activeProject?: string;
+    [key: string]: any;
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function gitCommand(args, cwd) {
+function gitCommand(args: string, cwd: string): string | null {
     try {
-        return execSync(`git ${args}`, { cwd, stdio: 'pipe', timeout: 10000, encoding: 'utf-8' }).toString().trim();
+        return execSync(`git ${args}`, { cwd, stdio: 'pipe' as const, timeout: 10000, encoding: 'utf-8' as const }).toString().trim();
     } catch {
         return null;
     }
 }
 
-function formatDate(isoString) {
+function formatDate(isoString: string | undefined | null): string {
     if (!isoString) return 'unknown';
     const d = new Date(isoString);
     const year = d.getFullYear();
@@ -47,7 +66,7 @@ function formatDate(isoString) {
     return `${year}-${month}-${day} ${h}:${m}`;
 }
 
-function timeAgo(isoString) {
+function timeAgo(isoString: string | undefined | null): string {
     if (!isoString) return '';
     const diff = Date.now() - new Date(isoString).getTime();
     const mins = Math.floor(diff / 60000);
@@ -59,7 +78,7 @@ function timeAgo(isoString) {
     return `${days} day${days > 1 ? 's' : ''} ago`;
 }
 
-function readJson(filePath) {
+function readJson(filePath: string): any {
     try {
         if (fs.existsSync(filePath)) {
             return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
@@ -70,11 +89,11 @@ function readJson(filePath) {
 
 // ── Section: Agency Info ─────────────────────────────────────────────────────
 
-function printAgencyInfo() {
+function printAgencyInfo(): void {
     const branch = gitCommand('rev-parse --abbrev-ref HEAD', ROOT);
     const lastCommit = gitCommand('log --oneline -1', ROOT);
     const status = gitCommand('status --porcelain', ROOT);
-    const dirtyCount = status ? status.split('\n').filter(l => l.trim()).length : 0;
+    const dirtyCount = status ? status.split('\n').filter((l: string) => l.trim()).length : 0;
 
     console.log('🏢 Agency: zoocode-agency');
     if (branch) console.log(`   Branch: ${branch}`);
@@ -87,16 +106,16 @@ function printAgencyInfo() {
 
 // ── Section: Active Project Info ─────────────────────────────────────────────
 
-function printProjectInfo() {
-    const projectsConfig = readJson(PROJECTS_JSON_PATH);
+function printProjectInfo(): void {
+    const projectsConfig: ProjectsJson | null = readJson(PROJECTS_JSON_PATH);
     if (!projectsConfig || !projectsConfig.projects) {
         console.log('📁 Projects: No projects.json found');
         console.log('');
         return;
     }
 
-    const activeProjectId = readJson(ACTIVE_PROJECT_PATH) || projectsConfig.activeProject;
-    const activeProject = projectsConfig.projects.find(p => p.id === activeProjectId);
+    const activeProjectId: string = readJson(ACTIVE_PROJECT_PATH) || projectsConfig.activeProject || '';
+    const activeProject: ProjectConfig | undefined = projectsConfig.projects.find(p => p.id === activeProjectId);
 
     if (!activeProject) {
         console.log(`📁 Active Project: "${activeProjectId}" — not found in projects.json`);
@@ -104,23 +123,22 @@ function printProjectInfo() {
         return;
     }
 
-    const projectRoot = path.resolve(ROOT, activeProject.rootPath || '');
-    const isAgency = activeProject.isAgency;
+    const projectRoot: string = path.resolve(ROOT, activeProject.rootPath || '');
+    const isAgency: boolean | undefined = activeProject.isAgency;
 
     console.log(`📁 Active Project: ${activeProject.name}`);
     console.log(`   ID: ${activeProject.id}`);
     if (activeProject.rootPath) console.log(`   Root: ${activeProject.rootPath}`);
     if (activeProject.techStack) {
-        const stackStr = Object.values(activeProject.techStack).join(' / ');
+        const stackStr: string = Object.values(activeProject.techStack).join(' / ');
         console.log(`   Stack: ${stackStr}`);
     }
 
-    // Git state for project (skip if agency itself, already shown above)
     if (!isAgency && fs.existsSync(projectRoot)) {
         const branch = gitCommand('rev-parse --abbrev-ref HEAD', projectRoot);
         const lastCommit = gitCommand('log --oneline -1', projectRoot);
         const status = gitCommand('status --porcelain', projectRoot);
-        const dirtyCount = status ? status.split('\n').filter(l => l.trim()).length : 0;
+        const dirtyCount = status ? status.split('\n').filter((l: string) => l.trim()).length : 0;
 
         if (branch) console.log(`   Branch: ${branch}`);
         if (lastCommit) console.log(`   Last commit: ${lastCommit}`);
@@ -128,13 +146,12 @@ function printProjectInfo() {
             console.log(`   Status: ${dirtyCount === 0 ? '✅ Clean' : `⚠️  ${dirtyCount} uncommitted`}`);
         }
 
-        // List dirty files (max 10)
         if (status && dirtyCount > 0) {
-            const lines = status.split('\n').filter(l => l.trim()).slice(0, 10);
+            const lines: string[] = status.split('\n').filter((l: string) => l.trim()).slice(0, 10);
             for (const line of lines) {
-                const statusChar = line.substring(0, 2).trim();
-                const filePath = line.substring(3).trim();
-                const icon = statusChar === '??' ? '🆕' :
+                const statusChar: string = line.substring(0, 2).trim();
+                const filePath: string = line.substring(3).trim();
+                const icon: string = statusChar === '??' ? '🆕' :
                     statusChar.includes('M') ? '📝' :
                         statusChar.includes('D') ? '🗑️' : '⚡';
                 console.log(`   ${icon} ${filePath}`);
@@ -152,8 +169,8 @@ function printProjectInfo() {
 
 // ── Section: Last Session ────────────────────────────────────────────────────
 
-function printLastSession() {
-    const session = readJson(SESSION_STATE_PATH);
+function printLastSession(): void {
+    const session: SessionState | null = readJson(SESSION_STATE_PATH);
 
     console.log('🔄 Last Session');
 
@@ -170,7 +187,7 @@ function printLastSession() {
     if (session.scope) console.log(`   Scope: ${session.scope}`);
     if (session.commitHash) console.log(`   Commit: ${session.commitHash}`);
     if (session.project) {
-        const projectLabel = session.project === 'zoocode-agency' ? 'agency' : session.project;
+        const projectLabel: string = session.project === 'zoocode-agency' ? 'agency' : session.project;
         console.log(`   Project: ${projectLabel}`);
     }
 
@@ -179,13 +196,13 @@ function printLastSession() {
 
 // ── Section: Recent Commits ──────────────────────────────────────────────────
 
-function printRecentCommits() {
-    const log = gitCommand('log --oneline -5 --format="%h %s (%ar)"', ROOT);
+function printRecentCommits(): void {
+    const log: string | null = gitCommand('log --oneline -5 --format="%h %s (%ar)"', ROOT);
 
     console.log('🕐 Recent Commits (agency)');
 
     if (log) {
-        const lines = log.split('\n');
+        const lines: string[] = log.split('\n');
         for (const line of lines) {
             console.log(`   ${line}`);
         }
@@ -198,7 +215,7 @@ function printRecentCommits() {
 
 // ── Section: Next Steps ──────────────────────────────────────────────────────
 
-function printNextSteps() {
+function printNextSteps(): void {
     console.log('➡️  Next:');
     console.log('   Ask "where are we" anytime to see this recap');
     console.log('   Or delegate a task to continue working');
@@ -207,12 +224,12 @@ function printNextSteps() {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
-function main() {
-    const now = new Date();
-    const tzOffset = -now.getTimezoneOffset();
-    const tzSign = tzOffset >= 0 ? '+' : '-';
-    const tzHours = String(Math.floor(Math.abs(tzOffset) / 60)).padStart(2, '0');
-    const tzLabel = `UTC${tzSign}${tzHours}`;
+function main(): void {
+    const now: Date = new Date();
+    const tzOffset: number = -now.getTimezoneOffset();
+    const tzSign: string = tzOffset >= 0 ? '+' : '-';
+    const tzHours: string = String(Math.floor(Math.abs(tzOffset) / 60)).padStart(2, '0');
+    const tzLabel: string = `UTC${tzSign}${tzHours}`;
 
     console.log('');
     console.log(`📌 Current Context — ${formatDate(now.toISOString())} (${tzLabel})`);
