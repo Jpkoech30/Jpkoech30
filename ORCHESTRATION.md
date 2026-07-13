@@ -419,7 +419,7 @@ Two critical issues were identified during agency setup review:
 | **17.2** | Create `.agency/scripts/compliance-check.js` — 7 automated checks (QG-C9) | `script` | 🔧 JengaBooks Code | 1d | 🔴 P0 | ✅ `DONE` |
 | **17.3** | Wire cost-report.js into post-commit hook | `integration` | 🔧 JengaBooks Code | 0.25d | 🟡 P1 | ✅ `DONE` |
 | **17.4** | Create E2E persona tests (Jane/David/Grace workflows) | `qa` | 🧪 QA Automator | 2d | 🟢 P2 | `PENDING` |
-| **17.5** | Create plan-sprint.js — generate task tables from feature descriptions | `script` | 🔧 JengaBooks Code | 1d | 🟢 P2 | `PENDING` |
+| **17.5** | Create plan-sprint.js — generate task tables from feature descriptions | `script` | 🔧 JengaBooks Code | 1d | 🟢 P2 | ✅ `DONE` (`.agency/scripts/plan-sprint.js`) |
 | **17.6** | 🧪 Validate all automation | `qa` | 🧪 QA Automator | 0.5d | — | `PENDING` |
 
 ### Handoff Chain
