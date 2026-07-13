@@ -4,7 +4,7 @@
  */
 const { execSync } = require("child_process");
 try {
-    execSync('npx tsx "' + __dirname + '/'client-bot.js.ts"', { stdio: "inherit" });
+    execSync('npx tsx "' + __dirname + '/'client-bot.ts"', { stdio: "inherit" });
 } catch (e) {
     process.exit(1);
 }

@@ -4,7 +4,7 @@
  */
 const { execSync } = require("child_process");
 try {
-    execSync('npx tsx "' + __dirname + '\\'quality-gate.js.ts"', { stdio: "inherit" });
+    execSync('npx tsx "' + __dirname + '\\'quality-gate.ts"', { stdio: "inherit" });
 } catch (e) {
     process.exit(1);
 }
