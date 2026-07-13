@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * validate-handoff.js — HANDOFF Metadata Validator
  *

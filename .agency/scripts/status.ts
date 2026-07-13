@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 
 /**
  * status.js — CLI Status Updater for ORCHESTRATION.md

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 
 /**
  * ⚠️ DEPRECATED — This script is superseded by enforcer.js

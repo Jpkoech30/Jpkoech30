@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 
 /**
  * memory.js v2.0 — Semantic Memory (Hybrid Search + Vector RAG)

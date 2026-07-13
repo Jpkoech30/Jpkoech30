@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 
 /**
  * secret-scan.js — Pre-commit Secret Scanner

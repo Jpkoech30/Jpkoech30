@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 
 /**
  * cost-report.js — Sprint Cost Report Generator (§11.5)

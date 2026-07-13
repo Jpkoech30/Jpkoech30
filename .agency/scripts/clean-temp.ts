@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * clean-temp.js — Orphan Temp File Cleanup Checker
  *

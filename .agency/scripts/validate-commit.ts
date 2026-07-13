@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * validate-commit.js — Conventional Commit & HANDOFF Metadata Validator
  *

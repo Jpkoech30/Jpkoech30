@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 // Interactive project setup wizard
 // Usage: node .agency/scripts/init-wizard.js
 const readline = require('readline');

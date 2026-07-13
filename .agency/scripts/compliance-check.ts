@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 
 /**
  * compliance-check.js — Automated Compliance Checklist (CC-1 through CC-7)

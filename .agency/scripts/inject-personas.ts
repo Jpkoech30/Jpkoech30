@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 
 /**
  * inject-personas.js — Injects ## 👤 PERSONA blocks into .roomodes customInstructions

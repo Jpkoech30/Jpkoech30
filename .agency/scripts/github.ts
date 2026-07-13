@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 
 /**
  * github.js — GitHub API Service for ZooCode Agency

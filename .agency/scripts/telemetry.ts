@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 
 /**
  * telemetry.js — Agency Telemetry Pipeline

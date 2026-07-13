@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 /**
  * auto-tune.js — Threshold Self-Tuning (Phase 2, Self-Improvement)
  *

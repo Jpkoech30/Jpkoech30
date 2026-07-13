@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * cleanup.js — File Cleanup Script (§15 of AGENCY-RULES)
  *

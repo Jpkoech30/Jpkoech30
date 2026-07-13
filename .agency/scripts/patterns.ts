@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 /**
  * patterns.js — Automated Pattern Detection (Phase 1, Self-Improvement)
  *

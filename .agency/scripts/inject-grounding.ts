@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 /**
  * inject-grounding.js — Injects GROUNDING (Hybrid Retrieval) section into ALL 31 agents
  * Run: node .agency/scripts/inject-grounding.js

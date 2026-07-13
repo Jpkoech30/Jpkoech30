@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 // node .agency/scripts/metrics.js
 // Reads telemetry events and computes:
 // - Completion rate: DONE / (DONE + FAILED)

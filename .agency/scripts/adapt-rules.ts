@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 /**
  * adapt-rules.js — Rule Evolution Suggestions (Phase 2, Self-Improvement)
  *

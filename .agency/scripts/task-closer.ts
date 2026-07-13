@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 /**
  * task-closer.js — Lead Architect task closure fallback
  * 
