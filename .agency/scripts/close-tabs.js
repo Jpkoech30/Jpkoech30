@@ -1,15 +1,10 @@
 #!/usr/bin/env node
 /**
- * close-tabs.js — Close all VS Code editor tabs
- * Usage: node .agency/scripts/close-tabs.js
- * Run from VS Code integrated terminal.
+ * TypeScript Shim â€” delegates to .ts implementation
  */
+const { execSync } = require("child_process");
 try {
-    const { execSync } = require("child_process");
-    console.log("Closing all editor tabs...");
-    execSync('code --command "workbench.action.closeAllEditors"', { stdio: "inherit", timeout: 5000 });
-    console.log("All editor tabs closed");
-} catch (err) {
-    console.log("Could not close tabs automatically.");
-    console.log("Manual: Ctrl+K Ctrl+W to close all editors");
+    execSync('npx tsx "' + __dirname + '/'close-tabs.js.ts"', { stdio: "inherit" });
+} catch (e) {
+    process.exit(1);
 }
