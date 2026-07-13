@@ -1,2 +1,4 @@
 #!/usr/bin/env node
-const { execSync } = require("child_process"); try { execSync("npx tsx \"" + __dirname + "/health.ts\"", { stdio: "inherit" }) } catch (e) { process.exit(1) }
+const{execSync}=require("child_process");
+var args=process.argv.slice(2).map(function(a){return a.includes(" ")?'"'+a+'"':a}).join(" ");
+try{execSync("npx tsx \""+__dirname+"/health.ts\" "+args,{stdio:"inherit"})}catch(e){process.exit(1)}
