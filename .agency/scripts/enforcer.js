@@ -32,6 +32,7 @@ const { execSync } = require('child_process');
 const ROOT = path.resolve(__dirname, '../..');
 const ENFORCER_DIR = path.resolve(__dirname, '../enforcer');
 const DB_PATH = path.join(ENFORCER_DIR, 'enforcer.db');
+const TELEMETRY_SCRIPT = path.join(__dirname, 'telemetry.js');
 
 // ── SQL Schema ─────────────────────────────────────────────────────────────────
 
@@ -266,6 +267,14 @@ function cmdPre(agent, task, project, hotfix, reason, embed) {
         process.exit(1);
     }
 
+    // Log telemetry for successful PRE phase
+    try {
+        execSync(`node "${TELEMETRY_SCRIPT}" log --event agent_invocation --agent "${agent}" --task "${task}" --status IN_PROGRESS --subEvent start`, { stdio: 'pipe', timeout: 10000 });
+    } catch (e) {
+        console.error(`  ❌ Telemetry logging failed (blocking): ${e.message}`);
+        process.exit(1);
+    }
+
     process.exit(0);
 }
 
@@ -410,6 +419,15 @@ function cmdPost(task, agent, project, ci) {
     if (failedCount === 0) {
         updateRow(task, agent, { phase: 'POST', status: 'PASSED' });
         console.log('  🏁 POST phase: ALL PASS');
+
+        // Log telemetry for successful POST phase
+        try {
+            execSync(`node "${TELEMETRY_SCRIPT}" log --event agent_invocation --agent "${agent}" --task "${task}" --status DONE --subEvent end`, { stdio: 'pipe', timeout: 10000 });
+        } catch (e) {
+            console.error(`  ❌ Telemetry logging failed (blocking): ${e.message}`);
+            process.exit(1);
+        }
+
         process.exit(0);
     } else {
         updateRow(task, agent, { phase: 'POST', status: 'FAILED' });
@@ -534,6 +552,15 @@ function cmdCommit(task, agent, msg, project) {
 
     updateRow(task, agent || 'unknown', { phase: 'COMMIT', status: 'PASSED' });
     console.log('✓ COMMIT phase: commit message valid');
+
+    // Log telemetry for successful COMMIT phase
+    try {
+        execSync(`node "${TELEMETRY_SCRIPT}" log --event agent_invocation --agent "${agent || 'unknown'}" --task "${task}" --status DONE --subEvent end`, { stdio: 'pipe', timeout: 10000 });
+    } catch (e) {
+        console.error(`  ❌ Telemetry logging failed (blocking): ${e.message}`);
+        process.exit(1);
+    }
+
     process.exit(0);
 }
 
@@ -557,6 +584,15 @@ function cmdHandoff(from, to, task, project) {
             INSERT INTO enforcement_state (task_id, agent_slug, project, phase, status, created_at, updated_at, completed_at)
             VALUES (?, ?, ?, 'HANDOFF', 'PASSED', ?, ?, ?)
         `).run(task, from, project || 'global', ts, ts, ts);
+
+        // Log telemetry for HANDOFF phase
+        try {
+            execSync(`node "${TELEMETRY_SCRIPT}" log --event agent_invocation --agent "${from}" --task "${task}" --status DONE --subEvent handoff`, { stdio: 'pipe', timeout: 10000 });
+        } catch (e) {
+            console.error(`  ❌ Telemetry logging failed (blocking): ${e.message}`);
+            process.exit(1);
+        }
+
         process.exit(0);
     }
 
@@ -564,6 +600,15 @@ function cmdHandoff(from, to, task, project) {
     if (row.hotfix_reason) {
         console.log(`  ⚡ HOTFIX handoff (reason: ${row.hotfix_reason})`);
         updateRow(task, from, { phase: 'HANDOFF', status: 'SKIPPED' });
+
+        // Log telemetry for HANDOFF (HOTFIX) phase
+        try {
+            execSync(`node "${TELEMETRY_SCRIPT}" log --event agent_invocation --agent "${from}" --task "${task}" --status HOTFIX --subEvent handoff`, { stdio: 'pipe', timeout: 10000 });
+        } catch (e) {
+            console.error(`  ❌ Telemetry logging failed (blocking): ${e.message}`);
+            process.exit(1);
+        }
+
         process.exit(0);
     }
 
@@ -590,6 +635,15 @@ function cmdHandoff(from, to, task, project) {
         const ts = now();
         updateRow(task, from, { phase: 'HANDOFF', status: 'PASSED', completed_at: ts });
         console.log(`✓ HANDOFF phase: ${from} → ${to} (task: ${task})`);
+
+        // Log telemetry for HANDOFF phase
+        try {
+            execSync(`node "${TELEMETRY_SCRIPT}" log --event agent_invocation --agent "${from}" --task "${task}" --status DONE --subEvent handoff`, { stdio: 'pipe', timeout: 10000 });
+        } catch (e) {
+            console.error(`  ❌ Telemetry logging failed (blocking): ${e.message}`);
+            process.exit(1);
+        }
+
         process.exit(0);
     }
 
@@ -597,12 +651,30 @@ function cmdHandoff(from, to, task, project) {
         const ts = now();
         updateRow(task, from, { phase: 'HANDOFF', status: 'PASSED', completed_at: ts });
         console.log(`✓ HANDOFF phase: ${from} → ${to} (task: ${task})`);
+
+        // Log telemetry for HANDOFF phase
+        try {
+            execSync(`node "${TELEMETRY_SCRIPT}" log --event agent_invocation --agent "${from}" --task "${task}" --status DONE --subEvent handoff`, { stdio: 'pipe', timeout: 10000 });
+        } catch (e) {
+            console.error(`  ❌ Telemetry logging failed (blocking): ${e.message}`);
+            process.exit(1);
+        }
+
         process.exit(0);
     }
 
     // Allow if already HANDOFF (re-handoff)
     if (row.phase === 'HANDOFF' && (row.status === 'PASSED' || row.status === 'SKIPPED')) {
         console.log(`✓ HANDOFF phase already complete for task "${task}"`);
+
+        // Log telemetry for re-handoff
+        try {
+            execSync(`node "${TELEMETRY_SCRIPT}" log --event agent_invocation --agent "${from}" --task "${task}" --status DONE --subEvent handoff`, { stdio: 'pipe', timeout: 10000 });
+        } catch (e) {
+            console.error(`  ❌ Telemetry logging failed (blocking): ${e.message}`);
+            process.exit(1);
+        }
+
         process.exit(0);
     }
 
