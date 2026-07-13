@@ -444,6 +444,8 @@ COST-ESTIMATE          | Recommended | COST-ESTIMATE:~2.5k tokens (~KES 0.07)
 SECTION 3: QUALITY GATES
 ===============================================================================
 
+## 3.1 Manual Quality Gates (Conceptual)
+
 Order | Gate                  | Triggered By              | Blocking? | Pass Criteria
 ------|-----------------------|---------------------------|-----------|----------------------------------------------
 1     | Security & Verification | Implementation complete  | Yes       | No hallucinations, no security anti-patterns
@@ -452,6 +454,45 @@ Order | Gate                  | Triggered By              | Blocking? | Pass Cri
 4     | Unit Tests            | Implementation complete  | Test fail | All tests pass, coverage targets met
 5     | Error Handling        | All code                 | Any       | All errors caught and user-friendly
 6     | Compliance            | All gates passed         | Any       | All 11 principals satisfied; ORCHESTRATION.md updated
+
+## 3.2 Automated Quality Gates (QG-C1 through QG-C8)
+
+These 8 checks are automated via `.agency/scripts/quality-gate.js` and run as **C4: Quality Gate** in the enforcer.js POST phase (see SECTION 2: HANDOFF PROTOCOL).
+
+| Check | Name | Severity | Integration |
+|-------|------|----------|-------------|
+| QG-C1 | Hallucination Detector | 🔴 BLOCK on secrets, 🟡 WARN on TODO | Scans modified files for hardcoded secrets (`api_key`, `password`, `jwt_secret`), hallucination markers (`MISSING_API_DATA`), TODO/FIXME markers, and nonexistent relative imports |
+| QG-C2 | Contract Compliance | 🟡 WARN only | Scans modified `.ts`/`.js` for API URLs and cross-references against `.agency/contracts/*.json` endpoints |
+| QG-C3 | Diff Size Limiter | 🟡 WARN at 500, 🔴 BLOCK at 2000 | Counts changed lines via git diff --stat; excludes generated files (lock files, Prisma client, minified) |
+| QG-C4 | Test Gate | 🟡 WARN on missing, 🔴 BLOCK on failures | Runs `npm test` if test files modified; warns if new code files lack corresponding `.spec.ts`/`.test.ts` |
+| QG-C5 | Plan-vs-Implementation | 🟡 WARN only | Compares planned files (from `.socratic-plan.md` or git log) against actual modified files |
+| QG-C6 | TypeScript Compile | 🔴 BLOCK on errors | Runs `npx tsc --noEmit` if `tsconfig.json` exists |
+| QG-C7 | Dependency Sanity | 🔴 BLOCK on missing, 🟡 WARN on monorepo | Verifies all `require()`/`import` packages exist in `package.json`; Node built-ins exempt |
+| QG-C8 | Design Principles | 🟡 WARN, 🔴 BLOCK at >3 violations | Checks DP3 (48px touch targets), DP4 (fontSize 16 on inputs), DP12 (loading/error/null/empty state handling) |
+
+### QG-C8 Design Principle Sub-Checks
+
+| DP | Check | Scan Pattern |
+|----|-------|-------------|
+| DP3 (48px) | Touch targets >= 48x48dp | Tailwind `min-h-`/`min-w-` values < 12, arbitrary `min-h-[<48px]`, inline `minHeight`/`minWidth` < 48 |
+| DP4 (fontSize 16) | `<input>`/`<TextInput>` have readable font size | Tags missing `text-base` class or `fontSize: 16` |
+| DP12 (Offline) | Components handle loading/error/null/empty states | Component files missing `loading`, `error`, `null`, or `empty` patterns |
+
+### Usage
+
+```bash
+# Run all 8 checks on a project
+node .agency/scripts/quality-gate.js check --project <path>
+
+# Exit codes:
+#   0 — All checks pass (warnings allowed)
+#   1 — One or more BLOCK results
+```
+
+The quality gate is automatically invoked as **C4** during the enforcer.js POST phase:
+```bash
+node .agency/scripts/enforcer.js post --task <id> --agent <slug>
+```
 
 
 ===============================================================================

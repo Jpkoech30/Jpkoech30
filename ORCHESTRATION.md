@@ -353,17 +353,26 @@ Two critical issues were identified during agency setup review:
 ---
 
 ### Sprint 16 — Quality Gate System (Est. 3.5 days)
-> **Status:** `PLANNED` | **Lead:** 🧠 Lead Architect | **Contract:** `agency-quality-gate@1.0.0`
+> **Status:** `CODE DONE — AWAITING QA` | **Lead:** 🧠 Lead Architect | **Contract:** `agency-quality-gate@1.0.0`
 > **Plan:** [`.agency/plans/quality-gate-plan.md`](.agency/plans/quality-gate-plan.md)
 > **Problem:** 7 unenforced quality gaps — no automated check validates LLM output before handoff
 
 | # | Task | Type | Agent | Est. | Severity | Status |
 |---|------|------|-------|------|----------|--------|
-| **16.1** | Create `.agency/scripts/quality-gate.js` — 7 checks (hallucination, contract, diff, test, plan, TS, deps) | `script` | 🔧 JengaBooks Code | 2d | 🔴 P0 | `PENDING` |
-| **16.2** | Wire QG into PTG as C5 in `post-task-gate.js` | `integration` | 🔧 JengaBooks Code | 0.5d | 🔴 P0 | `PENDING` |
+| **16.1** | Create `.agency/scripts/quality-gate.js` — 8 checks (C1-C8: hallucination, contract, diff, test, plan, TS, deps, design principles) | `script` | 🔧 JengaBooks Code | 2d | 🔴 P0 | ✅ `DONE` (932 lines, all checks implemented) |
+| **16.2** | Wire QG into enforcer.js POST phase as C4 | `integration` | 🔧 JengaBooks Code | 0.5d | 🔴 P0 | ✅ `DONE` (`.agency/scripts/enforcer.ts:415-438`) |
 | **16.3** | Create contract & plan | `docs` | 🧠 Lead Architect | 0.25d | — | ✅ DONE |
-| **16.4** | Update AGENCY-RULES.md §3 with new QG gates | `docs` | 🧠 Lead Architect | 0.25d | — | `PENDING` |
+| **16.4** | Update AGENCY-RULES.md §3 with new QG gates | `docs` | 🧠 Lead Architect | 0.25d | — | ✅ `DONE` |
 | **16.5** | 🧪 Validate QG-G1 through QG-G7 | `qa` | 🧪 QA Automator | 0.5d | — | `PENDING` |
+
+### Handoff Chain
+
+| Handoff | From | To | Artifacts |
+|---------|------|----|-----------|
+| **H16.0** | 🧠 Lead Architect | 🔧 JengaBooks Code | Sprint 16 tasks 16.1-16.2 (via `.agency/plans/quality-gate-plan.md`) |
+| **H16.1** | 🔧 JengaBooks Code | 🧠 Lead Architect | Updated `enforcer.ts` — QG wired as C4 |
+| **H16.2** | 🧠 Lead Architect | (self) | Sprint 16.4 — Updated `AGENCY-RULES.md §3` |
+| **H16.3** | 🧠 Lead Architect | 🧪 QA Automator | Sprint 16.5 — Validate QG-G1 through QG-G7 |
 
 ---
 

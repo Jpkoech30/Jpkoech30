@@ -1,9 +1,0 @@
-feat(sprint16-quality-gate): handoff from code-agent to lead-architect
-
-HANDOFF:lead-architect
-CONTEXT:Handoff from code-agent to lead-architect for task sprint16-quality-gate
-ARTIFACTS:pending
-CONTRACT:pending
-STATUS:IN_PROGRESS
-MEMORY:stored
-SCOPE:project
