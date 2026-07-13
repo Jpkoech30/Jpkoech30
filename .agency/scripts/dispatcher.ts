@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 
 /**
  * dispatcher.js — Parallel Task Dispatcher

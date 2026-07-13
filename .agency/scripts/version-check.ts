@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 
 /**
  * version-check.js — Node Version Guard

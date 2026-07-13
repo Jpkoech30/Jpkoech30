@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 
 /**
  * contract-gen.js — Auto-Generate Draft Contracts from Source Code

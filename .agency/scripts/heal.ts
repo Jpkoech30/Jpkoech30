@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 /**
  * heal.js — Auto-Remediation Engine (Phase 2, Self-Improvement)
  *

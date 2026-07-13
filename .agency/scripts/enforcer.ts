@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 
 /**
  * enforcer.js — Unified 4-Phase Enforcement State Machine

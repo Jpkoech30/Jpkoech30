@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 
 /**
  * telemetry.js — Agency Telemetry Pipeline
@@ -18,6 +18,56 @@
  *   0 — Success
  *   1 — Error
  */
+
+// ── Type Definitions ────────────────────────────────────────────────────────────
+
+interface TelemetryEvent {
+    timestamp: string;
+    agent?: string;
+    task?: string;
+    event: string;
+    status: string;
+    tokens?: { input?: number; output?: number; cacheHit?: number };
+    duration_ms?: number;
+    error?: string;
+    model?: string;
+    inputTokens?: number;
+    outputTokens?: number;
+    costKES?: number;
+    cacheHitTokens?: number;
+    gate?: string;
+    failCount?: number;
+    escalated?: boolean;
+}
+
+interface BuildInvocationParams {
+    agent: string;
+    task: string;
+    event: 'start' | 'end' | 'error' | 'handoff';
+    status: string;
+    tokens?: { input?: number; output?: number };
+    duration_ms?: number;
+    error?: string;
+    model?: string;
+}
+
+interface BuildCostParams {
+    task: string;
+    agent: string;
+    inputTokens: number;
+    outputTokens: number;
+    costKES: number;
+    cacheHitTokens?: number;
+}
+
+interface BuildGateFailureParams {
+    task: string;
+    gate: 'security' | 'performance' | 'accessibility' | 'qa' | 'compliance';
+    failCount: number;
+    escalated?: boolean;
+}
+
+// ── Constants ────────────────────────────────────────────────────────────────────
 
 const fs = require('fs');
 const path = require('path');

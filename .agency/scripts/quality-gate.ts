@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 
 /**
  * quality-gate.js — Quality Gate (QG) Enforcement System

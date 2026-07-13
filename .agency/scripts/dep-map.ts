@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 // dep-map.js — Hotfix dependency mapping
 // Prints dependent consumers for a changed file
 // Usage: node .agency/scripts/dep-map.js --file <changed-file-path>

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 /**
  * health.js — Self-Health Check (Phase 1, Self-Improvement)
  *

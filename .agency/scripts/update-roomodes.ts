@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 /**
  * update-roomodes.js — Updates .roomodes fileRegex patterns (Phase B)
  * Run: node .agency/scripts/update-roomodes.js

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 /**
  * close-tabs.js � Close all VS Code editor tabs
  * Usage: node .agency/scripts/close-tabs.js

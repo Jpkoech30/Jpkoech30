@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 
 /**
  * retro-report.js — Sprint Retrospective Report Generator

@@ -57,3 +57,5 @@
 {"timestamp":"2026-07-13T00:18:38.876Z","agent":"documentarian","task":"doc-sprint20","event":"start","status":"DONE"}
 {"timestamp":"2026-07-13T00:18:43.049Z","agent":"documentarian","task":"doc-sprint20","event":"start","status":"DONE"}
 {"timestamp":"2026-07-13T00:18:59.667Z","agent":"lead-architect","task":"open-source-docs-update","event":"start","status":"IN_PROGRESS"}
+{"timestamp":"2026-07-13T01:23:06.398Z","agent":"lead-architect","task":"ts-migration-final-commit","event":"start","status":"IN_PROGRESS"}
+{"timestamp":"2026-07-13T01:25:36.173Z","agent":"lead-architect","task":"ts-migration-phase-c-final","event":"start","status":"IN_PROGRESS"}

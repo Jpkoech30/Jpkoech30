@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 /**
  * init-project.js — Roo Code Project Bootstrap Script
  *

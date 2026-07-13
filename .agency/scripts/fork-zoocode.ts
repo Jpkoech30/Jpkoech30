@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 /**
  * fork-zoocode.js — Patches ZooCode extension to create Simba Code
  *

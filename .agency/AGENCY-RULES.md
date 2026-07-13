@@ -1002,10 +1002,7 @@ Companion documents (created):
 
 ## Scripts Reference
 
-| Script | Description | Usage | Example |
-|--------|-------------|-------|---------|
-| `auto-docs.js` | Self-updating documentation — parses JSDoc, package scripts, and Git log to sync AGENCY-RULES.md and CHANGELOG.md | `--sync Run full documentation sync (scripts reference + changelog)` `--dry-run Show what would change without modifying files` `--scripts-only Only update the Scripts Reference table` `--changelog-only Only generate changelog from Git history` | `node .agency/scripts/auto-docs.js --sync` |
-| `dispatcher.js` | Parallel task dispatcher — spawns independent tasks concurrently based on Depends On graph in ORCHESTRATION.md | `--parallel <n> Maximum number of concurrent agent processes (required for dispatch, max 5)` `--sprint <id> Only consider tasks in this sprint (optional)` `--dry-run Show what would be dispatched without executing` `--status Show currently running dispatched tasks` `--kill <taskId> Kill a specific dispatched task` | `node .agency/scripts/dispatcher.js --parallel 3` |
+No scripts with JSDoc @desc annotations found.
 
 
 ## npm Scripts

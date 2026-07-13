@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 
 // Top of file
 try { require('./version-check'); } catch (e) { }

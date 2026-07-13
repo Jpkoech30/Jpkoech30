@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 
 /**
  * auto-assign.js — Auto-Assign Agent from Task Description

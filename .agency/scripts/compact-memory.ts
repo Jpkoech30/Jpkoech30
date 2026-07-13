@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 // compact-memory.js — runs compaction asynchronously in cron
 // Usage: node .agency/scripts/compact-memory.js --project <id>
 //        node .agency/scripts/compact-memory.js --dry-run

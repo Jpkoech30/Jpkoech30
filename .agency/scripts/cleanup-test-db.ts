@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 
 /**
  * cleanup-test-db.js — Test Database Cleanup Script

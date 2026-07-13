@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 
 /**
  * chaos-monkey.js — Chaos Monkey Test Suite

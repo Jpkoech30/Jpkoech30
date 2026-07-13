@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 // project-pinger.js — Archives memory for inactive projects
 // Usage: node .agency/scripts/project-pinger.js
 //        node .agency/scripts/project-pinger.js --dry-run

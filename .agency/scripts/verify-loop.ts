@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @ts-nocheck
+
 /**
  * verify-loop.js — Closing the Self-Improvement Loop (Phase 3)
  *
