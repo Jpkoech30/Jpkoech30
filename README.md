@@ -1,50 +1,50 @@
-### 👋 Hi, I'm Joshua — @Jpkoech30
+### 👋 Hi, I'm Joshua Koech — @Jpkoech30
 
-I build **ZooCode Agency** — a multi-agent orchestration framework that coordinates **31 specialized AI agents** with quality gates, semantic memory, and cost tracking.
+I build **tools that build tools**. I'm the creator of [ZooCode Agency](https://github.com/Jpkoech30/zoocode-agency), a production-ready multi-agent orchestration framework.
 
 ---
 
-### 🧠 ZooCode Agency
+### 🧠 Featured: ZooCode Agency
 
-A production-ready system that transforms how AI coding agents work — from one generic agent to **31 specialists** working with enforcement gates.
+**31 specialized AI agents** · 15 quality gates · Semantic memory · Cost tracking
 
 ```
-Architect → 31 Specialists → 15 Quality Gates → Blocking Commit → Handoff + Memory
+Lead Architect → Specialist Agents → Quality Gates → Blocking Commit → Handoff + Memory
 ```
 
-**Key features:**
-- 🛡️ **15 quality gates** — hallucination detection, contract compliance, test verification, TypeScript checking, dependency sanity
-- 💾 **Semantic memory** — SQLite + FTS5 + vector embeddings (cosine similarity) for decision recall
-- 🔐 **Enforced oath** — pre-commit hook + handoff gate block unverified code from landing
-- 📊 **Cost tracking** — every token spend logged per agent per sprint in KES
-- 🔄 **Session recovery** — `npm run recap` shows full context after restart
-- 📦 **Zero build step** — TypeScript via tsx, 52 scripts migrated from JS
+**What it does:**
+- Routes tasks to the right specialist agent based on file type
+- Enforces 15 quality gates before any code lands
+- Stores decisions in SQLite with FTS5 + vector embeddings for semantic recall
+- Tracks every token cost per agent per sprint in KES
+- Recovers session context after VSCode restart with `npm run recap`
+- 52 TypeScript scripts, zero build step via `tsx`
 
-**Stack:** TypeScript, Node.js, SQLite (better-sqlite3 + sqlite-vec + FTS5), Husky, GitHub Actions
-
-**[→ View ZooCode Agency](https://github.com/Jpkoech30/zoocode-agency)**
+**Stack:** TypeScript · Node.js · SQLite (better-sqlite3 + sqlite-vec + FTS5) · Husky · GitHub Actions
 
 ---
 
 ### 📈 GitHub Stats
 
-![GitHub stats](https://github-readme-stats.vercel.app/api?username=Jpkoech30&show_icons=true&theme=dark)
+![GitHub stats](https://github-readme-stats.vercel.app/api?username=Jpkoech30&show_icons=true&theme=dark&hide_border=true)
+
+![Top Languages](https://github-readme-stats.vercel.app/api/top-langs/?username=Jpkoech30&layout=compact&theme=dark&hide_border=true)
 
 ---
 
-### 🛠️ Tech
+### 🛠️ Tech Stack
 
-`TypeScript` · `Node.js` · `NestJS` · `PostgreSQL` · `Prisma` · `React` · `Expo` · `React Native` · `TailwindCSS` · `Docker`
+`TypeScript` · `Node.js` · `NestJS` · `PostgreSQL` · `Prisma` · `React` · `Expo` · `TailwindCSS`
 
 ---
 
-### 📌 Featured Projects
+### 📌 Projects
 
 | Project | Description | Stack |
 |---------|-------------|-------|
-| [**ZooCode Agency**](https://github.com/Jpkoech30/zoocode-agency) | 31-agent orchestration with quality gates, memory & enforcement | TypeScript, Node.js, SQLite |
-| [**JengaBooks**](https://github.com/Jpkoech30/jengabooks) | Kenyan accounting SaaS — M-Pesa, eTIMS, compliance-first | NestJS, Postgres, React, Expo |
+| [**ZooCode Agency**](https://github.com/Jpkoech30/zoocode-agency) | 31-agent orchestration. Quality gates, semantic memory, cost tracking. | TypeScript, Node.js, SQLite |
+| [**JengaBooks**](https://github.com/Jpkoech30/jengabooks) | Kenyan accounting SaaS — M-Pesa, eTIMS, compliance-first | NestJS, PostgreSQL, React, Expo |
 
 ---
 
-*⚡ Building tools that build tools. Orchestrating agents so you don't have to.*
+*⚡ "Building tools that build tools."*
