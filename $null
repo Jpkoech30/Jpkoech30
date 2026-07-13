@@ -1,3 +1,2 @@
-fatal: ambiguous argument ';': unknown revision or path not in the working tree.
-Use '--' to separate paths from revisions, like this:
-'git <command> [<revision>...] -- [<file>...]'
+'ls' is not recognized as an internal or external command,
+operable program or batch file.
