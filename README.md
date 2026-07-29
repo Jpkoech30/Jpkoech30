@@ -57,20 +57,68 @@
 
 ---
 
-### 🛠️ Tech Stack
+### ⚡ Proficiency
 
-<p align="center">
-  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
-  <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white" />
-  <img src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" />
-  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
-  <img src="https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white" />
-  <img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black" />
-  <img src="https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white" />
-  <img src="https://img.shields.io/badge/TailwindCSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" />
-  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
-  <img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" />
-</p>
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>🚀 Backend</h3>
+      <p><b>TypeScript</b> ⭐⭐⭐⭐⭐<br>
+      <i>Primary language. 80%+ of all code across all projects.</i></p>
+      <p><b>Node.js / Express</b> ⭐⭐⭐⭐⭐<br>
+      <i>Sera Banking Core: 2,500+ TPS, hot-row contention, 25+ route modules.</i></p>
+      <p><b>NestJS</b> ⭐⭐⭐⭐<br>
+      <i>JengaBooks: modular architecture with Prisma, BullMQ, modular monolith.</i></p>
+      <p><b>PostgreSQL</b> ⭐⭐⭐⭐<br>
+      <i>Schema design, migrations, query optimization, PgBouncer connection pooling.</i></p>
+      <p><b>Redis</b> ⭐⭐⭐⭐<br>
+      <i>Caching, rate limiting, pub/sub, session management, distributed locks.</i></p>
+      <p><b>Prisma ORM</b> ⭐⭐⭐⭐<br>
+      <i>Multi-schema, idempotent migrations, raw queries when needed.</i></p>
+    </td>
+    <td width="50%" valign="top">
+      <h3>🌐 Frontend</h3>
+      <p><b>React</b> ⭐⭐⭐⭐<br>
+      <i>Vite + TailwindCSS, component architecture, custom hooks, 50+ route shells.</i></p>
+      <p><b>React Native / Expo</b> ⭐⭐⭐<br>
+      <i>Offline-first mobile, NativeWind styling, WatermelonDB sync.</i></p>
+      <p><b>TailwindCSS</b> ⭐⭐⭐⭐<br>
+      <i>Custom design tokens (Comet DS), responsive layouts, dark mode.</i></p>
+      <p><b>Zustand / React Query</b> ⭐⭐⭐⭐<br>
+      <i>State management, data fetching, optimistic updates, cache invalidation.</i></p>
+      <p><b>TypeScript (FE)</b> ⭐⭐⭐⭐⭐<br>
+      <i>Strict mode, generic hooks, branded types, Zod runtime validation.</i></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>🧰 Infrastructure</h3>
+      <p><b>Docker</b> ⭐⭐⭐⭐<br>
+      <i>Multi-stage builds, docker-compose with health checks, container networking.</i></p>
+      <p><b>GitHub Actions</b> ⭐⭐⭐⭐<br>
+      <i>CI/CD pipelines, matrix builds across OS, service containers (PG/Redis).</i></p>
+      <p><b>Linux / Bash</b> ⭐⭐⭐⭐<br>
+      <i>Server management, shell scripting, process automation, cron.</i></p>
+      <p><b>SQLite</b> ⭐⭐⭐⭐<br>
+      <i>FTS5 full-text search, vec0 vector embeddings, semantic memory store.</i></p>
+      <p><b>Git / Husky</b> ⭐⭐⭐⭐⭐<br>
+      <i>Git hooks, pre-commit enforcement, CWD guard, commit-msg validation.</i></p>
+    </td>
+    <td width="50%" valign="top">
+      <h3>🎯 AI & Orchestration</h3>
+      <p><b>AI Agent Orchestration</b> ⭐⭐⭐⭐⭐<br>
+      <i>Designed and built a 21-agent startup team with tight file-scope enforcement.</i></p>
+      <p><b>Multi-Agent Pipelines</b> ⭐⭐⭐⭐⭐<br>
+      <i>HANDOFF protocol, CWD guard, pre-commit oath, agent dispatch automation.</i></p>
+      <p><b>LLM Integration</b> ⭐⭐⭐⭐<br>
+      <i>DeepSeek Flash/Pro, model routing by task complexity, cost tracking (KES ~384/mo).</i></p>
+      <p><b>Semantic Memory</b> ⭐⭐⭐⭐<br>
+      <i>Hybrid search (BM25 + vector embeddings), cross-session recall, compaction.</i></p>
+      <p><b>System Architecture</b> ⭐⭐⭐⭐⭐<br>
+      <i>From whiteboard → API contracts → sprint plans → multi-agent execution.</i></p>
+    </td>
+  </tr>
+</table>
 
 ---
 
