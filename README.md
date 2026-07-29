@@ -7,7 +7,10 @@
 
 <p align="center">
   <a href="https://github.com/Jpkoech30/zoocode-agency">
-    <img src="https://img.shields.io/badge/ZooCode_Agency-31_Agents-6C5CE7?style=for-the-badge&logo=github" />
+    <img src="https://img.shields.io/badge/ZooCode_Agency-21_Agent_Startup-6C5CE7?style=for-the-badge&logo=github" />
+  </a>
+  <a href="https://github.com/Jpkoech30/sera-banking-core">
+    <img src="https://img.shields.io/badge/Sera_Banking_Core-2,500+_TPS-F97316?style=for-the-badge&logo=github" />
   </a>
   <a href="https://github.com/Jpkoech30/jengabooks">
     <img src="https://img.shields.io/badge/JengaBooks-Accounting_SaaS-00B894?style=for-the-badge&logo=github" />
@@ -18,17 +21,18 @@
 
 ### 🧠 What I'm Building
 
-**ZooCode Agency** — A multi-agent orchestration framework that coordinates **31 specialized AI agents** with quality gates, semantic memory, and cost tracking.
+**ZooCode Agency** — A full-business AI agency that coordinates **21 specialized agents** across Sales, Marketing, Finance, Product, Engineering, DevOps, QA, and Design. Structured like a real startup team.
 
 | Capability | How |
 |---|---|
-| 🎯 **Smart Routing** | Tasks auto-assigned to specialist agents by file type |
-| 🛡️ **15 Quality Gates** | Hallucination detection, contract compliance, test verification, TypeScript checking, dependency sanity |
-| 💾 **Semantic Memory** | SQLite + FTS5 + vector embeddings — decisions are recallable |
-| 🔐 **Enforced Oath** | Pre-commit hooks + handoff gates block unverified code |
-| 📊 **Cost Tracking** | Every token logged per agent per sprint in KES |
-| 🔄 **Session Recovery** | `npm run recap` shows full context after restart |
-| 📦 **Zero Build Step** | 52 TypeScript scripts via `tsx` |
+| 🏢 **Startup Structure** | 21 agents: CEO, Business (x5), Backend (x5), Frontend (x4), Mobile, DevOps, QA, Compliance, Design, Fixer |
+| 🎯 **Tight Scopes** | Directory-based `fileRegex` — no two agents can edit the same file |
+| 🛡️ **14 Principals** | VERIFICATION, TIME-TRAVEL, SOCRATIC, GROUNDING, SWARM, FEATURE-CREEP, GIT HANDSHAKE, +7 more |
+| 💾 **Semantic Memory** | SQLite + FTS5 + vector embeddings — 36 stored memories, recallable via hybrid search |
+| 🔐 **Enforced Gates** | Pre-commit oath, commit-msg validation, CWD guard, HANDOFF protocol |
+| 📊 **Cost Tracking** | Every token tracked per agent per sprint in KES (~384/month total) |
+| 🔄 **Session Recovery** | `npm run recap` restores full context after restart |
+| 💼 **Full Business** | Sales, Marketing, Finance, Product — not just engineers |
 
 ---
 
@@ -74,18 +78,29 @@
 
 <table>
   <tr>
-    <td width="50%" align="center">
+    <td width="33%" align="center">
       <h3>🧠 ZooCode Agency</h3>
-      <p><em>31-agent orchestration framework</em></p>
+      <p><em>21-agent startup team</em></p>
       <p>
         <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript" />
         <img src="https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=node.js" />
         <img src="https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite" />
       </p>
-      <p>Multi-agent orchestration with 31 specialized agents, 15 quality gates, semantic memory, and cost tracking. Pre-commit hook enforcement, session recovery, and zero-build-step TypeScript.</p>
+      <p>Full-business AI agency with 21 agents across Sales, Marketing, Finance, Product, Engineering, DevOps, QA, Compliance, and Design. Directory-based scope enforcement, semantic memory, and cost tracking.</p>
       <a href="https://github.com/Jpkoech30/zoocode-agency">→ View Project</a>
     </td>
-    <td width="50%" align="center">
+    <td width="33%" align="center">
+      <h3>🏦 Sera Banking Core</h3>
+      <p><em>High-performance banking core for SACCOs</em></p>
+      <p>
+        <img src="https://img.shields.io/badge/Express-000000?style=flat-square&logo=express" />
+        <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql" />
+        <img src="https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis" />
+      </p>
+      <p>2,500+ TPS banking core for rural SACCOs. Handles deposits, withdrawals, transfers, fraud detection, vault management, commissions, standing orders, and real-time accounting on low-resource hardware.</p>
+      <a href="https://github.com/Jpkoech30/sera-banking-core">→ View Project</a>
+    </td>
+    <td width="33%" align="center">
       <h3>📱 JengaBooks</h3>
       <p><em>Kenyan accounting SaaS</em></p>
       <p>
