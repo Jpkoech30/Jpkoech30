@@ -1,154 +1,121 @@
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=200&section=header&text=Joshua%20Koech&fontSize=60&fontAlignY=35&animation=fadeIn" width="100%" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=220&section=header&text=Joshua%20Koech&fontSize=50&fontAlignY=32&animation=twinkling" width="100%" />
 </div>
 
-<h1 align="center">👋 Hi, I'm Joshua Koech</h1>
-<h3 align="center">Building tools that build tools · Kenyan Full-Stack Engineer</h3>
+```text
+╔══════════════════════════════════════════════════════════╗
+║     Full-Stack Engineer · System Architect ·            ║
+║     AI Agency Builder · Kenyan 🇰🇪                       ║
+╚══════════════════════════════════════════════════════════╝
+```
 
 <p align="center">
-  <a href="https://github.com/Jpkoech30/zoocode-agency">
-    <img src="https://img.shields.io/badge/ZooCode_Agency-21_Agent_Startup-6C5CE7?style=for-the-badge&logo=github" />
-  </a>
-  <a href="https://github.com/Jpkoech30/sera-banking-core">
-    <img src="https://img.shields.io/badge/Sera_Banking_Core-2,500+_TPS-F97316?style=for-the-badge&logo=github" />
-  </a>
-  <a href="https://github.com/Jpkoech30/jengabooks">
-    <img src="https://img.shields.io/badge/JengaBooks-Accounting_SaaS-00B894?style=for-the-badge&logo=github" />
-  </a>
+  <a href="https://github.com/Jpkoech30/zoocode-agency"><img src="https://img.shields.io/badge/ZooCode_Agency-21_Agent_Team-6C5CE7?style=flat-square&logo=github" /></a>
+  <a href="https://github.com/Jpkoech30/sera-banking-core"><img src="https://img.shields.io/badge/Sera_Banking-2,500+_TPS-F97316?style=flat-square&logo=redis" /></a>
+  <a href="https://github.com/Jpkoech30/jengabooks"><img src="https://img.shields.io/badge/JengaBooks-Accounting_SaaS-00B894?style=flat-square&logo=tailwindcss" /></a>
 </p>
 
 ---
 
-### 🧠 What I'm Building
+## 🎯 What I Do
 
-**ZooCode Agency** — A full-business AI agency that coordinates **21 specialized agents** across Sales, Marketing, Finance, Product, Engineering, DevOps, QA, and Design. Structured like a real startup team.
+Build **tools that build tools**. I architect full-stack systems, orchestrate AI agent teams, and design banking infrastructure for rural financial inclusion.
 
-| Capability | How |
-|---|---|
-| 🏢 **Startup Structure** | 21 agents: CEO, Business (x5), Backend (x5), Frontend (x4), Mobile, DevOps, QA, Compliance, Design, Fixer |
-| 🎯 **Tight Scopes** | Directory-based `fileRegex` — no two agents can edit the same file |
-| 🛡️ **14 Principals** | VERIFICATION, TIME-TRAVEL, SOCRATIC, GROUNDING, SWARM, FEATURE-CREEP, GIT HANDSHAKE, +7 more |
-| 💾 **Semantic Memory** | SQLite + FTS5 + vector embeddings — 36 stored memories, recallable via hybrid search |
-| 🔐 **Enforced Gates** | Pre-commit oath, commit-msg validation, CWD guard, HANDOFF protocol |
-| 📊 **Cost Tracking** | Every token tracked per agent per sprint in KES (~384/month total) |
-| 🔄 **Session Recovery** | `npm run recap` restores full context after restart |
-| 💼 **Full Business** | Sales, Marketing, Finance, Product — not just engineers |
+| Area | Focus |
+|------|-------|
+| 🧠 **Agency Engineering** | 21-agent startup teams with scope enforcement, handoff protocols, semantic memory |
+| 🏦 **Banking Core** | 2,500+ TPS transaction engines for SACCOs — Express, PostgreSQL, Redis |
+| 📱 **SaaS Platform** | Accounting & compliance platforms with M-Pesa, eTIMS, offline-first mobile |
+| 🏗️ **Architecture** | Whiteboard → contracts → sprints → multi-agent execution pipeline |
 
 ---
 
-### 📊 GitHub Analytics
-
-<p align="center">
-  <img src="https://github-readme-stats.vercel.app/api?username=Jpkoech30&show_icons=true&theme=dark&hide_border=true&count_private=true&include_all_commits=true" width="49%" />
-  <img src="https://github-readme-streak-stats.herokuapp.com/?user=Jpkoech30&theme=dark&hide_border=true" width="49%" />
-</p>
-
-<p align="center">
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=Jpkoech30&layout=compact&theme=dark&hide_border=true&langs_count=8" width="40%" />
-</p>
-
----
-
-### 🏆 GitHub Trophies
-
-<p align="center">
-  <img src="https://github-profile-trophy.vercel.app/?username=Jpkoech30&theme=darkhub&no-frame=true&column=7&row=1" width="100%" />
-</p>
-
----
-
-### ⚡ Proficiency
+## ⚡ Skill Matrix
 
 <table>
   <tr>
-    <td width="50%" valign="top">
+    <td width="50%">
       <h3>🚀 Backend</h3>
-      <p><b>TypeScript</b> ⭐⭐⭐⭐⭐<br>
-      <i>Primary language. 80%+ of all code across all projects.</i></p>
-      <p><b>Node.js / Express</b> ⭐⭐⭐⭐⭐<br>
-      <i>Sera Banking Core: 2,500+ TPS, hot-row contention, 25+ route modules.</i></p>
-      <p><b>NestJS</b> ⭐⭐⭐⭐<br>
-      <i>JengaBooks: modular architecture with Prisma, BullMQ, modular monolith.</i></p>
-      <p><b>PostgreSQL</b> ⭐⭐⭐⭐<br>
-      <i>Schema design, migrations, query optimization, PgBouncer connection pooling.</i></p>
-      <p><b>Redis</b> ⭐⭐⭐⭐<br>
-      <i>Caching, rate limiting, pub/sub, session management, distributed locks.</i></p>
-      <p><b>Prisma ORM</b> ⭐⭐⭐⭐<br>
-      <i>Multi-schema, idempotent migrations, raw queries when needed.</i></p>
+      <p>TypeScript · Node.js · Express · NestJS · PostgreSQL · Redis · Prisma</p>
+      <p>
+        <img src="https://img.shields.io/badge/TypeScript-★★★★★-3178C6?style=flat-square" /><br>
+        <img src="https://img.shields.io/badge/Node.js%2FExpress-★★★★★-339933?style=flat-square" /><br>
+        <img src="https://img.shields.io/badge/PostgreSQL-★★★★☆-4169E1?style=flat-square" /><br>
+        <img src="https://img.shields.io/badge/Redis-★★★★☆-DC382D?style=flat-square" /><br>
+        <img src="https://img.shields.io/badge/NestJS-★★★★☆-E0234E?style=flat-square" /><br>
+        <img src="https://img.shields.io/badge/Prisma-★★★★☆-2D3748?style=flat-square" />
+      </p>
     </td>
-    <td width="50%" valign="top">
+    <td width="50%">
       <h3>🌐 Frontend</h3>
-      <p><b>React</b> ⭐⭐⭐⭐<br>
-      <i>Vite + TailwindCSS, component architecture, custom hooks, 50+ route shells.</i></p>
-      <p><b>React Native / Expo</b> ⭐⭐⭐<br>
-      <i>Offline-first mobile, NativeWind styling, WatermelonDB sync.</i></p>
-      <p><b>TailwindCSS</b> ⭐⭐⭐⭐<br>
-      <i>Custom design tokens (Comet DS), responsive layouts, dark mode.</i></p>
-      <p><b>Zustand / React Query</b> ⭐⭐⭐⭐<br>
-      <i>State management, data fetching, optimistic updates, cache invalidation.</i></p>
-      <p><b>TypeScript (FE)</b> ⭐⭐⭐⭐⭐<br>
-      <i>Strict mode, generic hooks, branded types, Zod runtime validation.</i></p>
+      <p>React · React Native · Expo · TailwindCSS · Zustand · React Query</p>
+      <p>
+        <img src="https://img.shields.io/badge/React-★★★★☆-61DAFB?style=flat-square" /><br>
+        <img src="https://img.shields.io/badge/TailwindCSS-★★★★☆-06B6D4?style=flat-square" /><br>
+        <img src="https://img.shields.io/badge/Zustand%2FRQ-★★★★☆-FF4154?style=flat-square" /><br>
+        <img src="https://img.shields.io/badge/React%20Native-★★★☆☆-61DAFB?style=flat-square" /><br>
+        <img src="https://img.shields.io/badge/Expo-★★★☆☆-000020?style=flat-square" /><br>
+        <img src="https://img.shields.io/badge/TS%20Strict-★★★★★-3178C6?style=flat-square" />
+      </p>
     </td>
   </tr>
   <tr>
-    <td width="50%" valign="top">
+    <td width="50%">
       <h3>🧰 Infrastructure</h3>
-      <p><b>Docker</b> ⭐⭐⭐⭐<br>
-      <i>Multi-stage builds, docker-compose with health checks, container networking.</i></p>
-      <p><b>GitHub Actions</b> ⭐⭐⭐⭐<br>
-      <i>CI/CD pipelines, matrix builds across OS, service containers (PG/Redis).</i></p>
-      <p><b>Linux / Bash</b> ⭐⭐⭐⭐<br>
-      <i>Server management, shell scripting, process automation, cron.</i></p>
-      <p><b>SQLite</b> ⭐⭐⭐⭐<br>
-      <i>FTS5 full-text search, vec0 vector embeddings, semantic memory store.</i></p>
-      <p><b>Git / Husky</b> ⭐⭐⭐⭐⭐<br>
-      <i>Git hooks, pre-commit enforcement, CWD guard, commit-msg validation.</i></p>
+      <p>Docker · GitHub Actions · Linux · SQLite · Git/Husky</p>
+      <p>
+        <img src="https://img.shields.io/badge/Git%2FHusky-★★★★★-F05032?style=flat-square" /><br>
+        <img src="https://img.shields.io/badge/Docker-★★★★☆-2496ED?style=flat-square" /><br>
+        <img src="https://img.shields.io/badge/GitHub%20Actions-★★★★☆-2088FF?style=flat-square" /><br>
+        <img src="https://img.shields.io/badge/Linux%2FBash-★★★★☆-FCC624?style=flat-square" /><br>
+        <img src="https://img.shields.io/badge/SQLite%20(FTS5)-★★★★☆-003B57?style=flat-square" />
+      </p>
     </td>
-    <td width="50%" valign="top">
-      <h3>🎯 AI & Orchestration</h3>
-      <p><b>AI Agent Orchestration</b> ⭐⭐⭐⭐⭐<br>
-      <i>Designed and built a 21-agent startup team with tight file-scope enforcement.</i></p>
-      <p><b>Multi-Agent Pipelines</b> ⭐⭐⭐⭐⭐<br>
-      <i>HANDOFF protocol, CWD guard, pre-commit oath, agent dispatch automation.</i></p>
-      <p><b>LLM Integration</b> ⭐⭐⭐⭐<br>
-      <i>DeepSeek Flash/Pro, model routing by task complexity, cost tracking (KES ~384/mo).</i></p>
-      <p><b>Semantic Memory</b> ⭐⭐⭐⭐<br>
-      <i>Hybrid search (BM25 + vector embeddings), cross-session recall, compaction.</i></p>
-      <p><b>System Architecture</b> ⭐⭐⭐⭐⭐<br>
-      <i>From whiteboard → API contracts → sprint plans → multi-agent execution.</i></p>
+    <td width="50%">
+      <h3>🤖 AI & Systems</h3>
+      <p>Agent Orchestration · LLM Routing · Memory Systems · Architecture</p>
+      <p>
+        <img src="https://img.shields.io/badge/Agent%20Orchestration-★★★★★-6C5CE7?style=flat-square" /><br>
+        <img src="https://img.shields.io/badge/System%20Architecture-★★★★★-00B894?style=flat-square" /><br>
+        <img src="https://img.shields.io/badge/Multi%2DAgent%20Pipelines-★★★★★-6C5CE7?style=flat-square" /><br>
+        <img src="https://img.shields.io/badge/LLM%20Integration-★★★★☆-FF6B6B?style=flat-square" /><br>
+        <img src="https://img.shields.io/badge/Semantic%20Memory-★★★★☆-00CEC9?style=flat-square" />
+      </p>
     </td>
   </tr>
 </table>
 
 ---
 
-### 📌 Featured Projects
+## 📦 Active Projects
 
 <table>
   <tr>
-    <td width="33%" align="center">
+    <td width="50%" valign="top">
       <h3>🧠 ZooCode Agency</h3>
-      <p><em>21-agent startup team</em></p>
+      <p><em>AI agent orchestration framework</em></p>
       <p>
         <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript" />
         <img src="https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=node.js" />
         <img src="https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite" />
       </p>
-      <p>Full-business AI agency with 21 agents across Sales, Marketing, Finance, Product, Engineering, DevOps, QA, Compliance, and Design. Directory-based scope enforcement, semantic memory, and cost tracking.</p>
-      <a href="https://github.com/Jpkoech30/zoocode-agency">→ View Project</a>
+      <p>A full-business AI agency with 21 specialized agents, directory-based scope enforcement, hybrid semantic memory (BM25 + vectors), pre-commit enforcement, and cost tracking at ~KES 384/month.</p>
+      <a href="https://github.com/Jpkoech30/zoocode-agency">→ Explore the Agency →</a>
     </td>
-    <td width="33%" align="center">
+    <td width="50%" valign="top">
       <h3>🏦 Sera Banking Core</h3>
-      <p><em>High-performance banking core for SACCOs</em></p>
+      <p><em>High-performance banking for SACCOs</em></p>
       <p>
         <img src="https://img.shields.io/badge/Express-000000?style=flat-square&logo=express" />
         <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql" />
         <img src="https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis" />
       </p>
-      <p>2,500+ TPS banking core for rural SACCOs. Handles deposits, withdrawals, transfers, fraud detection, vault management, commissions, standing orders, and real-time accounting on low-resource hardware.</p>
-      <a href="https://github.com/Jpkoech30/sera-banking-core">→ View Project</a>
+      <p>2,500+ TPS banking core handling deposits, withdrawals, transfers, fraud detection, vault management, commissions, real-time accounting, and standing orders. Built for low-resource rural deployment.</p>
+      <a href="https://github.com/Jpkoech30/sera-banking-core">→ View the Core →</a>
     </td>
-    <td width="33%" align="center">
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
       <h3>📱 JengaBooks</h3>
       <p><em>Kenyan accounting SaaS</em></p>
       <p>
@@ -156,29 +123,52 @@
         <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql" />
         <img src="https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react" />
       </p>
-      <p>Compliance-first accounting platform with M-Pesa integration, eTIMS/KRA compliance, offline-first mobile app, and multi-currency support. Built for Kenyan businesses.</p>
-      <a href="https://github.com/Jpkoech30/jengabooks">→ View Project</a>
+      <p>Compliance-first accounting with M-Pesa integration, eTIMS/KRA compliance, offline-first mobile (Expo), multi-currency, payroll, and AI-powered financial insights.</p>
+      <a href="https://github.com/Jpkoech30/jengabooks">→ Explore JengaBooks →</a>
+    </td>
+    <td width="50%" valign="top">
+      <h3>🛠️ Currently Building</h3>
+      <ul>
+        <li>🔧 Fixing R4 auth middleware regression (15 integration tests)</li>
+        <li>📋 User management API for Sera Banking Core</li>
+        <li>⏰ Centralized cron management system</li>
+        <li>📊 Load test quality gates (targeting 2,500+ TPS)</li>
+      </ul>
+      <br>
+      <p><i>Full backlog tracked via ZooCode Agency orchestration.</i></p>
     </td>
   </tr>
 </table>
 
 ---
 
-### 🔄 Recent Activity
-
-<!--RECENT_ACTIVITY:start-->
-<!--RECENT_ACTIVITY:end-->
+## 📊 GitHub Pulse
 
 <p align="center">
-  <img src="https://visitcount.itsvg.in/api?id=Jpkoech30&icon=0&color=6" />
+  <img src="https://github-readme-stats.vercel.app/api?username=Jpkoech30&show_icons=true&theme=dark&hide_border=true&count_private=true&include_all_commits=true&bg_color=0D1117&title_color=6C5CE7&icon_color=6C5CE7" width="49%" />
+  <img src="https://github-readme-streak-stats.herokuapp.com/?user=Jpkoech30&theme=dark&hide_border=true&background=0D1117&ring=6C5CE7&fire=6C5CE7&currStreakLabel=6C5CE7" width="49%" />
+</p>
+
+<p align="center">
+  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=Jpkoech30&layout=compact&theme=dark&hide_border=true&bg_color=0D1117&title_color=6C5CE7&langs_count=8" width="40%" />
 </p>
 
 ---
 
+## 🏆 Achievements
+
 <p align="center">
-  <i>"Building tools that build tools."</i>
-  <br/><br/>
-  <a href="https://github.com/Jpkoech30">github.com/Jpkoech30</a>
+  <img src="https://github-profile-trophy.vercel.app/?username=Jpkoech30&theme=darkhub&no-frame=true&column=7&row=1&margin-w=10" width="100%" />
+</p>
+
+---
+
+## 📬 Connect
+
+<p align="center">
+  <a href="mailto:joshuapchumba64@gmail.com"><img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" /></a>
+  <a href="https://github.com/Jpkoech30"><img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" /></a>
+  <a href="https://www.linkedin.com/in/joshua-koech-435087235/"><img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" /></a>
 </p>
 
 <div align="center">
