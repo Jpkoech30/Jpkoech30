@@ -146,7 +146,7 @@ Build **tools that build tools**. I architect full-stack systems, orchestrate AI
 
 <p align="center">
   <img src="https://github-readme-stats.vercel.app/api?username=Jpkoech30&show_icons=true&theme=dark&hide_border=true&count_private=true&include_all_commits=true&bg_color=0D1117&title_color=6C5CE7&icon_color=6C5CE7" width="49%" />
-  <img src="https://github-readme-streak-stats.herokuapp.com/?user=Jpkoech30&theme=dark&hide_border=true&background=0D1117&ring=6C5CE7&fire=6C5CE7&currStreakLabel=6C5CE7" width="49%" />
+  <img src="https://github-readme-stats.vercel.app/api?username=Jpkoech30&show=reviews,discussions_started,discussions_answered&theme=dark&hide_border=true&bg_color=0D1117&title_color=6C5CE7" width="49%" />
 </p>
 
 <p align="center">
