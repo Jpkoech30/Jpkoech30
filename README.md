@@ -145,12 +145,8 @@ Build **tools that build tools**. I architect full-stack systems, orchestrate AI
 ## 📊 GitHub Pulse
 
 <p align="center">
-  <img src="https://github-readme-stats.vercel.app/api?username=Jpkoech30&show_icons=true&theme=dark&hide_border=true&count_private=true&include_all_commits=true&bg_color=0D1117&title_color=6C5CE7&icon_color=6C5CE7" width="49%" />
-  <img src="https://github-readme-stats.vercel.app/api?username=Jpkoech30&show=reviews,discussions_started,discussions_answered&theme=dark&hide_border=true&bg_color=0D1117&title_color=6C5CE7" width="49%" />
-</p>
-
-<p align="center">
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=Jpkoech30&layout=compact&theme=dark&hide_border=true&bg_color=0D1117&title_color=6C5CE7&langs_count=8" width="40%" />
+  <img src="https://github-readme-stats.vercel.app/api?username=Jpkoech30&show_icons=true&theme=dark&hide_border=true&count_private=true&include_all_commits=true&bg_color=0D1117&title_color=6C5CE7&icon_color=6C5CE7&rank_icon=percentile" width="55%" />
+  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=Jpkoech30&layout=compact&theme=dark&hide_border=true&bg_color=0D1117&title_color=6C5CE7&langs_count=6" width="40%" />
 </p>
 
 ---
